@@ -1,0 +1,95 @@
+param(
+    [int]$VmCases = 300
+)
+
+$ErrorActionPreference = 'Stop'
+
+$root = Split-Path -Parent $PSScriptRoot
+Set-Location $root
+
+function Run-Checked {
+    param(
+        [Parameter(Mandatory = $true)] [string] $Exe,
+        [Parameter()] [string[]] $Args = @()
+    )
+    & $Exe @Args
+    if ($LASTEXITCODE -ne 0) {
+        throw "Command failed ($LASTEXITCODE): $Exe $($Args -join ' ')"
+    }
+}
+
+function Resolve-PwshExe {
+    $pwshName = if ($IsWindows) { 'pwsh.exe' } else { 'pwsh' }
+    $fromPsHome = Join-Path $PSHOME $pwshName
+    if (Test-Path -LiteralPath $fromPsHome) {
+        return $fromPsHome
+    }
+
+    $cmd = Get-Command pwsh -ErrorAction SilentlyContinue
+    if ($cmd) {
+        return $cmd.Source
+    }
+
+    throw "pwsh executable not found"
+}
+
+function Has-Cmd {
+    param([Parameter(Mandatory = $true)] [string]$Name)
+    return $null -ne (Get-Command $Name -ErrorAction SilentlyContinue)
+}
+
+$hasSh = Has-Cmd -Name 'sh'
+$hasMake = Has-Cmd -Name 'make'
+$pwshExe = Resolve-PwshExe
+
+if ($hasSh -and $hasMake) {
+    Write-Host "[prod-win] shell core test suite..."
+    Run-Checked -Exe 'sh' -Args @('./scripts/test_v0.sh')
+    Run-Checked -Exe 'sh' -Args @('./scripts/test_v1.sh')
+    Run-Checked -Exe 'sh' -Args @('./scripts/test_v2.sh')
+    Run-Checked -Exe 'sh' -Args @('./scripts/test_v3_start.sh')
+    Run-Checked -Exe 'sh' -Args @('./scripts/test_v4.sh')
+    Run-Checked -Exe 'sh' -Args @('./scripts/test_ecosystem.sh')
+} elseif ($hasSh -and -not $hasMake) {
+    Write-Host "[prod-win] warning: 'sh' found but 'make' not found; skipping shell test suite"
+} else {
+    Write-Host "[prod-win] warning: 'sh' not found; skipping shell test suite"
+}
+
+Write-Host "[prod-win] vm consistency..."
+Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/test_vm_consistency.ps1', '-Seed', '1337', '-Cases', "$VmCases")
+
+Write-Host "[prod-win] powershell suite..."
+Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/test_v3.ps1')
+Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/test_v4.ps1')
+
+Write-Host "[prod-win] powershell tooling smoke..."
+$tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_prod_" + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $tmp | Out-Null
+try {
+    $minPath = Join-Path $tmp 'min.cy'
+@"
+let x = 1;
+print(x);
+"@ | Set-Content -NoNewline -LiteralPath $minPath
+
+    Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/cyfmt.ps1', $minPath)
+    Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/cydbg.ps1', $minPath)
+
+    Push-Location $tmp
+    try {
+        $cypm = Join-Path $root 'scripts/cypm.ps1'
+        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'init', 'demo')
+        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'add', 'core', './core', '1.2.3')
+        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'add', 'app', './app', '0.1.0', 'core@^1.0.0')
+        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'resolve', 'app')
+    }
+    finally {
+        Pop-Location
+    }
+}
+finally {
+    Remove-Item -Recurse -Force $tmp
+}
+
+Write-Host "[prod-win] PASS"
