@@ -63,6 +63,67 @@ $unpackPath = Join-Path $tmpRoot 'unpack'
 
 New-Item -ItemType Directory -Path $tmpRoot | Out-Null
 
+function Invoke-WebDownload {
+    param(
+        [Parameter(Mandatory = $true)] [string] $Uri,
+        [Parameter(Mandatory = $true)] [string] $OutFile,
+        [int]$Retries = 2,
+        [switch]$Quiet
+    )
+
+    $attempt = 0
+    while ($attempt -le $Retries) {
+        try {
+            $params = @{
+                Uri     = $Uri
+                OutFile = $OutFile
+            }
+            if ($PSVersionTable.PSVersion.Major -lt 6) {
+                $params.UseBasicParsing = $true
+            }
+            Invoke-WebRequest @params
+            return $true
+        }
+        catch {
+            if ($attempt -ge $Retries) {
+                if ($Quiet) { return $false }
+                throw
+            }
+            Start-Sleep -Seconds ([Math]::Min(2 + $attempt, 5))
+        }
+        $attempt++
+    }
+    return $false
+}
+
+function Resolve-ReleaseAssetUrl {
+    param(
+        [Parameter(Mandatory = $true)] [string] $RepoName,
+        [Parameter(Mandatory = $true)] [string] $TagName,
+        [Parameter(Mandatory = $true)] [string] $AssetName
+    )
+
+    $api = "https://api.github.com/repos/$RepoName/releases/tags/$TagName"
+    try {
+        $params = @{
+            Uri     = $api
+            Headers = @{ 'User-Agent' = 'cy-installer' }
+        }
+        if ($PSVersionTable.PSVersion.Major -lt 6) {
+            $params.UseBasicParsing = $true
+        }
+        $release = Invoke-RestMethod @params
+        $assetObj = $release.assets | Where-Object { $_.name -eq $AssetName } | Select-Object -First 1
+        if ($assetObj -and $assetObj.browser_download_url) {
+            return [string]$assetObj.browser_download_url
+        }
+    }
+    catch {
+        return ''
+    }
+    return ''
+}
+
 function Get-ReleaseHash {
     param([string]$Path)
     if (-not (Test-Path -LiteralPath $Path)) { return '' }
@@ -150,11 +211,14 @@ try {
     $remoteHash = ''
     if (-not $Force) {
         try {
-            Invoke-WebRequest -Uri $hashUrl -OutFile $hashPath
-            $remoteHash = Get-ReleaseHash -Path $hashPath
+            if (Invoke-WebDownload -Uri $hashUrl -OutFile $hashPath -Retries 1 -Quiet) {
+                $remoteHash = Get-ReleaseHash -Path $hashPath
+            } else {
+                $remoteHash = ''
+            }
         }
         catch {
-            $remoteHash = ''
+            $remoteHash = Get-ReleaseHash -Path $hashPath
         }
     }
 
@@ -165,7 +229,20 @@ try {
     }
 
     Write-Host ("Downloading {0}" -f $url)
-    Invoke-WebRequest -Uri $url -OutFile $zipPath
+    $downloaded = Invoke-WebDownload -Uri $url -OutFile $zipPath -Retries 2 -Quiet
+
+    if (-not $downloaded -and $Version -ne 'latest') {
+        $resolvedUrl = Resolve-ReleaseAssetUrl -RepoName $Repo -TagName $Version -AssetName $Asset
+        if (-not [string]::IsNullOrWhiteSpace($resolvedUrl)) {
+            Write-Host ("Retrying via release API URL: {0}" -f $resolvedUrl)
+            $downloaded = Invoke-WebDownload -Uri $resolvedUrl -OutFile $zipPath -Retries 2 -Quiet
+        }
+    }
+
+    if (-not $downloaded) {
+        throw ("Failed to download release asset '{0}' for version '{1}' from repo '{2}'. " +
+               "Expected URL: {3}" -f $Asset, $Version, $Repo, $url)
+    }
 
     New-Item -ItemType Directory -Path $unpackPath | Out-Null
     Expand-Archive -Path $zipPath -DestinationPath $unpackPath -Force
