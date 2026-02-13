@@ -9,8 +9,9 @@ make >/dev/null
 
 tmpd=$(mktemp -d)
 trap 'rm -rf "$tmpd"' EXIT
+payload_path="$tmpd/http_payload.txt"
 
-cat >"$tmpd/v4.cy" <<'CYEOF'
+cat >"$tmpd/v4.cy" <<CYEOF
 require_version(lang_version());
 
 typealias IntType = "int";
@@ -117,6 +118,27 @@ let merged = Objects.merge({a: 1}, {b: 2});
 print(len(keys(merged)));
 print(Objects.get_or(merged, "a", 0));
 print(Objects.get_or(merged, "z", 9));
+
+switch (2) {
+    case 1: { print("one"); }
+    case 2: { print("two"); }
+    default: { print("other"); }
+}
+
+print(null ?? 99);
+print(5 ?? 99);
+
+import "cy:json";
+import "cy:http";
+
+print(JSON.parse("42"));
+print(JSON.parse("true"));
+print(JSON.stringify(7));
+
+write("$payload_path", "hello-http");
+let http_ok = HTTP.get("$payload_path");
+print(HTTP.ok(http_ok));
+print(HTTP.text("$payload_path"));
 CYEOF
 
 expected='int
@@ -152,7 +174,16 @@ true
 5
 2
 1
-9'
+9
+two
+99
+5
+42
+true
+7
+10
+true
+hello-http'
 
 echo "[v4] running interpreter path..."
 out_ast=$(./cy "$tmpd/v4.cy")

@@ -3,7 +3,14 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
-if ($IsWindows) {
+$isWin = $false
+if ($null -ne (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue)) {
+    $isWin = [bool]$IsWindows
+} elseif ($env:OS -eq 'Windows_NT') {
+    $isWin = $true
+}
+
+if ($isWin) {
     Write-Host '[san-win] skip: sanitizer gate runs on Linux/macOS only'
     exit 0
 }
@@ -80,12 +87,14 @@ while (true) {
     $env:ASAN_OPTIONS = if ($env:ASAN_OPTIONS) { $env:ASAN_OPTIONS } else { 'detect_leaks=1:abort_on_error=1' }
     $env:UBSAN_OPTIONS = if ($env:UBSAN_OPTIONS) { $env:UBSAN_OPTIONS } else { 'print_stacktrace=1:halt_on_error=1' }
 
-    $outAst = (& $runtime $smoke 2>&1 | Out-String).TrimEnd("`r", "`n")
+    $outAstRaw = (& $runtime $smoke 2>&1 | Out-String)
+    $outAst = ($outAstRaw -replace "`r`n", "`n" -replace "`r", "`n").TrimEnd("`n")
     if ($LASTEXITCODE -ne 0) {
         throw "Sanitized AST run failed: $outAst"
     }
 
-    $outVm = (& $runtime '--vm-strict' $smoke 2>&1 | Out-String).TrimEnd("`r", "`n")
+    $outVmRaw = (& $runtime '--vm-strict' $smoke 2>&1 | Out-String)
+    $outVm = ($outVmRaw -replace "`r`n", "`n" -replace "`r", "`n").TrimEnd("`n")
     if ($LASTEXITCODE -ne 0) {
         throw "Sanitized VM run failed: $outVm"
     }

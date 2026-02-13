@@ -7,15 +7,32 @@ cd "$ROOT_DIR"
 echo "[v0] building native runtime..."
 make >/dev/null
 
+if [ -x ./cy ]; then
+  runtime=./cy
+elif [ -x ./cy.exe ]; then
+  runtime=./cy.exe
+else
+  echo "FAIL: cy runtime not found (expected ./cy or ./cy.exe)" >&2
+  exit 1
+fi
+
 echo "[v0] test: main script via launcher"
-out1=$(./cy main.cy)
+out1=$("$runtime" main.cy)
 [ "$out1" = "3" ] || {
   echo "FAIL: expected '3', got '$out1'"
   exit 1
 }
 
 echo "[v0] test: direct executable .cy"
-out2=$(PATH="$ROOT_DIR:$PATH" ./main.cy)
+chmod +x ./main.cy
+shim_dir=$(mktemp -d)
+trap 'rm -rf "$shim_dir"' EXIT
+cat >"$shim_dir/cy" <<EOF
+#!/usr/bin/env sh
+exec "$ROOT_DIR/$runtime" "\$@"
+EOF
+chmod +x "$shim_dir/cy"
+out2=$(PATH="$shim_dir:$ROOT_DIR:$PATH" ./main.cy)
 [ "$out2" = "3" ] || {
   echo "FAIL: expected '3', got '$out2'"
   exit 1
@@ -24,14 +41,14 @@ out2=$(PATH="$ROOT_DIR:$PATH" ./main.cy)
 echo "[v0] test: arithmetic precedence + print"
 tmpf=$(mktemp)
 tmpf2=$(mktemp)
-trap 'rm -f "$tmpf" "$tmpf2"' EXIT
+trap 'rm -rf "$shim_dir"; rm -f "$tmpf" "$tmpf2"' EXIT
 cat >"$tmpf" <<'EOF'
 # v0 smoke
 print(2 + 3 * 4);
 (10 - 4) / 2;
 EOF
 
-out3=$(./cy "$tmpf")
+out3=$("$runtime" "$tmpf")
 expected='14
 3'
 [ "$out3" = "$expected" ] || {
@@ -59,8 +76,8 @@ try {
 }
 EOF
 
-out4=$(./cy "$tmpf2")
-out5=$(./cy --vm "$tmpf2")
+out4=$("$runtime" "$tmpf2")
+out5=$("$runtime" --vm "$tmpf2")
 expected2='42
 boom'
 [ "$out4" = "$expected2" ] || {

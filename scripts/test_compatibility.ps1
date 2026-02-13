@@ -2,7 +2,12 @@ $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
-$isWin = $IsWindows
+$isWin = $false
+if ($null -ne (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue)) {
+    $isWin = [bool]$IsWindows
+} elseif ($env:OS -eq 'Windows_NT') {
+    $isWin = $true
+}
 $exeExt = if ($isWin) { '.exe' } else { '' }
 
 function Resolve-CCompiler {
@@ -59,7 +64,8 @@ function Run-ProcessText {
     if ($LASTEXITCODE -ne 0) {
         throw "Command failed ($LASTEXITCODE): $Exe $($Args -join ' ')`n$raw"
     }
-    return $raw.TrimEnd("`r", "`n")
+    $normalized = $raw -replace "`r`n", "`n" -replace "`r", "`n"
+    return $normalized.TrimEnd("`n")
 }
 
 Write-Host "[compat-win] building native runtime..."

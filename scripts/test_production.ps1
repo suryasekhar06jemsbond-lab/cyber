@@ -7,6 +7,13 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
+$isWin = $false
+if ($null -ne (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue)) {
+    $isWin = [bool]$IsWindows
+} elseif ($env:OS -eq 'Windows_NT') {
+    $isWin = $true
+}
+
 function Run-Checked {
     param(
         [Parameter(Mandatory = $true)] [string] $Exe,
@@ -19,7 +26,7 @@ function Run-Checked {
 }
 
 function Resolve-PwshExe {
-    $pwshName = if ($IsWindows) { 'pwsh.exe' } else { 'pwsh' }
+    $pwshName = if ($isWin) { 'pwsh.exe' } else { 'pwsh' }
     $fromPsHome = Join-Path $PSHOME $pwshName
     if (Test-Path -LiteralPath $fromPsHome) {
         return $fromPsHome
@@ -42,7 +49,9 @@ $hasSh = Has-Cmd -Name 'sh'
 $hasMake = Has-Cmd -Name 'make'
 $pwshExe = Resolve-PwshExe
 
-if ($hasSh -and $hasMake) {
+if ($isWin -and $hasSh -and $hasMake) {
+    Write-Host "[prod-win] warning: skipping shell test suite on Windows; use PowerShell suite for this platform"
+} elseif ($hasSh -and $hasMake) {
     Write-Host "[prod-win] shell core test suite..."
     Run-Checked -Exe 'sh' -Args @('./scripts/test_v0.sh')
     Run-Checked -Exe 'sh' -Args @('./scripts/test_v1.sh')

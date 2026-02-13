@@ -49,7 +49,8 @@ util|2.1.0|./pkgs/util|core@^1.0.0
         }
 
         Invoke-Cypm @('add-remote', 'util', '>=2.0.0')
-        $resolved = (& $cypm resolve util | Out-String).TrimEnd("`r", "`n")
+        $resolvedRaw = (& $cypm resolve util | Out-String)
+        $resolved = ($resolvedRaw -replace "`r`n", "`n" -replace "`r", "`n").TrimEnd("`n")
         $expected = "core`nutil"
         if ($resolved -ne $expected) {
             throw "cypm resolve mismatch: expected '$expected', got '$resolved'"

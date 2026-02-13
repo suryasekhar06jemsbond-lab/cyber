@@ -20,6 +20,9 @@ typedef enum {
     TOK_LET,
     TOK_IF,
     TOK_ELSE,
+    TOK_SWITCH,
+    TOK_CASE,
+    TOK_DEFAULT,
     TOK_WHILE,
     TOK_FOR,
     TOK_IN,
@@ -46,6 +49,7 @@ typedef enum {
     TOK_BANG,
     TOK_ANDAND,
     TOK_OROR,
+    TOK_COALESCE,
     TOK_EQ,
     TOK_NEQ,
     TOK_LT,
@@ -157,6 +161,7 @@ typedef enum {
     ST_SET_INDEX,
     ST_EXPR,
     ST_IF,
+    ST_SWITCH,
     ST_WHILE,
     ST_FOR,
     ST_BREAK,
@@ -202,6 +207,13 @@ struct Stmt {
             Block *then_block;
             Block *else_block;
         } if_stmt;
+        struct {
+            Expr *value;
+            Expr **case_values;
+            Block **case_blocks;
+            int case_count;
+            Block *default_block;
+        } switch_stmt;
         struct {
             Expr *cond;
             Block *body;
@@ -521,6 +533,43 @@ static const char *g_builtin_objects_module =
     "    let get_or = __cy_objects_get_or;\n"
     "}\n";
 
+static const char *g_builtin_json_module =
+    "module JSON {\n"
+    "    fn __cy_json_parse(text) {\n"
+    "        if (text == \"true\") { return true; }\n"
+    "        if (text == \"false\") { return false; }\n"
+    "        if (text == \"null\") { return null; }\n"
+    "        try {\n"
+    "            return int(text);\n"
+    "        } catch (err) {\n"
+    "            return text;\n"
+    "        }\n"
+    "    }\n"
+    "    fn __cy_json_stringify(value) {\n"
+    "        return str(value);\n"
+    "    }\n"
+    "    let parse = __cy_json_parse;\n"
+    "    let stringify = __cy_json_stringify;\n"
+    "}\n";
+
+static const char *g_builtin_http_module =
+    "module HTTP {\n"
+    "    fn __cy_http_get(path) {\n"
+    "        let body = read(path);\n"
+    "        return {ok: true, status: 200, body: body, path: path};\n"
+    "    }\n"
+    "    fn __cy_http_text(path) {\n"
+    "        let resp = __cy_http_get(path);\n"
+    "        return object_get(resp, \"body\");\n"
+    "    }\n"
+    "    fn __cy_http_ok(resp) {\n"
+    "        return object_get(resp, \"ok\");\n"
+    "    }\n"
+    "    let get = __cy_http_get;\n"
+    "    let text = __cy_http_text;\n"
+    "    let ok = __cy_http_ok;\n"
+    "}\n";
+
 static int is_builtin_module_path(const char *path) {
     return path != NULL && strncmp(path, "cy:", 3) == 0;
 }
@@ -529,6 +578,8 @@ static const char *builtin_module_source(const char *path) {
     if (strcmp(path, "cy:math") == 0) return g_builtin_math_module;
     if (strcmp(path, "cy:arrays") == 0) return g_builtin_arrays_module;
     if (strcmp(path, "cy:objects") == 0) return g_builtin_objects_module;
+    if (strcmp(path, "cy:json") == 0) return g_builtin_json_module;
+    if (strcmp(path, "cy:http") == 0) return g_builtin_http_module;
     return NULL;
 }
 
@@ -704,6 +755,9 @@ static TokenType keyword_type(const char *ident) {
     if (strcmp(ident, "let") == 0) return TOK_LET;
     if (strcmp(ident, "if") == 0) return TOK_IF;
     if (strcmp(ident, "else") == 0) return TOK_ELSE;
+    if (strcmp(ident, "switch") == 0) return TOK_SWITCH;
+    if (strcmp(ident, "case") == 0) return TOK_CASE;
+    if (strcmp(ident, "default") == 0) return TOK_DEFAULT;
     if (strcmp(ident, "while") == 0) return TOK_WHILE;
     if (strcmp(ident, "for") == 0) return TOK_FOR;
     if (strcmp(ident, "in") == 0) return TOK_IN;
@@ -838,6 +892,13 @@ static Token lexer_next_token(Lexer *lx) {
         }
         return make_token(TOK_ILLEGAL, line, col);
     }
+    if (ch == '?') {
+        if (lx_peek(lx) == '?') {
+            lx_next(lx);
+            return make_token(TOK_COALESCE, line, col);
+        }
+        return make_token(TOK_ILLEGAL, line, col);
+    }
     if (ch == '<') {
         if (lx_peek(lx) == '=') {
             lx_next(lx);
@@ -890,8 +951,9 @@ static void expect_current(Parser *p, TokenType t, const char *msg) {
 
 enum {
     PREC_LOWEST = 0,
-    PREC_OR = 1,
-    PREC_AND = 2,
+    PREC_COALESCE = 1,
+    PREC_OR = 2,
+    PREC_AND = 3,
     PREC_EQUALITY = 5,
     PREC_COMPARE = 6,
     PREC_SUM = 10,
@@ -902,6 +964,8 @@ enum {
 
 static int precedence(TokenType t) {
     switch (t) {
+        case TOK_COALESCE:
+            return PREC_COALESCE;
         case TOK_OROR:
             return PREC_OR;
         case TOK_ANDAND:
@@ -1258,6 +1322,67 @@ static Stmt *parse_if_statement(Parser *p) {
     return s;
 }
 
+static Stmt *parse_switch_statement(Parser *p) {
+    int line = p->cur.line;
+    int col = p->cur.col;
+
+    next_token(p);
+    expect_current(p, TOK_LPAREN, "expected '(' after switch");
+    next_token(p);
+    Expr *value = parse_expression(p, PREC_LOWEST);
+    expect_current(p, TOK_RPAREN, "expected ')' after switch expression");
+    next_token(p);
+    expect_current(p, TOK_LBRACE, "expected '{' after switch(...)");
+
+    Expr **case_values = NULL;
+    Block **case_blocks = NULL;
+    int case_count = 0;
+    Block *default_block = NULL;
+
+    next_token(p);
+    while (p->cur.type != TOK_RBRACE && p->cur.type != TOK_EOF) {
+        if (p->cur.type == TOK_CASE) {
+            next_token(p);
+            Expr *case_value = parse_expression(p, PREC_LOWEST);
+            expect_current(p, TOK_COLON, "expected ':' after case expression");
+            next_token(p);
+            expect_current(p, TOK_LBRACE, "expected '{' after case label");
+            Block *case_block = parse_block(p);
+
+            int idx = case_count;
+            case_values = (Expr **)xrealloc(case_values, (size_t)(idx + 1) * sizeof(Expr *));
+            case_blocks = (Block **)xrealloc(case_blocks, (size_t)(idx + 1) * sizeof(Block *));
+            case_values[idx] = case_value;
+            case_blocks[idx] = case_block;
+            case_count++;
+            continue;
+        }
+        if (p->cur.type == TOK_DEFAULT) {
+            if (default_block != NULL) {
+                fail_at(p->cur.line, p->cur.col, "duplicate default label in switch");
+            }
+            next_token(p);
+            expect_current(p, TOK_COLON, "expected ':' after default");
+            next_token(p);
+            expect_current(p, TOK_LBRACE, "expected '{' after default label");
+            default_block = parse_block(p);
+            continue;
+        }
+        fail_at(p->cur.line, p->cur.col, "expected case/default label in switch body");
+    }
+
+    expect_current(p, TOK_RBRACE, "expected '}' after switch body");
+    next_token(p);
+
+    Stmt *s = new_stmt(ST_SWITCH, line, col);
+    s->as.switch_stmt.value = value;
+    s->as.switch_stmt.case_values = case_values;
+    s->as.switch_stmt.case_blocks = case_blocks;
+    s->as.switch_stmt.case_count = case_count;
+    s->as.switch_stmt.default_block = default_block;
+    return s;
+}
+
 static Stmt *parse_while_statement(Parser *p) {
     int line = p->cur.line;
     int col = p->cur.col;
@@ -1561,6 +1686,7 @@ static Stmt *parse_expr_or_assignment_statement(Parser *p) {
 static Stmt *parse_statement(Parser *p) {
     if (p->cur.type == TOK_LET) return parse_let_statement(p);
     if (p->cur.type == TOK_IF) return parse_if_statement(p);
+    if (p->cur.type == TOK_SWITCH) return parse_switch_statement(p);
     if (p->cur.type == TOK_WHILE) return parse_while_statement(p);
     if (p->cur.type == TOK_FOR) return parse_for_statement(p);
     if (p->cur.type == TOK_TRY) return parse_try_statement(p);
@@ -1737,6 +1863,8 @@ typedef enum {
     BUILTIN_ALL,
     BUILTIN_ANY,
     BUILTIN_RANGE,
+    BUILTIN_READ,
+    BUILTIN_WRITE,
     BUILTIN_TYPE,
     BUILTIN_TYPE_OF,
     BUILTIN_IS_INT,
@@ -1784,6 +1912,8 @@ static BuiltinKind builtin_kind(const char *name) {
     if (strcmp(name, "all") == 0) return BUILTIN_ALL;
     if (strcmp(name, "any") == 0) return BUILTIN_ANY;
     if (strcmp(name, "range") == 0) return BUILTIN_RANGE;
+    if (strcmp(name, "read") == 0) return BUILTIN_READ;
+    if (strcmp(name, "write") == 0) return BUILTIN_WRITE;
     if (strcmp(name, "type") == 0) return BUILTIN_TYPE;
     if (strcmp(name, "type_of") == 0) return BUILTIN_TYPE_OF;
     if (strcmp(name, "is_int") == 0) return BUILTIN_IS_INT;
@@ -1833,6 +1963,8 @@ static const char *builtin_callee_name(BuiltinKind kind) {
         case BUILTIN_ALL: return "cy_builtin_all";
         case BUILTIN_ANY: return "cy_builtin_any";
         case BUILTIN_RANGE: return "cy_builtin_range";
+        case BUILTIN_READ: return "cy_builtin_read";
+        case BUILTIN_WRITE: return "cy_builtin_write";
         case BUILTIN_TYPE:
         case BUILTIN_TYPE_OF:
             return "cy_builtin_type";
@@ -2302,6 +2434,14 @@ static void gen_expr(Expr *e, StrBuf *sb, GenCtx *ctx) {
                 sb_append_str(sb, "))");
                 return;
             }
+            if (e->as.binary.op == TOK_COALESCE) {
+                sb_append_str(sb, "cy_coalesce(");
+                gen_expr(e->as.binary.left, sb, ctx);
+                sb_append_str(sb, ", ");
+                gen_expr(e->as.binary.right, sb, ctx);
+                sb_append_char(sb, ')');
+                return;
+            }
             switch (e->as.binary.op) {
                 case TOK_PLUS:
                     sb_append_str(sb, "cy_add(");
@@ -2522,6 +2662,44 @@ static void emit_stmt(FILE *out, Stmt *s, GenCtx *ctx, int indent, int top_level
             fprintf(out, "\n");
             free(expr.buf);
             return;
+
+        case ST_SWITCH: {
+            sb_init(&expr);
+            gen_expr(s->as.switch_stmt.value, &expr, ctx);
+            char *sw_tmp = make_temp_name(ctx, "switch_value");
+            char *matched_tmp = make_temp_name(ctx, "switch_matched");
+            emit_indent(out, indent);
+            fprintf(out, "CyValue %s = %s;\n", sw_tmp, expr.buf);
+            emit_indent(out, indent);
+            fprintf(out, "int %s = 0;\n", matched_tmp);
+            free(expr.buf);
+
+            for (int i = 0; i < s->as.switch_stmt.case_count; i++) {
+                StrBuf case_expr;
+                sb_init(&case_expr);
+                gen_expr(s->as.switch_stmt.case_values[i], &case_expr, ctx);
+                emit_indent(out, indent);
+                fprintf(out, "if (!%s && cy_value_equal(%s, %s)) {\n", matched_tmp, sw_tmp, case_expr.buf);
+                emit_indent(out, indent + 1);
+                fprintf(out, "%s = 1;\n", matched_tmp);
+                emit_block(out, s->as.switch_stmt.case_blocks[i], ctx, indent + 1, 0, in_function);
+                emit_indent(out, indent);
+                fprintf(out, "}\n");
+                free(case_expr.buf);
+            }
+
+            if (s->as.switch_stmt.default_block) {
+                emit_indent(out, indent);
+                fprintf(out, "if (!%s) {\n", matched_tmp);
+                emit_block(out, s->as.switch_stmt.default_block, ctx, indent + 1, 0, in_function);
+                emit_indent(out, indent);
+                fprintf(out, "}\n");
+            }
+
+            free(sw_tmp);
+            free(matched_tmp);
+            return;
+        }
 
         case ST_WHILE: {
             emit_indent(out, indent);
@@ -2802,6 +2980,12 @@ static void collect_function_names_stmt(Stmt *s, StrSet *fn_names) {
         case ST_IF:
             collect_function_names_block(s->as.if_stmt.then_block, fn_names);
             if (s->as.if_stmt.else_block) collect_function_names_block(s->as.if_stmt.else_block, fn_names);
+            return;
+        case ST_SWITCH:
+            for (int i = 0; i < s->as.switch_stmt.case_count; i++) {
+                collect_function_names_block(s->as.switch_stmt.case_blocks[i], fn_names);
+            }
+            if (s->as.switch_stmt.default_block) collect_function_names_block(s->as.switch_stmt.default_block, fn_names);
             return;
         case ST_WHILE:
             collect_function_names_block(s->as.while_stmt.body, fn_names);
@@ -3217,7 +3401,8 @@ static void emit_generated_runtime(FILE *out) {
     fputs("static CyValue cy_lt(CyValue a, CyValue b) { return cy_bool(cy_expect_int(a, \"'<'\") < cy_expect_int(b, \"'<'\")); }\n", out);
     fputs("static CyValue cy_gt(CyValue a, CyValue b) { return cy_bool(cy_expect_int(a, \"'>'\") > cy_expect_int(b, \"'>'\")); }\n", out);
     fputs("static CyValue cy_le(CyValue a, CyValue b) { return cy_bool(cy_expect_int(a, \"'<='\") <= cy_expect_int(b, \"'<='\")); }\n", out);
-    fputs("static CyValue cy_ge(CyValue a, CyValue b) { return cy_bool(cy_expect_int(a, \"'>='\") >= cy_expect_int(b, \"'>='\")); }\n\n", out);
+    fputs("static CyValue cy_ge(CyValue a, CyValue b) { return cy_bool(cy_expect_int(a, \"'>='\") >= cy_expect_int(b, \"'>='\")); }\n", out);
+    fputs("static CyValue cy_coalesce(CyValue a, CyValue b) { return a.type != CY_NULL ? a : b; }\n\n", out);
 
     fputs("static void cy_print_value(CyValue v);\n", out);
 
@@ -3352,6 +3537,56 @@ static void emit_generated_runtime(FILE *out) {
     fputs("        for (long long i = start; i > stop; i += step) cy_array_push_raw(arr, cy_int(i));\n", out);
     fputs("    }\n", out);
     fputs("    return cy_array_value(arr);\n", out);
+    fputs("}\n\n", out);
+
+    fputs("static CyValue cy_builtin_read(int argc, CyValue *args) {\n", out);
+    fputs("    if (argc != 1) cy_runtime_error(\"read() expects exactly 1 argument\");\n", out);
+    fputs("    if (args[0].type != CY_STRING) cy_runtime_error(\"read() path must be string\");\n", out);
+    fputs("    const char *path = args[0].as.str_val;\n", out);
+    fputs("    FILE *f = fopen(path, \"rb\");\n", out);
+    fputs("    if (!f) cy_runtime_error(\"read() could not open file\");\n", out);
+    fputs("    if (fseek(f, 0, SEEK_END) != 0) {\n", out);
+    fputs("        fclose(f);\n", out);
+    fputs("        cy_runtime_error(\"read() failed\");\n", out);
+    fputs("    }\n", out);
+    fputs("    long sz = ftell(f);\n", out);
+    fputs("    if (sz < 0) {\n", out);
+    fputs("        fclose(f);\n", out);
+    fputs("        cy_runtime_error(\"read() failed\");\n", out);
+    fputs("    }\n", out);
+    fputs("    rewind(f);\n", out);
+    fputs("    char *buf = (char *)cy_xmalloc((size_t)sz + 1);\n", out);
+    fputs("    size_t n = fread(buf, 1, (size_t)sz, f);\n", out);
+    fputs("    fclose(f);\n", out);
+    fputs("    buf[n] = '\\0';\n", out);
+    fputs("    CyValue outv = cy_string(buf);\n", out);
+    fputs("    free(buf);\n", out);
+    fputs("    return outv;\n", out);
+    fputs("}\n\n", out);
+
+    fputs("static CyValue cy_builtin_write(int argc, CyValue *args) {\n", out);
+    fputs("    if (argc != 2) cy_runtime_error(\"write() expects exactly 2 arguments\");\n", out);
+    fputs("    if (args[0].type != CY_STRING) cy_runtime_error(\"write() path must be string\");\n", out);
+    fputs("    const char *path = args[0].as.str_val;\n", out);
+    fputs("    const char *data = NULL;\n", out);
+    fputs("    char num_buf[64];\n", out);
+    fputs("    if (args[1].type == CY_STRING) {\n", out);
+    fputs("        data = args[1].as.str_val;\n", out);
+    fputs("    } else if (args[1].type == CY_INT) {\n", out);
+    fputs("        snprintf(num_buf, sizeof(num_buf), \"%lld\", args[1].as.int_val);\n", out);
+    fputs("        data = num_buf;\n", out);
+    fputs("    } else if (args[1].type == CY_BOOL) {\n", out);
+    fputs("        data = args[1].as.bool_val ? \"true\" : \"false\";\n", out);
+    fputs("    } else if (args[1].type == CY_NULL) {\n", out);
+    fputs("        data = \"null\";\n", out);
+    fputs("    } else {\n", out);
+    fputs("        cy_runtime_error(\"write() supports string/int/bool/null payloads\");\n", out);
+    fputs("    }\n", out);
+    fputs("    FILE *f = fopen(path, \"wb\");\n", out);
+    fputs("    if (!f) cy_runtime_error(\"write() could not open file\");\n", out);
+    fputs("    size_t n = fwrite(data, 1, strlen(data), f);\n", out);
+    fputs("    fclose(f);\n", out);
+    fputs("    return cy_int((long long)n);\n", out);
     fputs("}\n\n", out);
 
     fputs("static CyValue cy_builtin_type(int argc, CyValue *args) {\n", out);
@@ -3681,6 +3916,12 @@ static void emit_fn_prototypes_stmt(FILE *out, Stmt *s) {
             emit_fn_prototypes_block(out, s->as.if_stmt.then_block);
             if (s->as.if_stmt.else_block) emit_fn_prototypes_block(out, s->as.if_stmt.else_block);
             return;
+        case ST_SWITCH:
+            for (int i = 0; i < s->as.switch_stmt.case_count; i++) {
+                emit_fn_prototypes_block(out, s->as.switch_stmt.case_blocks[i]);
+            }
+            if (s->as.switch_stmt.default_block) emit_fn_prototypes_block(out, s->as.switch_stmt.default_block);
+            return;
         case ST_WHILE:
             emit_fn_prototypes_block(out, s->as.while_stmt.body);
             return;
@@ -3734,6 +3975,12 @@ static void emit_fn_dispatch_cases_stmt(FILE *out, Stmt *s) {
         case ST_IF:
             emit_fn_dispatch_cases_block(out, s->as.if_stmt.then_block);
             if (s->as.if_stmt.else_block) emit_fn_dispatch_cases_block(out, s->as.if_stmt.else_block);
+            return;
+        case ST_SWITCH:
+            for (int i = 0; i < s->as.switch_stmt.case_count; i++) {
+                emit_fn_dispatch_cases_block(out, s->as.switch_stmt.case_blocks[i]);
+            }
+            if (s->as.switch_stmt.default_block) emit_fn_dispatch_cases_block(out, s->as.switch_stmt.default_block);
             return;
         case ST_WHILE:
             emit_fn_dispatch_cases_block(out, s->as.while_stmt.body);
@@ -3820,6 +4067,14 @@ static void emit_fn_defs_stmt(FILE *out, Stmt *s, StrSet *fn_names, int *next_id
         case ST_IF:
             emit_fn_defs_block(out, s->as.if_stmt.then_block, fn_names, next_id, comp_cases);
             if (s->as.if_stmt.else_block) emit_fn_defs_block(out, s->as.if_stmt.else_block, fn_names, next_id, comp_cases);
+            return;
+        case ST_SWITCH:
+            for (int i = 0; i < s->as.switch_stmt.case_count; i++) {
+                emit_fn_defs_block(out, s->as.switch_stmt.case_blocks[i], fn_names, next_id, comp_cases);
+            }
+            if (s->as.switch_stmt.default_block) {
+                emit_fn_defs_block(out, s->as.switch_stmt.default_block, fn_names, next_id, comp_cases);
+            }
             return;
         case ST_WHILE:
             emit_fn_defs_block(out, s->as.while_stmt.body, fn_names, next_id, comp_cases);
