@@ -20,13 +20,22 @@ foreach ($arg in $CliArgs) {
     switch ($arg) {
         '--help' { $Help = $true; continue }
         '-h' { $Help = $true; continue }
+        '-help' { $Help = $true; continue }
         '--strict' { $Strict = $true; continue }
+        '-strict' { $Strict = $true; continue }
         default {
+            if ($arg.StartsWith('-')) {
+                throw "Unknown option: $arg"
+            }
             if ($Target -eq '.') {
                 $Target = $arg
-            } else {
-                throw "Multiple targets are not supported"
+                continue
             }
+            if ($arg -eq $Target) {
+                # PowerShell may include already-bound positional args in remaining args.
+                continue
+            }
+            throw "Multiple targets are not supported"
         }
     }
 }
