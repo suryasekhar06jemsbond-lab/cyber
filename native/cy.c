@@ -28,6 +28,9 @@ typedef enum {
     TOK_LET,
     TOK_IF,
     TOK_ELSE,
+    TOK_SWITCH,
+    TOK_CASE,
+    TOK_DEFAULT,
     TOK_WHILE,
     TOK_FOR,
     TOK_IN,
@@ -54,6 +57,7 @@ typedef enum {
     TOK_BANG,
     TOK_ANDAND,
     TOK_OROR,
+    TOK_COALESCE,
     TOK_EQ,
     TOK_NEQ,
     TOK_LT,
@@ -279,6 +283,9 @@ static TokenType keyword_type(const char *ident) {
     if (strcmp(ident, "let") == 0) return TOK_LET;
     if (strcmp(ident, "if") == 0) return TOK_IF;
     if (strcmp(ident, "else") == 0) return TOK_ELSE;
+    if (strcmp(ident, "switch") == 0) return TOK_SWITCH;
+    if (strcmp(ident, "case") == 0) return TOK_CASE;
+    if (strcmp(ident, "default") == 0) return TOK_DEFAULT;
     if (strcmp(ident, "while") == 0) return TOK_WHILE;
     if (strcmp(ident, "for") == 0) return TOK_FOR;
     if (strcmp(ident, "in") == 0) return TOK_IN;
@@ -397,6 +404,11 @@ static Token lexer_next_token(Lexer *lx) {
         lexer_next_char(lx);
         return make_token(TOK_OROR, line, col);
     }
+    if (ch == '?' && lexer_peek_next(lx) == '?') {
+        lexer_next_char(lx);
+        lexer_next_char(lx);
+        return make_token(TOK_COALESCE, line, col);
+    }
     if (ch == '<' && lexer_peek_next(lx) == '=') {
         lexer_next_char(lx);
         lexer_next_char(lx);
@@ -510,6 +522,7 @@ typedef enum {
     STMT_SET_INDEX,
     STMT_EXPR,
     STMT_IF,
+    STMT_SWITCH,
     STMT_WHILE,
     STMT_FOR,
     STMT_BREAK,
@@ -561,6 +574,13 @@ struct Stmt {
             Block *then_block;
             Block *else_block;
         } if_stmt;
+        struct {
+            Expr *value;
+            Expr **case_values;
+            Block **case_blocks;
+            int case_count;
+            Block *default_block;
+        } switch_stmt;
         struct {
             Expr *cond;
             Block *body;
@@ -666,18 +686,21 @@ static void expect_current(Parser *p, TokenType t, const char *msg) {
 
 enum {
     PREC_LOWEST = 0,
-    PREC_OR = 1,
-    PREC_AND = 2,
-    PREC_EQUALS = 3,
-    PREC_COMPARE = 4,
-    PREC_SUM = 5,
-    PREC_PRODUCT = 6,
-    PREC_PREFIX = 7,
-    PREC_CALL = 8
+    PREC_COALESCE = 1,
+    PREC_OR = 2,
+    PREC_AND = 3,
+    PREC_EQUALS = 4,
+    PREC_COMPARE = 5,
+    PREC_SUM = 6,
+    PREC_PRODUCT = 7,
+    PREC_PREFIX = 8,
+    PREC_CALL = 9
 };
 
 static int precedence(TokenType t) {
     switch (t) {
+        case TOK_COALESCE:
+            return PREC_COALESCE;
         case TOK_OROR:
             return PREC_OR;
         case TOK_ANDAND:
@@ -1094,6 +1117,67 @@ static Stmt *parse_if_statement(Parser *p) {
     return s;
 }
 
+static Stmt *parse_switch_statement(Parser *p) {
+    int line = p->cur.line;
+    int col = p->cur.col;
+
+    next_token(p);
+    expect_current(p, TOK_LPAREN, "expected '(' after switch");
+    next_token(p);
+    Expr *value = parse_expression(p, PREC_LOWEST);
+    expect_current(p, TOK_RPAREN, "expected ')' after switch expression");
+    next_token(p);
+    expect_current(p, TOK_LBRACE, "expected '{' after switch(...)");
+
+    Expr **case_values = NULL;
+    Block **case_blocks = NULL;
+    int case_count = 0;
+    Block *default_block = NULL;
+
+    next_token(p);
+    while (p->cur.type != TOK_RBRACE && p->cur.type != TOK_EOF) {
+        if (p->cur.type == TOK_CASE) {
+            next_token(p);
+            Expr *case_value = parse_expression(p, PREC_LOWEST);
+            expect_current(p, TOK_COLON, "expected ':' after case expression");
+            next_token(p);
+            expect_current(p, TOK_LBRACE, "expected '{' after case label");
+            Block *case_block = parse_block(p);
+
+            int idx = case_count;
+            case_values = (Expr **)xrealloc(case_values, (size_t)(idx + 1) * sizeof(Expr *));
+            case_blocks = (Block **)xrealloc(case_blocks, (size_t)(idx + 1) * sizeof(Block *));
+            case_values[idx] = case_value;
+            case_blocks[idx] = case_block;
+            case_count++;
+            continue;
+        }
+        if (p->cur.type == TOK_DEFAULT) {
+            if (default_block != NULL) {
+                die_at(p->cur.line, p->cur.col, "duplicate default label in switch");
+            }
+            next_token(p);
+            expect_current(p, TOK_COLON, "expected ':' after default");
+            next_token(p);
+            expect_current(p, TOK_LBRACE, "expected '{' after default label");
+            default_block = parse_block(p);
+            continue;
+        }
+        die_at(p->cur.line, p->cur.col, "expected case/default label in switch body");
+    }
+
+    expect_current(p, TOK_RBRACE, "expected '}' to close switch statement");
+    next_token(p);
+
+    Stmt *s = new_stmt(STMT_SWITCH, line, col);
+    s->as.switch_stmt.value = value;
+    s->as.switch_stmt.case_values = case_values;
+    s->as.switch_stmt.case_blocks = case_blocks;
+    s->as.switch_stmt.case_count = case_count;
+    s->as.switch_stmt.default_block = default_block;
+    return s;
+}
+
 static Stmt *parse_while_statement(Parser *p) {
     int line = p->cur.line;
     int col = p->cur.col;
@@ -1353,6 +1437,8 @@ static Stmt *parse_statement(Parser *p) {
             return parse_let_statement(p);
         case TOK_IF:
             return parse_if_statement(p);
+        case TOK_SWITCH:
+            return parse_switch_statement(p);
         case TOK_WHILE:
             return parse_while_statement(p);
         case TOK_FOR:
@@ -1875,6 +1961,43 @@ static const char *g_builtin_objects_module =
     "    let get_or = __cy_objects_get_or;\n"
     "}\n";
 
+static const char *g_builtin_json_module =
+    "module JSON {\n"
+    "    fn __cy_json_parse(text) {\n"
+    "        if (text == \"true\") { return true; }\n"
+    "        if (text == \"false\") { return false; }\n"
+    "        if (text == \"null\") { return null; }\n"
+    "        try {\n"
+    "            return int(text);\n"
+    "        } catch (err) {\n"
+    "            return text;\n"
+    "        }\n"
+    "    }\n"
+    "    fn __cy_json_stringify(value) {\n"
+    "        return str(value);\n"
+    "    }\n"
+    "    let parse = __cy_json_parse;\n"
+    "    let stringify = __cy_json_stringify;\n"
+    "}\n";
+
+static const char *g_builtin_http_module =
+    "module HTTP {\n"
+    "    fn __cy_http_get(path) {\n"
+    "        let body = read(path);\n"
+    "        return {ok: true, status: 200, body: body, path: path};\n"
+    "    }\n"
+    "    fn __cy_http_text(path) {\n"
+    "        let resp = __cy_http_get(path);\n"
+    "        return object_get(resp, \"body\");\n"
+    "    }\n"
+    "    fn __cy_http_ok(resp) {\n"
+    "        return object_get(resp, \"ok\");\n"
+    "    }\n"
+    "    let get = __cy_http_get;\n"
+    "    let text = __cy_http_text;\n"
+    "    let ok = __cy_http_ok;\n"
+    "}\n";
+
 static int is_builtin_module_path(const char *path) {
     return path != NULL && strncmp(path, "cy:", 3) == 0;
 }
@@ -1883,6 +2006,8 @@ static const char *builtin_module_source(const char *path) {
     if (strcmp(path, "cy:math") == 0) return g_builtin_math_module;
     if (strcmp(path, "cy:arrays") == 0) return g_builtin_arrays_module;
     if (strcmp(path, "cy:objects") == 0) return g_builtin_objects_module;
+    if (strcmp(path, "cy:json") == 0) return g_builtin_json_module;
+    if (strcmp(path, "cy:http") == 0) return g_builtin_http_module;
     return NULL;
 }
 
@@ -2836,6 +2961,12 @@ static Value eval_expr_ast(Expr *expr, Env *env, ImportSet *imports, const char 
                 return value_bool(is_truthy(left) || is_truthy(right));
             }
 
+            if (op == TOK_COALESCE) {
+                Value right = eval_expr_ast(expr->as.binary.right, env, imports, current_file);
+                if (left.type != VAL_NULL) return left;
+                return right;
+            }
+
             Value right = eval_expr_ast(expr->as.binary.right, env, imports, current_file);
 
             if (op == TOK_PLUS) {
@@ -2921,6 +3052,7 @@ typedef enum {
     BC_NEQ,
     BC_AND,
     BC_OR,
+    BC_COALESCE,
     BC_LT,
     BC_GT,
     BC_LE,
@@ -2992,6 +3124,7 @@ static int expr_vm_supported(Expr *expr) {
                 case TOK_NEQ:
                 case TOK_ANDAND:
                 case TOK_OROR:
+                case TOK_COALESCE:
                 case TOK_LT:
                 case TOK_GT:
                 case TOK_LE:
@@ -3108,6 +3241,9 @@ static void compile_expr_bytecode(Expr *expr, Bytecode *bc) {
                     return;
                 case TOK_OROR:
                     bytecode_emit(bc, BC_OR, 0, NULL, expr->line, expr->col);
+                    return;
+                case TOK_COALESCE:
+                    bytecode_emit(bc, BC_COALESCE, 0, NULL, expr->line, expr->col);
                     return;
                 case TOK_LT:
                     bytecode_emit(bc, BC_LT, 0, NULL, expr->line, expr->col);
@@ -3381,6 +3517,12 @@ static Value vm_exec(Bytecode *bc, Env *env, ImportSet *imports, const char *cur
                 vstack_push(&st, value_bool(in.op == BC_AND ? (lv && rv) : (lv || rv)));
                 break;
             }
+            case BC_COALESCE: {
+                Value right = vstack_pop(&st, in.line, in.col);
+                Value left = vstack_pop(&st, in.line, in.col);
+                vstack_push(&st, left.type != VAL_NULL ? left : right);
+                break;
+            }
             case BC_LT:
             case BC_GT:
             case BC_LE:
@@ -3544,6 +3686,7 @@ static const char *stmt_kind_name(StmtKind kind) {
         case STMT_SET_INDEX: return "set_index";
         case STMT_EXPR: return "expr";
         case STMT_IF: return "if";
+        case STMT_SWITCH: return "switch";
         case STMT_WHILE: return "while";
         case STMT_FOR: return "for";
         case STMT_BREAK: return "break";
@@ -3755,6 +3898,26 @@ static EvalResult eval_statement(Stmt *stmt, Env *env, ImportSet *imports, const
                 Env *branch_env = env_new(env);
                 EvalResult r = g_use_vm ? vm_eval_block(stmt->as.if_stmt.else_block, branch_env, imports, current_file, 0)
                                         : eval_block(stmt->as.if_stmt.else_block, branch_env, imports, current_file, 0);
+                if (r.control != CTRL_NONE) return r;
+            }
+            return eval_result(value_null(), CTRL_NONE);
+        }
+        case STMT_SWITCH: {
+            Value sw = eval_expr(stmt->as.switch_stmt.value, env, imports, current_file);
+            for (int i = 0; i < stmt->as.switch_stmt.case_count; i++) {
+                Value cv = eval_expr(stmt->as.switch_stmt.case_values[i], env, imports, current_file);
+                if (!values_equal(sw, cv)) continue;
+                Env *case_env = env_new(env);
+                EvalResult r = g_use_vm ? vm_eval_block(stmt->as.switch_stmt.case_blocks[i], case_env, imports, current_file, 0)
+                                        : eval_block(stmt->as.switch_stmt.case_blocks[i], case_env, imports, current_file, 0);
+                if (r.control != CTRL_NONE) return r;
+                return eval_result(value_null(), CTRL_NONE);
+            }
+            if (stmt->as.switch_stmt.default_block != NULL) {
+                Env *default_env = env_new(env);
+                EvalResult r =
+                    g_use_vm ? vm_eval_block(stmt->as.switch_stmt.default_block, default_env, imports, current_file, 0)
+                             : eval_block(stmt->as.switch_stmt.default_block, default_env, imports, current_file, 0);
                 if (r.control != CTRL_NONE) return r;
             }
             return eval_result(value_null(), CTRL_NONE);

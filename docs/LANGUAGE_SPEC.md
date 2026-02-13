@@ -10,7 +10,7 @@ Version: `0.6-draft` (`v4 runtime`)
 
 1. `#` starts a line comment.
 2. Whitespace is ignored except as separator.
-3. Statements end with `;` unless the statement is a block form (`if`, `while`, `for`, `fn`, `try/catch`, `class`, `module`).
+3. Statements end with `;` unless the statement is a block form (`if`, `switch`, `while`, `for`, `fn`, `try/catch`, `class`, `module`).
 
 ## Literals
 
@@ -27,12 +27,13 @@ Version: `0.6-draft` (`v4 runtime`)
 2. Comparisons: `== != < > <= >=`
 3. Unary operators: `-expr`, `!expr`
 4. Logical operators: `expr && expr`, `expr || expr`
-5. Grouping: `(expr)`
-6. Identifier references: `name`
-7. Function calls: `name(arg1, arg2)`
-8. Indexing: `arr[0]`, `obj["x"]`
-9. Member access: `obj.key`
-10. Array comprehensions:
+5. Null-coalescing: `expr ?? fallback`
+6. Grouping: `(expr)`
+7. Identifier references: `name`
+8. Function calls: `name(arg1, arg2)`
+9. Indexing: `arr[0]`, `obj["x"]`
+10. Member access: `obj.key`
+11. Array comprehensions:
    - Single-variable: `[expr for x in iterable if cond]`
    - Dual-variable: `[expr for i, x in iterable if cond]` (array: `i=index`, object: `i=key`)
 
@@ -132,7 +133,17 @@ module Math {
 }
 ```
 
-14. Type alias declaration:
+14. Switch statement:
+
+```cy
+switch (value) {
+    case 1: { print("one"); }
+    case 2: { print("two"); }
+    default: { print("other"); }
+}
+```
+
+15. Type alias declaration:
 
 ```cy
 typealias NumberType = "int";
@@ -193,3 +204,5 @@ Imports with `cy:` are built in to the runtime/compiler and do not require files
 1. `import "cy:math";` exposes `Math` module helpers (`abs`, `min`, `max`, `clamp`, `pow`, `sum`)
 2. `import "cy:arrays";` exposes `Arrays` module helpers (`first`, `last`, `sum`, `enumerate`)
 3. `import "cy:objects";` exposes `Objects` module helpers (`merge`, `get_or`)
+4. `import "cy:json";` exposes `JSON.parse`/`JSON.stringify` (primitive-focused JSON helpers)
+5. `import "cy:http";` exposes `HTTP.get`/`HTTP.text`/`HTTP.ok` (file-path fetch helper module)

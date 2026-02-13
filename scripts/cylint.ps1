@@ -5,8 +5,15 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+$isWin = $false
+if ($null -ne (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue)) {
+    $isWin = [bool]$IsWindows
+} elseif ($env:OS -eq 'Windows_NT') {
+    $isWin = $true
+}
+
 $runtime = $null
-if ($IsWindows) {
+if ($isWin) {
     if (Test-Path '.\cy.exe') { $runtime = '.\cy.exe' }
     elseif (Test-Path '.\cy') { $runtime = '.\cy' }
 } else {

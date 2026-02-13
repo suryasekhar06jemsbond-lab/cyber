@@ -57,11 +57,11 @@ chmod +x main.cy
 `v3` emits a standalone C compiler source (`compiler/v3_compiler_template.c`) and no longer uses generated runner output for program compilation.
 Current direct-codegen source subset:
 - literals: int, string, bool, `null`, arrays, object literals
-- expressions: arithmetic/comparison/logical/unary (`+ - * / %`, `== != < > <= >=`, `&& ||`, `!`), calls, indexing, member access (`obj.key`), array comprehensions (`for x in y` and `for i, x in y`)
-- statements: `let`, assignment (identifier/member/index), expression statements, `if/else if/else`, `while`, `for (x in y)` / `for (k, v in y)`, `break`, `continue`, `try/catch`, `throw`, `fn`, `return`, `import`, `class`, `module`, `typealias`
+- expressions: arithmetic/comparison/logical/unary (`+ - * / %`, `== != < > <= >=`, `&& ||`, `??`, `!`), calls, indexing, member access (`obj.key`), array comprehensions (`for x in y` and `for i, x in y`)
+- statements: `let`, assignment (identifier/member/index), expression statements, `if/else if/else`, `switch/case/default`, `while`, `for (x in y)` / `for (k, v in y)`, `break`, `continue`, `try/catch`, `throw`, `fn`, `return`, `import`, `class`, `module`, `typealias`
 - compile-time import expansion (module dedup in compiler)
 - compiled-in language builtins (numeric helpers `abs/min/max/clamp/sum`, boolean helpers `all/any`, predicates, range/conversion helpers, object/class/version helpers; no stdlib dependency required)
-- builtin package imports (`cy:math`, `cy:arrays`, `cy:objects`) resolved without filesystem dependencies
+- builtin package imports (`cy:math`, `cy:arrays`, `cy:objects`, `cy:json`, `cy:http`) resolved without filesystem dependencies
 
 Generate compiler C and build compiler binary:
 

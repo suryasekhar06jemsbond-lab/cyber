@@ -2,7 +2,12 @@ $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
-$isWin = $IsWindows
+$isWin = $false
+if ($null -ne (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue)) {
+    $isWin = [bool]$IsWindows
+} elseif ($env:OS -eq 'Windows_NT') {
+    $isWin = $true
+}
 $exeExt = if ($isWin) { '.exe' } else { '' }
 
 function Resolve-CCompiler {
@@ -59,7 +64,8 @@ function Run-ProcessText {
     if ($LASTEXITCODE -ne 0) {
         throw "Command failed ($LASTEXITCODE): $Exe $($Args -join ' ')"
     }
-    return $raw.TrimEnd("`r", "`n")
+    $normalized = $raw -replace "`r`n", "`n" -replace "`r", "`n"
+    return $normalized.TrimEnd("`n")
 }
 
 $Compiler = Resolve-CCompiler
@@ -73,6 +79,8 @@ New-Item -ItemType Directory -Path $tmp | Out-Null
 
 try {
     $programPath = Join-Path $tmp 'v4.cy'
+    $payloadPath = Join-Path $tmp 'http_payload.txt'
+    $payloadPathCy = $payloadPath -replace '\\', '/'
 @"
 require_version(lang_version());
 
@@ -180,9 +188,30 @@ let merged = Objects.merge({a: 1}, {b: 2});
 print(len(keys(merged)));
 print(Objects.get_or(merged, "a", 0));
 print(Objects.get_or(merged, "z", 9));
+
+switch (2) {
+    case 1: { print("one"); }
+    case 2: { print("two"); }
+    default: { print("other"); }
+}
+
+print(null ?? 99);
+print(5 ?? 99);
+
+import "cy:json";
+import "cy:http";
+
+print(JSON.parse("42"));
+print(JSON.parse("true"));
+print(JSON.stringify(7));
+
+write("$payloadPathCy", "hello-http");
+let http_ok = HTTP.get("$payloadPathCy");
+print(HTTP.ok(http_ok));
+print(HTTP.text("$payloadPathCy"));
 "@ | Set-Content -NoNewline $programPath
 
-    $expected = "int`n42`n7`n12`n6`nelif`n63`n9`n5`n3`n42`n99`ntrue`n2`n2`n2`n6`n2`n1`n11`n5`n8`n10`n10`ntrue`ntrue`n32`n9`n7`n1`n5`n2`n1`n9"
+    $expected = "int`n42`n7`n12`n6`nelif`n63`n9`n5`n3`n42`n99`ntrue`n2`n2`n2`n6`n2`n1`n11`n5`n8`n10`n10`ntrue`ntrue`n32`n9`n7`n1`n5`n2`n1`n9`ntwo`n99`n5`n42`ntrue`n7`n10`ntrue`nhello-http"
 
     Write-Host "[v4-win] running interpreter path..."
     $outAst = Run-ProcessText -Exe $runtimeExe -Args @($programPath)

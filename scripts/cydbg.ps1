@@ -7,13 +7,20 @@ $ErrorActionPreference = 'Stop'
 
 if ($null -eq $CliArgs) { $CliArgs = @() }
 
+$isWin = $false
+if ($null -ne (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue)) {
+    $isWin = [bool]$IsWindows
+} elseif ($env:OS -eq 'Windows_NT') {
+    $isWin = $true
+}
+
 if ($CliArgs.Count -lt 1) {
     [Console]::Error.WriteLine('Usage: cydbg [--break line1,line2] [--step] [--step-count N] <file.cy> [args...]')
     exit 1
 }
 
 $runtime = $null
-if ($IsWindows) {
+if ($isWin) {
     if (Test-Path './cy.exe') {
         $runtime = './cy.exe'
     } elseif (Test-Path './cy') {
