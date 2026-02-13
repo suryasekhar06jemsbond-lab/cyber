@@ -37,6 +37,24 @@ function Resolve-PwshExe {
         return $cmd.Source
     }
 
+    if ($isWin) {
+        $pwshDefault = 'C:\Program Files\PowerShell\7\pwsh.exe'
+        if (Test-Path -LiteralPath $pwshDefault) {
+            return $pwshDefault
+        }
+
+        # Fallback to Windows PowerShell host when PowerShell 7 is unavailable.
+        $winPsHome = Join-Path $PSHOME 'powershell.exe'
+        if (Test-Path -LiteralPath $winPsHome) {
+            return $winPsHome
+        }
+
+        $winPsCmd = Get-Command powershell -ErrorAction SilentlyContinue
+        if ($winPsCmd) {
+            return $winPsCmd.Source
+        }
+    }
+
     throw "pwsh executable not found"
 }
 
