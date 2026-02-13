@@ -84,7 +84,7 @@ $runtimeExe = Join-Path $root ("cy" + $exeExt)
 $nativeSource = Join-Path $root 'native/cy.c'
 Build-C -Compiler $Compiler -Output $runtimeExe -Source $nativeSource
 
-$tmp = Join-Path $env:TEMP ("cy_v3_" + [guid]::NewGuid().ToString('N'))
+$tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_v3_" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $tmp | Out-Null
 
 try {
@@ -238,9 +238,10 @@ try {
     $stage2Exe = Join-Path $tmp ("compiler_stage2" + $exeExt)
     $stage3C = Join-Path $tmp 'compiler_stage3.c'
     $seedPath = Join-Path $root 'compiler/v3_seed.cy'
+    $seedPathCy = $seedPath -replace '\\', '/'
 
     Write-Host "[v3-win] compiling compiler source with output path..."
-    Invoke-Checked -Exe $runtimeExe -Args @($seedPath, $seedPath, $stage1C)
+    Invoke-Checked -Exe $runtimeExe -Args @($seedPathCy, $seedPathCy, $stage1C)
     Build-C -Compiler $Compiler -Output $stage1Exe -Source $stage1C
 
     Write-Host "[v3-win] compiling rich program with rebuilt compiler..."
@@ -255,9 +256,9 @@ try {
     }
 
     Write-Host "[v3-win] deterministic rebuild loop..."
-    Invoke-Checked -Exe $stage1Exe -Args @($seedPath, $stage2C, '--emit-self')
+    Invoke-Checked -Exe $stage1Exe -Args @($seedPathCy, $stage2C, '--emit-self')
     Build-C -Compiler $Compiler -Output $stage2Exe -Source $stage2C
-    Invoke-Checked -Exe $stage2Exe -Args @($seedPath, $stage3C, '--emit-self')
+    Invoke-Checked -Exe $stage2Exe -Args @($seedPathCy, $stage3C, '--emit-self')
 
     $h1 = (Get-FileHash $stage1C -Algorithm SHA256).Hash
     $h2 = (Get-FileHash $stage2C -Algorithm SHA256).Hash

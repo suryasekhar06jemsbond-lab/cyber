@@ -113,9 +113,10 @@ print("unreachable");
 
     Write-Host "[compat-win] verifying compiled runtime compatibility..."
     $seedPath = Join-Path $root 'compiler/v3_seed.cy'
+    $seedPathCy = $seedPath -replace '\\', '/'
     $stage1C = Join-Path $tmp 'compiler_stage1.c'
     $stage1Exe = Join-Path $tmp ("compiler_stage1" + $exeExt)
-    Invoke-Checked -Exe $runtimeExe -Args @($seedPath, $seedPath, $stage1C)
+    Invoke-Checked -Exe $runtimeExe -Args @($seedPathCy, $seedPathCy, $stage1C)
     Build-C -Compiler $compiler -Output $stage1Exe -Source $stage1C
 
     $okC = Join-Path $tmp 'ok.c'
