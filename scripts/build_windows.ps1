@@ -95,8 +95,11 @@ function Build-Runtime {
         Remove-Item -Force -LiteralPath $OutputPath
     }
 
+    # Pass version as a quoted C string literal on all compilers.
+    $versionLiteral = ('\"{0}\"' -f $LangVersion)
+
     if ($Compiler.Kind -eq 'cl') {
-        $versionDefine = "/DCY_LANG_VERSION=`"$LangVersion`""
+        $versionDefine = "/DCY_LANG_VERSION=$versionLiteral"
         $args = @('/nologo', '/W4', '/WX', $versionDefine, $SourcePath)
         if ($ResPath) { $args += $ResPath }
         $args += "/Fe:$OutputPath"
@@ -106,7 +109,7 @@ function Build-Runtime {
         return
     }
 
-    $versionDefine = "-DCY_LANG_VERSION=`"$LangVersion`""
+    $versionDefine = "-DCY_LANG_VERSION=$versionLiteral"
     $args = @('-O2', '-std=c99', '-Wall', '-Wextra', '-Werror', $versionDefine, '-o', $OutputPath, $SourcePath)
     if ($ResPath) { $args += $ResPath }
     & $Compiler.Exe @args
