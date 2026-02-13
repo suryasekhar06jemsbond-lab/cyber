@@ -1,9 +1,40 @@
 param(
     [switch]$Check,
-    [string]$Target = '.'
+    [string]$Target = '.',
+    [switch]$Help,
+    [Parameter(ValueFromRemainingArguments = $true)]
+    [string[]]$CliArgs
 )
 
 $ErrorActionPreference = 'Stop'
+
+if ($null -eq $CliArgs) { $CliArgs = @() }
+
+function Show-Usage {
+@"
+Usage: cyfmt [--check] [target]
+"@
+}
+
+foreach ($arg in $CliArgs) {
+    switch ($arg) {
+        '--help' { $Help = $true; continue }
+        '-h' { $Help = $true; continue }
+        '--check' { $Check = $true; continue }
+        default {
+            if ($Target -eq '.') {
+                $Target = $arg
+            } else {
+                throw "Multiple targets are not supported"
+            }
+        }
+    }
+}
+
+if ($Help) {
+    Show-Usage
+    exit 0
+}
 
 function Get-FormattedCyText {
     param([string]$Path)

@@ -14,9 +14,20 @@ if ($null -ne (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue)) {
     $isWin = $true
 }
 
+function Show-Usage {
+    [Console]::Out.WriteLine('Usage: cydbg [--break line1,line2] [--step] [--step-count N] <file.cy> [args...]')
+}
+
 if ($CliArgs.Count -lt 1) {
-    [Console]::Error.WriteLine('Usage: cydbg [--break line1,line2] [--step] [--step-count N] <file.cy> [args...]')
+    Show-Usage
     exit 1
+}
+
+foreach ($arg in $CliArgs) {
+    if ($arg -eq '--help' -or $arg -eq '-h') {
+        Show-Usage
+        exit 0
+    }
 }
 
 function Resolve-RuntimePath {

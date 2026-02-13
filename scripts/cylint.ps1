@@ -1,9 +1,40 @@
 param(
     [switch]$Strict,
-    [string]$Target = '.'
+    [string]$Target = '.',
+    [switch]$Help,
+    [Parameter(ValueFromRemainingArguments = $true)]
+    [string[]]$CliArgs
 )
 
 $ErrorActionPreference = 'Stop'
+
+if ($null -eq $CliArgs) { $CliArgs = @() }
+
+function Show-Usage {
+@"
+Usage: cylint [--strict] [target]
+"@
+}
+
+foreach ($arg in $CliArgs) {
+    switch ($arg) {
+        '--help' { $Help = $true; continue }
+        '-h' { $Help = $true; continue }
+        '--strict' { $Strict = $true; continue }
+        default {
+            if ($Target -eq '.') {
+                $Target = $arg
+            } else {
+                throw "Multiple targets are not supported"
+            }
+        }
+    }
+}
+
+if ($Help) {
+    Show-Usage
+    exit 0
+}
 
 $isWin = $false
 if ($null -ne (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue)) {

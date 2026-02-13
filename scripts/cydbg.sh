@@ -6,6 +6,13 @@ if [ "$#" -lt 1 ]; then
   exit 1
 fi
 
+case "${1:-}" in
+  --help|-h)
+    echo "Usage: cydbg [--break line1,line2] [--step] [--step-count N] <file.cy> [args...]"
+    exit 0
+    ;;
+esac
+
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 runtime=""
 
