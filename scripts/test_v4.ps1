@@ -74,7 +74,7 @@ $runtimeExe = Join-Path $root ("cy" + $exeExt)
 $nativeSource = Join-Path $root 'native/cy.c'
 Build-C -Compiler $Compiler -Output $runtimeExe -Source $nativeSource
 
-$tmp = Join-Path $env:TEMP ("cy_v4_" + [guid]::NewGuid().ToString('N'))
+$tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_v4_" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $tmp | Out-Null
 
 try {
