@@ -8,6 +8,15 @@ $ErrorActionPreference = 'Stop'
 
 $CliArgs = @($args)
 
+# Some hosts can bind a switch-like token into the first positional string parameter.
+switch ($Target.ToLowerInvariant()) {
+    '-check' { $Check = $true; $Target = '.' }
+    '--check' { $Check = $true; $Target = '.' }
+    '-h' { $Help = $true; $Target = '.' }
+    '--help' { $Help = $true; $Target = '.' }
+    '-help' { $Help = $true; $Target = '.' }
+}
+
 function Show-Usage {
 @"
 Usage: cyfmt [--check] [target]

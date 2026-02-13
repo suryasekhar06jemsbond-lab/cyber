@@ -8,6 +8,15 @@ $ErrorActionPreference = 'Stop'
 
 $CliArgs = @($args)
 
+# Some hosts can bind a switch-like token into the first positional string parameter.
+switch ($Target.ToLowerInvariant()) {
+    '-strict' { $Strict = $true; $Target = '.' }
+    '--strict' { $Strict = $true; $Target = '.' }
+    '-h' { $Help = $true; $Target = '.' }
+    '--help' { $Help = $true; $Target = '.' }
+    '-help' { $Help = $true; $Target = '.' }
+}
+
 function Show-Usage {
 @"
 Usage: cylint [--strict] [target]
