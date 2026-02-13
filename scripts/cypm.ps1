@@ -8,6 +8,7 @@ $ErrorActionPreference = 'Stop'
 if ($null -eq $CliArgs) { $CliArgs = @() }
 
 $manifest = 'cy.pkg'
+$lockfile = 'cy.lock'
 
 function Show-Usage {
 @"
@@ -21,6 +22,8 @@ Commands:
   list
   path <name>
   resolve [roots_csv]
+  lock [roots_csv]
+  verify-lock
 
 Version examples:
   1.2.3
@@ -429,6 +432,76 @@ switch ($cmd) {
         $data = Read-Manifest
         $order = Resolve-Order $data $roots
         $order
+    }
+
+    'lock' {
+        Ensure-Manifest
+        $roots = if ($CliArgs.Count -gt 1) { Normalize-Csv $CliArgs[1] } else { '' }
+        $data = Read-Manifest
+        $order = Resolve-Order $data $roots
+
+        $lines = @()
+        $lines += '# cy lockfile v1'
+        if ($roots -ne '') {
+            $lines += ("roots={0}" -f $roots)
+        } else {
+            $lines += 'roots=*'
+        }
+
+        foreach ($name in $order) {
+            if (-not $data.Packages.ContainsKey($name)) { continue }
+            $path = $data.Packages[$name]
+            $version = $data.Versions[$name]
+            $lines += ("pkg.{0}={1}" -f $name, $path)
+            $lines += ("ver.{0}={1}" -f $name, $version)
+        }
+
+        $lines | Set-Content -LiteralPath $lockfile
+        Write-Host "Wrote $lockfile"
+    }
+
+    'verify-lock' {
+        Ensure-Manifest
+        if (-not (Test-Path -LiteralPath $lockfile)) {
+            throw "Lockfile '$lockfile' not found. Run: cypm lock"
+        }
+
+        $data = Read-Manifest
+        foreach ($lineRaw in Get-Content -LiteralPath $lockfile) {
+            $line = $lineRaw.Trim()
+            if ($line -eq '' -or $line.StartsWith('#') -or $line.StartsWith('roots=')) { continue }
+
+            if ($line -match '^pkg\.([^=]+)=(.*)$') {
+                $name = $Matches[1]
+                $lockedPath = $Matches[2]
+                if (-not $data.Packages.ContainsKey($name)) {
+                    throw "Lock references missing package '$name'"
+                }
+                $manifestPath = $data.Packages[$name]
+                if ($manifestPath -ne $lockedPath) {
+                    throw "Lock path mismatch for '$name': lock=$lockedPath manifest=$manifestPath"
+                }
+                if (-not (Test-Path -LiteralPath $lockedPath)) {
+                    throw "Locked path does not exist for '$name': $lockedPath"
+                }
+                continue
+            }
+
+            if ($line -match '^ver\.([^=]+)=(.*)$') {
+                $name = $Matches[1]
+                $lockedVer = $Matches[2]
+                if (-not $data.Versions.ContainsKey($name)) {
+                    throw "Lock references missing package version '$name'"
+                }
+                $manifestVer = $data.Versions[$name]
+                if ($manifestVer -ne $lockedVer) {
+                    throw "Lock version mismatch for '$name': lock=$lockedVer manifest=$manifestVer"
+                }
+                continue
+            }
+        }
+
+        Write-Host 'Lockfile verified'
     }
 
     default {

@@ -13,6 +13,7 @@ echo "[prod] core test suite..."
 ./scripts/test_v2.sh
 ./scripts/test_v3_start.sh
 ./scripts/test_v4.sh
+./scripts/test_compatibility.sh
 ./scripts/test_ecosystem.sh
 
 echo "[prod] vm consistency..."
@@ -34,6 +35,7 @@ if pwsh_bin="$(resolve_pwsh)"; then
   echo "[prod] powershell suite..."
   "$pwsh_bin" -NoLogo -NoProfile -File ./scripts/test_v3.ps1
   "$pwsh_bin" -NoLogo -NoProfile -File ./scripts/test_v4.ps1
+  "$pwsh_bin" -NoLogo -NoProfile -File ./scripts/test_compatibility.ps1
 
   echo "[prod] powershell tooling smoke..."
   tmpd=$(mktemp -d)
@@ -45,10 +47,13 @@ if pwsh_bin="$(resolve_pwsh)"; then
 
   (
     cd "$tmpd"
+    mkdir -p core app
     "$pwsh_bin" -NoLogo -NoProfile -File "$ROOT_DIR/scripts/cypm.ps1" init demo >/dev/null
     "$pwsh_bin" -NoLogo -NoProfile -File "$ROOT_DIR/scripts/cypm.ps1" add core ./core 1.2.3 >/dev/null
     "$pwsh_bin" -NoLogo -NoProfile -File "$ROOT_DIR/scripts/cypm.ps1" add app ./app 0.1.0 core@^1.0.0 >/dev/null
     "$pwsh_bin" -NoLogo -NoProfile -File "$ROOT_DIR/scripts/cypm.ps1" resolve app >/dev/null
+    "$pwsh_bin" -NoLogo -NoProfile -File "$ROOT_DIR/scripts/cypm.ps1" lock app >/dev/null
+    "$pwsh_bin" -NoLogo -NoProfile -File "$ROOT_DIR/scripts/cypm.ps1" verify-lock >/dev/null
   )
 fi
 

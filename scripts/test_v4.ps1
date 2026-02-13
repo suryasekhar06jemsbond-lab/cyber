@@ -142,6 +142,12 @@ print(len(ys));
         throw "v4 vm output mismatch: expected '$expected', got '$outVm'"
     }
 
+    Write-Host "[v4-win] running vm strict path..."
+    $outVmStrict = Run-ProcessText -Exe $runtimeExe -Args @('--vm-strict', $programPath)
+    if ($outVmStrict -ne $expected) {
+        throw "v4 vm-strict output mismatch: expected '$expected', got '$outVmStrict'"
+    }
+
     Write-Host "[v4-win] lint check..."
     $lintScript = Join-Path $root 'scripts/cylint.ps1'
     Invoke-Checked -Exe $lintScript -Args @($programPath)

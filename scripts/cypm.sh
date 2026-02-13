@@ -2,6 +2,7 @@
 set -eu
 
 manifest="cy.pkg"
+lockfile="cy.lock"
 
 usage() {
   cat <<'USAGE'
@@ -15,6 +16,8 @@ Commands:
   list
   path <name>
   resolve [roots_csv]
+  lock [roots_csv]
+  verify-lock
 
 Version examples:
   1.2.3
@@ -487,6 +490,80 @@ case "$cmd" in
         for (i = 1; i <= resolved_n; i++) print resolved[i]
       }
     ' "$manifest"
+    ;;
+
+  lock)
+    ensure_manifest
+    roots=$(normalize_csv "${2:-}")
+    resolved=$("$0" resolve "$roots")
+
+    {
+      echo "# cy lockfile v1"
+      if [ -n "$roots" ]; then
+        echo "roots=$roots"
+      else
+        echo "roots=*"
+      fi
+
+      printf '%s\n' "$resolved" | while IFS= read -r name; do
+        [ -n "$name" ] || continue
+        path=$(get_pkg_path "$name" || true)
+        [ -n "$path" ] || continue
+        ver=$(get_pkg_version "$name")
+        echo "pkg.$name=$path"
+        echo "ver.$name=$ver"
+      done
+    } > "$lockfile"
+
+    echo "Wrote $lockfile"
+    ;;
+
+  verify-lock)
+    ensure_manifest
+    if [ ! -f "$lockfile" ]; then
+      echo "Error: $lockfile not found. Run: cypm lock" >&2
+      exit 1
+    fi
+
+    err=0
+    while IFS= read -r line; do
+      case "$line" in
+        pkg.*=*)
+          name=${line#pkg.}
+          name=${name%%=*}
+          locked_path=${line#*=}
+          current_path=$(get_pkg_path "$name" || true)
+          if [ -z "$current_path" ]; then
+            echo "Error: lock references missing package '$name'" >&2
+            err=1
+            continue
+          fi
+          if [ "$locked_path" != "$current_path" ]; then
+            echo "Error: lock path mismatch for '$name': lock=$locked_path manifest=$current_path" >&2
+            err=1
+          fi
+          if [ ! -e "$locked_path" ]; then
+            echo "Error: locked path does not exist for '$name': $locked_path" >&2
+            err=1
+          fi
+          ;;
+        ver.*=*)
+          name=${line#ver.}
+          name=${name%%=*}
+          locked_ver=${line#*=}
+          current_ver=$(get_pkg_version "$name")
+          if [ "$locked_ver" != "$current_ver" ]; then
+            echo "Error: lock version mismatch for '$name': lock=$locked_ver manifest=$current_ver" >&2
+            err=1
+          fi
+          ;;
+      esac
+    done < "$lockfile"
+
+    if [ "$err" -ne 0 ]; then
+      exit 1
+    fi
+    echo "Lockfile verified"
     ;;
 
   *)

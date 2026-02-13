@@ -35,7 +35,7 @@ Version: `0.6-draft` (`v4 runtime`)
 
 Direct-codegen note:
 1. Runtime interpreter supports comprehensions.
-2. Current `v3` direct C codegen reports comprehensions as unsupported.
+2. `v3` direct C codegen supports comprehensions in both array and object iteration forms.
 
 ## Statements
 
@@ -159,8 +159,10 @@ Import behavior:
 5. Runtime supports statement trace mode via `--trace` CLI flag.
 6. Runtime supports in-process debugger flags: `--debug`, `--break`, `--step`, `--step-count`.
 7. Runtime supports bytecode expression VM via `--vm`, with expression bytecode caching.
-8. Runtime supports parser/lint mode via `--parse-only` (alias: `--lint`).
-9. Runtime supports allocation guard flag `--max-alloc N`.
+8. Runtime supports strict VM mode via `--vm-strict` (runtime error on VM fallback).
+9. Runtime supports parser/lint mode via `--parse-only` (alias: `--lint`).
+10. Runtime supports allocation guard flag `--max-alloc N`.
+11. Runtime supports CLI version output via `--version`.
 
 ## Standard Library Modules
 

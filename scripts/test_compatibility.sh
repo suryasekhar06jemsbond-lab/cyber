@@ -1,0 +1,80 @@
+#!/usr/bin/env sh
+set -eu
+
+ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+cd "$ROOT_DIR"
+
+echo "[compat] building native runtime..."
+make >/dev/null
+
+tmpd=$(mktemp -d)
+trap 'rm -rf "$tmpd"' EXIT
+
+version=$(./cy --version)
+[ -n "$version" ] || {
+  echo "FAIL: --version returned empty output"
+  exit 1
+}
+
+cat > "$tmpd/ok.cy" <<'CYEOF'
+print(lang_version());
+require_version(lang_version());
+print("ok");
+CYEOF
+
+cat > "$tmpd/bad.cy" <<'CYEOF'
+require_version("999.0.0");
+print("unreachable");
+CYEOF
+
+out_ok=$(./cy "$tmpd/ok.cy")
+expected_ok="$version
+ok"
+if [ "$out_ok" != "$expected_ok" ]; then
+  echo "FAIL: runtime version contract mismatch"
+  echo "Expected:"
+  printf '%s\n' "$expected_ok"
+  echo "Got:"
+  printf '%s\n' "$out_ok"
+  exit 1
+fi
+
+if ./cy "$tmpd/bad.cy" >/dev/null 2>"$tmpd/bad_runtime.log"; then
+  echo "FAIL: require_version mismatch should fail in runtime"
+  exit 1
+fi
+grep -q "language version mismatch" "$tmpd/bad_runtime.log" || {
+  echo "FAIL: missing runtime version mismatch error message"
+  cat "$tmpd/bad_runtime.log"
+  exit 1
+}
+
+echo "[compat] verifying compiled runtime compatibility..."
+./cy compiler/v3_seed.cy compiler/v3_seed.cy "$tmpd/compiler_stage1.c" >/dev/null
+cc -O2 -std=c99 -Wall -Wextra -Werror -o "$tmpd/compiler_stage1" "$tmpd/compiler_stage1.c"
+
+"$tmpd/compiler_stage1" "$tmpd/ok.cy" "$tmpd/ok.c" >/dev/null
+cc -O2 -std=c99 -Wall -Wextra -Werror -o "$tmpd/ok_bin" "$tmpd/ok.c"
+out_compiled_ok=$("$tmpd/ok_bin")
+if [ "$out_compiled_ok" != "$expected_ok" ]; then
+  echo "FAIL: compiled version contract mismatch"
+  echo "Expected:"
+  printf '%s\n' "$expected_ok"
+  echo "Got:"
+  printf '%s\n' "$out_compiled_ok"
+  exit 1
+fi
+
+"$tmpd/compiler_stage1" "$tmpd/bad.cy" "$tmpd/bad.c" >/dev/null
+cc -O2 -std=c99 -Wall -Wextra -Werror -o "$tmpd/bad_bin" "$tmpd/bad.c"
+if "$tmpd/bad_bin" >/dev/null 2>"$tmpd/bad_compiled.log"; then
+  echo "FAIL: require_version mismatch should fail in compiled runtime"
+  exit 1
+fi
+grep -q "language version mismatch" "$tmpd/bad_compiled.log" || {
+  echo "FAIL: missing compiled version mismatch error message"
+  cat "$tmpd/bad_compiled.log"
+  exit 1
+}
+
+echo "[compat] PASS"

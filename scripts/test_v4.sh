@@ -96,6 +96,17 @@ out_vm=$(./cy --vm "$tmpd/v4.cy")
   exit 1
 }
 
+echo "[v4] running vm strict path..."
+out_vm_strict=$(./cy --vm-strict "$tmpd/v4.cy")
+[ "$out_vm_strict" = "$expected" ] || {
+  echo "FAIL: v4 vm-strict output mismatch"
+  echo "Expected:"
+  printf '%s\n' "$expected"
+  echo "Got:"
+  printf '%s\n' "$out_vm_strict"
+  exit 1
+}
+
 echo "[v4] lint check..."
 ./scripts/cylint.sh "$tmpd/v4.cy" >/dev/null
 

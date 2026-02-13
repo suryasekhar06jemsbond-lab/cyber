@@ -4,6 +4,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <stdint.h>
 #include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1372,6 +1373,7 @@ static int g_script_argc = 0;
 static char **g_script_argv = NULL;
 static int g_trace = 0;
 static int g_use_vm = 0;
+static int g_vm_strict = 0;
 static int g_parse_only = 0;
 static int g_debug_enabled = 0;
 static int g_debug_step_mode = 0;
@@ -2265,6 +2267,7 @@ typedef enum {
     BC_PUSH_NULL,
     BC_LOAD,
     BC_ARRAY_MAKE,
+    BC_ARRAY_COMP,
     BC_OBJECT_NEW,
     BC_OBJECT_SET_KEY,
     BC_INDEX_GET,
@@ -2321,7 +2324,10 @@ static int expr_vm_supported(Expr *expr) {
             }
             return 1;
         case EXPR_ARRAY_COMP:
-            return 0;
+            if (!expr_vm_supported(expr->as.array_comp.value_expr)) return 0;
+            if (!expr_vm_supported(expr->as.array_comp.iter_expr)) return 0;
+            if (expr->as.array_comp.filter_expr && !expr_vm_supported(expr->as.array_comp.filter_expr)) return 0;
+            return 1;
         case EXPR_OBJECT:
             for (int i = 0; i < expr->as.object.count; i++) {
                 if (!expr_vm_supported(expr->as.object.values[i])) return 0;
@@ -2383,7 +2389,7 @@ static void compile_expr_bytecode(Expr *expr, Bytecode *bc) {
             bytecode_emit(bc, BC_ARRAY_MAKE, expr->as.array.count, NULL, expr->line, expr->col);
             return;
         case EXPR_ARRAY_COMP:
-            runtime_error(expr->line, expr->col, "array comprehension is not supported in VM bytecode path");
+            bytecode_emit(bc, BC_ARRAY_COMP, (long long)(intptr_t)expr, NULL, expr->line, expr->col);
             return;
         case EXPR_OBJECT:
             bytecode_emit(bc, BC_OBJECT_NEW, 0, NULL, expr->line, expr->col);
@@ -2506,6 +2512,54 @@ static Value vstack_pop(ValueStack *st, int line, int col) {
     return st->items[--st->count];
 }
 
+static Value eval_array_comp_vm_expr(Expr *expr, Env *env, ImportSet *imports, const char *current_file) {
+    Value iter = eval_expr_vm(expr->as.array_comp.iter_expr, env, imports, current_file);
+    Value *out_items = NULL;
+    int out_count = 0;
+    int out_cap = 0;
+
+    if (iter.type == VAL_ARRAY) {
+        for (int i = 0; i < iter.as.array_val->count; i++) {
+            Env *loop_env = env_new(env);
+            env_define(loop_env, expr->as.array_comp.iter_name, iter.as.array_val->items[i]);
+            if (expr->as.array_comp.filter_expr) {
+                Value keep = eval_expr_vm(expr->as.array_comp.filter_expr, loop_env, imports, current_file);
+                if (!is_truthy(keep)) continue;
+            }
+            Value outv = eval_expr_vm(expr->as.array_comp.value_expr, loop_env, imports, current_file);
+            if (out_count == out_cap) {
+                int next = out_cap == 0 ? 8 : out_cap * 2;
+                out_items = (Value *)xrealloc(out_items, (size_t)next * sizeof(Value));
+                out_cap = next;
+            }
+            out_items[out_count++] = outv;
+        }
+        return value_array(out_items, out_count);
+    }
+
+    if (iter.type == VAL_OBJECT) {
+        for (int i = 0; i < iter.as.object_val->count; i++) {
+            Env *loop_env = env_new(env);
+            env_define(loop_env, expr->as.array_comp.iter_name, value_string(iter.as.object_val->items[i].key));
+            if (expr->as.array_comp.filter_expr) {
+                Value keep = eval_expr_vm(expr->as.array_comp.filter_expr, loop_env, imports, current_file);
+                if (!is_truthy(keep)) continue;
+            }
+            Value outv = eval_expr_vm(expr->as.array_comp.value_expr, loop_env, imports, current_file);
+            if (out_count == out_cap) {
+                int next = out_cap == 0 ? 8 : out_cap * 2;
+                out_items = (Value *)xrealloc(out_items, (size_t)next * sizeof(Value));
+                out_cap = next;
+            }
+            out_items[out_count++] = outv;
+        }
+        return value_array(out_items, out_count);
+    }
+
+    runtime_error(expr->line, expr->col, "array comprehension expects array or object iterable");
+    return value_null();
+}
+
 static Value vm_exec(Bytecode *bc, Env *env, ImportSet *imports, const char *current_file) {
     ValueStack st;
     st.items = NULL;
@@ -2541,6 +2595,11 @@ static Value vm_exec(Bytecode *bc, Env *env, ImportSet *imports, const char *cur
                     items[i] = vstack_pop(&st, in.line, in.col);
                 }
                 vstack_push(&st, value_array(items, n));
+                break;
+            }
+            case BC_ARRAY_COMP: {
+                Expr *comp_expr = (Expr *)(intptr_t)in.iarg;
+                vstack_push(&st, eval_array_comp_vm_expr(comp_expr, env, imports, current_file));
                 break;
             }
             case BC_OBJECT_NEW:
@@ -2671,6 +2730,9 @@ static Value vm_exec(Bytecode *bc, Env *env, ImportSet *imports, const char *cur
 
 static Value eval_expr_vm(Expr *expr, Env *env, ImportSet *imports, const char *current_file) {
     if (!expr_vm_supported(expr)) {
+        if (g_vm_strict) {
+            runtime_error(expr->line, expr->col, "expression is not supported in strict VM mode");
+        }
         return eval_expr_ast(expr, env, imports, current_file);
     }
 
@@ -3095,6 +3157,16 @@ int main(int argc, char **argv) {
             script_arg_index++;
             continue;
         }
+        if (strcmp(arg, "--vm-strict") == 0) {
+            g_use_vm = 1;
+            g_vm_strict = 1;
+            script_arg_index++;
+            continue;
+        }
+        if (strcmp(arg, "--version") == 0) {
+            printf("%s\n", CY_LANG_VERSION);
+            return 0;
+        }
         if (strcmp(arg, "--max-alloc") == 0) {
             if (script_arg_index + 1 >= argc) {
                 fprintf(stderr, "Error: --max-alloc expects a value\n");
@@ -3171,7 +3243,8 @@ int main(int argc, char **argv) {
 
     if (argc <= script_arg_index) {
         fprintf(stderr,
-                "Usage: cy [--trace] [--parse-only|--lint] [--vm] [--max-alloc N] [--debug] [--break lines] [--step] [--step-count N] [--debug-no-prompt] "
+                "Usage: cy [--trace] [--parse-only|--lint] [--vm|--vm-strict] [--max-alloc N] [--debug] [--break lines] [--step] [--step-count N] "
+                "[--debug-no-prompt] [--version] "
                 "<file.cy> [args...]\n");
         return 1;
     }

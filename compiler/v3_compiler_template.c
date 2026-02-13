@@ -1707,6 +1707,7 @@ static void append_c_string_literal(StrBuf *sb, const char *s) {
 
 static void gen_expr(Expr *e, StrBuf *sb, GenCtx *ctx);
 static void gen_array_comp_expr(Expr *e, StrBuf *sb, GenCtx *ctx);
+static int expr_uses_ident(Expr *e, const char *name);
 
 static void gen_args_vector(Expr **args, int argc, StrBuf *sb, GenCtx *ctx) {
     sb_append_fmt(sb, "%d, ", argc);
@@ -1766,14 +1767,68 @@ static void gen_call_expr(Expr *e, StrBuf *sb, GenCtx *ctx) {
     sb_append_char(sb, ')');
 }
 
+static int expr_uses_ident(Expr *e, const char *name) {
+    switch (e->kind) {
+        case EX_INT:
+        case EX_STRING:
+        case EX_BOOL:
+        case EX_NULL:
+            return 0;
+        case EX_IDENT:
+            return strcmp(e->as.ident, name) == 0;
+        case EX_ARRAY:
+            for (int i = 0; i < e->as.array.count; i++) {
+                if (expr_uses_ident(e->as.array.items[i], name)) return 1;
+            }
+            return 0;
+        case EX_ARRAY_COMP:
+            if (expr_uses_ident(e->as.array_comp.iter_expr, name)) return 1;
+            if (strcmp(e->as.array_comp.iter_name, name) == 0) return 0;
+            if (expr_uses_ident(e->as.array_comp.value_expr, name)) return 1;
+            if (e->as.array_comp.filter_expr && expr_uses_ident(e->as.array_comp.filter_expr, name)) return 1;
+            return 0;
+        case EX_OBJECT:
+            for (int i = 0; i < e->as.object.count; i++) {
+                if (expr_uses_ident(e->as.object.values[i], name)) return 1;
+            }
+            return 0;
+        case EX_INDEX:
+            return expr_uses_ident(e->as.index.left, name) || expr_uses_ident(e->as.index.index, name);
+        case EX_DOT:
+            return expr_uses_ident(e->as.dot.left, name);
+        case EX_UNARY:
+            return expr_uses_ident(e->as.unary.right, name);
+        case EX_BINARY:
+            return expr_uses_ident(e->as.binary.left, name) || expr_uses_ident(e->as.binary.right, name);
+        case EX_CALL:
+            if (expr_uses_ident(e->as.call.callee, name)) return 1;
+            for (int i = 0; i < e->as.call.argc; i++) {
+                if (expr_uses_ident(e->as.call.args[i], name)) return 1;
+            }
+            return 0;
+    }
+    return 0;
+}
+
 static void gen_array_comp_expr(Expr *e, StrBuf *sb, GenCtx *ctx) {
     if (!ctx->comp_cases) {
         fail_at(e->line, e->col, "internal error: missing comprehension codegen buffer");
     }
 
+    CaptureList visible;
     CaptureList caps;
+    capture_list_init(&visible);
     capture_list_init(&caps);
-    scope_collect_visible_bindings(ctx, &caps);
+    scope_collect_visible_bindings(ctx, &visible);
+    for (int i = 0; i < visible.count; i++) {
+        const char *name = visible.cy_names[i];
+        int used = 0;
+        if (expr_uses_ident(e->as.array_comp.iter_expr, name)) used = 1;
+        if (!used && expr_uses_ident(e->as.array_comp.value_expr, name)) used = 1;
+        if (!used && e->as.array_comp.filter_expr && expr_uses_ident(e->as.array_comp.filter_expr, name)) used = 1;
+        if (used) capture_list_add(&caps, visible.cy_names[i], visible.c_names[i]);
+    }
+    capture_list_free(&visible);
 
     int comp_id = ctx->next_id++;
 
@@ -3371,6 +3426,7 @@ static void emit_fn_defs(FILE *out, Block *program, StrSet *fn_names, int *next_
 
 static void emit_comp_dispatch(FILE *out, StrBuf *comp_cases) {
     fputs("static CyValue cy_eval_comp(int comp_id, CyValue __cy_env) {\n", out);
+    fputs("    (void)__cy_env;\n", out);
     fputs("    switch (comp_id) {\n", out);
     if (comp_cases && comp_cases->buf && comp_cases->len > 0) {
         fputs(comp_cases->buf, out);

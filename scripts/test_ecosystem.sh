@@ -71,6 +71,7 @@ echo "$trace" | grep -F "[step 1]" >/dev/null || {
 
 (
   cd "$tmpd"
+  mkdir -p "$tmpd/app"
   "$ROOT_DIR/scripts/cypm.sh" init demo >/dev/null
   "$ROOT_DIR/scripts/cypm.sh" add stdlib "$ROOT_DIR/stdlib" 1.2.0 >/dev/null
   "$ROOT_DIR/scripts/cypm.sh" add app "$tmpd/app" 0.1.0 stdlib@^1.0.0 >/dev/null
@@ -106,6 +107,17 @@ app'
   grep -q "version conflict" "$tmpd/resolve_err.log" || {
     echo "FAIL: cypm resolve conflict error missing"
     cat "$tmpd/resolve_err.log"
+    exit 1
+  }
+
+  "$ROOT_DIR/scripts/cypm.sh" dep app stdlib@^1.0.0 >/dev/null
+  "$ROOT_DIR/scripts/cypm.sh" lock app >/dev/null
+  [ -f "$tmpd/cy.lock" ] || {
+    echo "FAIL: cypm lock did not create cy.lock"
+    exit 1
+  }
+  "$ROOT_DIR/scripts/cypm.sh" verify-lock >/dev/null || {
+    echo "FAIL: cypm verify-lock failed"
     exit 1
   }
 )

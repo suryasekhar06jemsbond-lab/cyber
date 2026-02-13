@@ -46,18 +46,17 @@ chmod +x main.cy
 - `V4.md`: runtime expansion (loops/comprehensions/class-module-typealias + lint + VM cache)
 - `BOOTSTRAP.md`: roadmap to self-hosting (`v2` and `v3`)
 - `docs/LANGUAGE_SPEC.md`: language spec draft
+- `docs/RELEASE_POLICY.md`: compatibility + release gate contract
 
 ## v3 Compiler (Direct Codegen)
 
 `v3` emits a standalone C compiler source (`compiler/v3_compiler_template.c`) and no longer uses generated runner output for program compilation.
 Current direct-codegen source subset:
 - literals: int, string, bool, `null`, arrays, object literals
-- expressions: arithmetic/comparison/unary, calls, indexing, member access (`obj.key`)
+- expressions: arithmetic/comparison/unary, calls, indexing, member access (`obj.key`), array comprehensions
 - statements: `let`, assignment (identifier/member/index), expression statements, `if/else`, `while`, `for (x in y)`, `break`, `continue`, `try/catch`, `throw`, `fn`, `return`, `import`, `class`, `module`, `typealias`
 - compile-time import expansion (module dedup in compiler)
 - compiled-in class/object/type/version builtins (no stdlib dependency required for these)
-
-Note: runtime array comprehensions (`[x for ...]`) are currently interpreted by `native/cy.c`; direct C codegen for comprehensions is not yet implemented.
 
 Generate compiler C and build compiler binary:
 
@@ -115,6 +114,8 @@ Package manager:
 ./scripts/cypm.sh version app 0.2.0
 ./scripts/cypm.sh list
 ./scripts/cypm.sh resolve app
+./scripts/cypm.sh lock app
+./scripts/cypm.sh verify-lock
 ```
 
 Formatter:
@@ -146,8 +147,10 @@ Native runtime debug flags (no wrapper):
 ./cy --debug --step program.cy
 ./cy --debug --step-count 10 program.cy
 ./cy --vm program.cy
+./cy --vm-strict program.cy
 ./cy --max-alloc 1000000 program.cy
 ./cy --parse-only program.cy
+./cy --version
 ```
 
 PowerShell equivalents:
@@ -158,6 +161,8 @@ PowerShell equivalents:
 .\scripts\cypm.ps1 add app .\app 0.1.0 stdlib@^1.0.0
 .\scripts\cypm.ps1 version app 0.2.0
 .\scripts\cypm.ps1 resolve app
+.\scripts\cypm.ps1 lock app
+.\scripts\cypm.ps1 verify-lock
 .\scripts\cyfmt.ps1 .
 .\scripts\cylint.ps1 .
 .\scripts\cydbg.ps1 --break 12,20 examples\fibonacci.cy
@@ -177,6 +182,7 @@ PowerShell equivalents:
 ./scripts/test_v3_start.sh
 ./scripts/test_ecosystem.sh
 ./scripts/test_v4.sh
+./scripts/test_compatibility.sh
 ./scripts/test_vm_consistency.sh 1337 300
 ./scripts/test_production.sh
 ```
@@ -185,6 +191,7 @@ PowerShell equivalents:
 .\scripts\test_vm_consistency.ps1 -Seed 1337 -Cases 300
 .\scripts\test_v3.ps1
 .\scripts\test_v4.ps1
+.\scripts\test_compatibility.ps1
 .\scripts\test_production.ps1 -VmCases 300
 ```
 

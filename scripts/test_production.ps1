@@ -49,6 +49,7 @@ if ($hasSh -and $hasMake) {
     Run-Checked -Exe 'sh' -Args @('./scripts/test_v2.sh')
     Run-Checked -Exe 'sh' -Args @('./scripts/test_v3_start.sh')
     Run-Checked -Exe 'sh' -Args @('./scripts/test_v4.sh')
+    Run-Checked -Exe 'sh' -Args @('./scripts/test_compatibility.sh')
     Run-Checked -Exe 'sh' -Args @('./scripts/test_ecosystem.sh')
 } elseif ($hasSh -and -not $hasMake) {
     Write-Host "[prod-win] warning: 'sh' found but 'make' not found; skipping shell test suite"
@@ -62,6 +63,7 @@ Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/t
 Write-Host "[prod-win] powershell suite..."
 Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/test_v3.ps1')
 Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/test_v4.ps1')
+Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/test_compatibility.ps1')
 
 Write-Host "[prod-win] powershell tooling smoke..."
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_prod_" + [guid]::NewGuid().ToString('N'))
@@ -78,11 +80,15 @@ print(x);
 
     Push-Location $tmp
     try {
+        New-Item -ItemType Directory -Force -Path './core' | Out-Null
+        New-Item -ItemType Directory -Force -Path './app' | Out-Null
         $cypm = Join-Path $root 'scripts/cypm.ps1'
         Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'init', 'demo')
         Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'add', 'core', './core', '1.2.3')
         Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'add', 'app', './app', '0.1.0', 'core@^1.0.0')
         Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'resolve', 'app')
+        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'lock', 'app')
+        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'verify-lock')
     }
     finally {
         Pop-Location

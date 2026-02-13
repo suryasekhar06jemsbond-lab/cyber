@@ -152,6 +152,12 @@ let obj = {x: 40, inc: inc};
 obj["y"] = 2;
 print(obj.inc(obj["y"]));
 print(len(keys(obj)));
+let keys_arr = [k for k in obj];
+print(len(keys_arr));
+
+let ys = [n * 2 for n in [1, 2, 3, 4] if n > 2];
+print(ys[0]);
+print(len(ys));
 
 try {
     throw "boom";
@@ -177,7 +183,7 @@ try {
     Invoke-Checked -Exe $stage1Exe -Args @($programPath, $programC)
     Build-C -Compiler $Compiler -Output $programExe -Source $programC
     $programOut = Run-ProcessText -Exe $programExe
-    $expected = "int`n42`nmath`n7`n12`n12`n6`n42`n3`nboom"
+    $expected = "int`n42`nmath`n7`n12`n12`n6`n42`n3`n3`n6`n2`nboom"
     if ($programOut -ne $expected) {
         throw "compiled rich program output mismatch: expected '$expected', got '$programOut'"
     }

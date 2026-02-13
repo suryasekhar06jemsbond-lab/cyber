@@ -85,6 +85,12 @@ let obj = {x: 40, inc: inc};
 obj["y"] = 2;
 print(obj.inc(obj["y"]));
 print(len(keys(obj)));
+let keys_arr = [k for k in obj];
+print(len(keys_arr));
+
+let ys = [n * 2 for n in [1, 2, 3, 4] if n > 2];
+print(ys[0]);
+print(len(ys));
 
 try {
     throw "boom";
@@ -106,6 +112,9 @@ math
 6
 42
 3
+3
+6
+2
 boom'
 if [ "$out_prog" != "$expected_prog" ]; then
   echo "FAIL: compiled rich program output mismatch"
