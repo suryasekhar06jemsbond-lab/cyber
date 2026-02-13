@@ -131,6 +131,7 @@ jobs:
         working-directory: editor/vscode/cy-language
         run: |
           npm install
+          mkdir -p ../../../dist
           npx @vscode/vsce package -o ../../../dist/cy-language.vsix
 
       - name: Upload VS Code extension
