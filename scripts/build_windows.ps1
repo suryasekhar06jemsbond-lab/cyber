@@ -95,26 +95,33 @@ function Build-Runtime {
         Remove-Item -Force -LiteralPath $OutputPath
     }
 
-    # Pass version as a quoted C string literal on all compilers.
-    $versionLiteral = ('\"{0}\"' -f $LangVersion)
+    $versionHeader = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_lang_version_" + [guid]::NewGuid().ToString('N') + '.h')
+    @(
+        '#ifndef CY_LANG_VERSION'
+        ('#define CY_LANG_VERSION "{0}"' -f $LangVersion)
+        '#endif'
+    ) | Set-Content -Encoding ascii -LiteralPath $versionHeader
 
-    if ($Compiler.Kind -eq 'cl') {
-        $versionDefine = "/DCY_LANG_VERSION=$versionLiteral"
-        $args = @('/nologo', '/W4', '/WX', $versionDefine, $SourcePath)
+    try {
+        if ($Compiler.Kind -eq 'cl') {
+            $args = @('/nologo', '/W4', '/WX', "/FI$versionHeader", $SourcePath)
+            if ($ResPath) { $args += $ResPath }
+            $args += "/Fe:$OutputPath"
+            & $Compiler.Exe @args | Out-Null
+            if ($null -ne $LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw "C compilation failed: $SourcePath -> $OutputPath" }
+            if (-not (Test-Path -LiteralPath $OutputPath)) { throw "C compilation did not produce output: $OutputPath" }
+            return
+        }
+
+        $args = @('-O2', '-std=c99', '-Wall', '-Wextra', '-Werror', '-include', $versionHeader, '-o', $OutputPath, $SourcePath)
         if ($ResPath) { $args += $ResPath }
-        $args += "/Fe:$OutputPath"
-        & $Compiler.Exe @args | Out-Null
+        & $Compiler.Exe @args
         if ($null -ne $LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw "C compilation failed: $SourcePath -> $OutputPath" }
         if (-not (Test-Path -LiteralPath $OutputPath)) { throw "C compilation did not produce output: $OutputPath" }
-        return
     }
-
-    $versionDefine = "-DCY_LANG_VERSION=$versionLiteral"
-    $args = @('-O2', '-std=c99', '-Wall', '-Wextra', '-Werror', $versionDefine, '-o', $OutputPath, $SourcePath)
-    if ($ResPath) { $args += $ResPath }
-    & $Compiler.Exe @args
-    if ($null -ne $LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw "C compilation failed: $SourcePath -> $OutputPath" }
-    if (-not (Test-Path -LiteralPath $OutputPath)) { throw "C compilation did not produce output: $OutputPath" }
+    finally {
+        Remove-Item -Force -LiteralPath $versionHeader -ErrorAction SilentlyContinue
+    }
 }
 
 function Normalize-Text {

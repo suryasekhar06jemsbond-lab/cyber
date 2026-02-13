@@ -64,7 +64,8 @@ foreach ($arg in $CliArgs) {
             if ((Resolve-NormalizedPath -Path $arg) -eq (Resolve-NormalizedPath -Path $Target)) {
                 continue
             }
-            throw "Multiple targets are not supported (target='$Target', extra='$arg')"
+            # Ignore additional positional args to avoid host-specific switch-binding quirks.
+            continue
         }
     }
 }
