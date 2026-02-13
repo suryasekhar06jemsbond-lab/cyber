@@ -4,6 +4,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdint.h>
 #include <setjmp.h>
 #include <stdio.h>
@@ -49,7 +50,10 @@ typedef enum {
     TOK_MINUS,
     TOK_STAR,
     TOK_SLASH,
+    TOK_PERCENT,
     TOK_BANG,
+    TOK_ANDAND,
+    TOK_OROR,
     TOK_EQ,
     TOK_NEQ,
     TOK_LT,
@@ -89,22 +93,94 @@ static void die_at(int line, int col, const char *msg) {
     exit(1);
 }
 
+typedef struct {
+    void **items;
+    int count;
+    int cap;
+    int initialized;
+    int cleaning;
+} AllocTracker;
+
+static AllocTracker g_alloc_tracker = {0};
+
+static void alloc_tracker_cleanup(void);
+
+static void alloc_tracker_init(void) {
+    if (g_alloc_tracker.initialized) return;
+    g_alloc_tracker.initialized = 1;
+    if (atexit(alloc_tracker_cleanup) != 0) {
+        fprintf(stderr, "Failed to register allocator cleanup hook\n");
+        exit(1);
+    }
+}
+
+static int alloc_tracker_find(void *p) {
+    for (int i = 0; i < g_alloc_tracker.count; i++) {
+        if (g_alloc_tracker.items[i] == p) return i;
+    }
+    return -1;
+}
+
+static void alloc_tracker_add(void *p) {
+    if (!p || g_alloc_tracker.cleaning) return;
+    alloc_tracker_init();
+
+    if (alloc_tracker_find(p) >= 0) return;
+
+    if (g_alloc_tracker.count == g_alloc_tracker.cap) {
+        int next_cap = g_alloc_tracker.cap == 0 ? 256 : g_alloc_tracker.cap * 2;
+        void **next_items = (void **)realloc(g_alloc_tracker.items, (size_t)next_cap * sizeof(void *));
+        if (!next_items) {
+            fprintf(stderr, "Out of memory\n");
+            exit(1);
+        }
+        g_alloc_tracker.items = next_items;
+        g_alloc_tracker.cap = next_cap;
+    }
+
+    g_alloc_tracker.items[g_alloc_tracker.count++] = p;
+}
+
+static void alloc_tracker_remove(void *p) {
+    if (!p || !g_alloc_tracker.initialized || g_alloc_tracker.cleaning) return;
+    int idx = alloc_tracker_find(p);
+    if (idx < 0) return;
+    g_alloc_tracker.items[idx] = g_alloc_tracker.items[g_alloc_tracker.count - 1];
+    g_alloc_tracker.count--;
+}
+
 static void *xmalloc(size_t n) {
     void *p = malloc(n);
     if (!p) {
         fprintf(stderr, "Out of memory\n");
         exit(1);
     }
+    alloc_tracker_add(p);
     return p;
 }
 
 static void *xrealloc(void *p, size_t n) {
+    if (!p) return xmalloc(n);
+
+    int idx = alloc_tracker_find(p);
     void *q = realloc(p, n);
     if (!q) {
         fprintf(stderr, "Out of memory\n");
         exit(1);
     }
+
+    if (idx >= 0) {
+        g_alloc_tracker.items[idx] = q;
+    } else {
+        alloc_tracker_add(q);
+    }
     return q;
+}
+
+static void xfree(void *p) {
+    if (!p) return;
+    alloc_tracker_remove(p);
+    free(p);
 }
 
 static char *xstrdup(const char *s) {
@@ -119,6 +195,18 @@ static char *xstrndup(const char *s, size_t n) {
     memcpy(d, s, n);
     d[n] = '\0';
     return d;
+}
+
+static void alloc_tracker_cleanup(void) {
+    if (!g_alloc_tracker.initialized) return;
+    g_alloc_tracker.cleaning = 1;
+    for (int i = g_alloc_tracker.count - 1; i >= 0; i--) {
+        free(g_alloc_tracker.items[i]);
+    }
+    free(g_alloc_tracker.items);
+    g_alloc_tracker.items = NULL;
+    g_alloc_tracker.count = 0;
+    g_alloc_tracker.cap = 0;
 }
 
 static char *str_concat(const char *a, const char *b) {
@@ -299,6 +387,16 @@ static Token lexer_next_token(Lexer *lx) {
         lexer_next_char(lx);
         return make_token(TOK_NEQ, line, col);
     }
+    if (ch == '&' && lexer_peek_next(lx) == '&') {
+        lexer_next_char(lx);
+        lexer_next_char(lx);
+        return make_token(TOK_ANDAND, line, col);
+    }
+    if (ch == '|' && lexer_peek_next(lx) == '|') {
+        lexer_next_char(lx);
+        lexer_next_char(lx);
+        return make_token(TOK_OROR, line, col);
+    }
     if (ch == '<' && lexer_peek_next(lx) == '=') {
         lexer_next_char(lx);
         lexer_next_char(lx);
@@ -317,6 +415,7 @@ static Token lexer_next_token(Lexer *lx) {
         case '-': return make_token(TOK_MINUS, line, col);
         case '*': return make_token(TOK_STAR, line, col);
         case '/': return make_token(TOK_SLASH, line, col);
+        case '%': return make_token(TOK_PERCENT, line, col);
         case '!': return make_token(TOK_BANG, line, col);
         case '<': return make_token(TOK_LT, line, col);
         case '>': return make_token(TOK_GT, line, col);
@@ -370,6 +469,7 @@ struct Expr {
         struct {
             Expr *value_expr;
             char *iter_name;
+            char *iter_value_name;
             Expr *iter_expr;
             Expr *filter_expr;
         } array_comp;
@@ -467,6 +567,7 @@ struct Stmt {
         } while_stmt;
         struct {
             char *iter_name;
+            char *iter_value_name;
             Expr *iter_expr;
             Block *body;
         } for_stmt;
@@ -532,7 +633,7 @@ static Block *new_block(void) {
 static void block_add_stmt(Block *b, Stmt *s) {
     if (b->count == b->cap) {
         int next_cap = b->cap == 0 ? 8 : b->cap * 2;
-        b->items = (Stmt **)realloc(b->items, (size_t)next_cap * sizeof(Stmt *));
+        b->items = (Stmt **)xrealloc(b->items, (size_t)next_cap * sizeof(Stmt *));
         if (!b->items) {
             fprintf(stderr, "Out of memory\n");
             exit(1);
@@ -565,16 +666,22 @@ static void expect_current(Parser *p, TokenType t, const char *msg) {
 
 enum {
     PREC_LOWEST = 0,
-    PREC_EQUALS = 1,
-    PREC_COMPARE = 2,
-    PREC_SUM = 3,
-    PREC_PRODUCT = 4,
-    PREC_PREFIX = 5,
-    PREC_CALL = 6
+    PREC_OR = 1,
+    PREC_AND = 2,
+    PREC_EQUALS = 3,
+    PREC_COMPARE = 4,
+    PREC_SUM = 5,
+    PREC_PRODUCT = 6,
+    PREC_PREFIX = 7,
+    PREC_CALL = 8
 };
 
 static int precedence(TokenType t) {
     switch (t) {
+        case TOK_OROR:
+            return PREC_OR;
+        case TOK_ANDAND:
+            return PREC_AND;
         case TOK_EQ:
         case TOK_NEQ:
             return PREC_EQUALS;
@@ -588,6 +695,7 @@ static int precedence(TokenType t) {
             return PREC_SUM;
         case TOK_STAR:
         case TOK_SLASH:
+        case TOK_PERCENT:
             return PREC_PRODUCT;
         case TOK_LPAREN:
         case TOK_LBRACKET:
@@ -619,12 +727,19 @@ static Expr *parse_array_literal(Parser *p) {
     if (p->cur.type == TOK_FOR) {
         Expr *comp = new_expr(EXPR_ARRAY_COMP, line, col);
         comp->as.array_comp.value_expr = first;
+        comp->as.array_comp.iter_value_name = NULL;
 
         next_token(p);
         expect_current(p, TOK_IDENT, "expected iterator variable name after for");
         comp->as.array_comp.iter_name = xstrdup(p->cur.text);
 
         next_token(p);
+        if (p->cur.type == TOK_COMMA) {
+            next_token(p);
+            expect_current(p, TOK_IDENT, "expected second iterator variable name");
+            comp->as.array_comp.iter_value_name = xstrdup(p->cur.text);
+            next_token(p);
+        }
         expect_current(p, TOK_IN, "expected 'in' in array comprehension");
 
         next_token(p);
@@ -787,7 +902,7 @@ static Expr *parse_call_expr(Parser *p, Expr *callee) {
         Expr *arg = parse_expression(p, PREC_LOWEST);
 
         int idx = e->as.call.argc;
-        e->as.call.args = (Expr **)realloc(e->as.call.args, (size_t)(idx + 1) * sizeof(Expr *));
+        e->as.call.args = (Expr **)xrealloc(e->as.call.args, (size_t)(idx + 1) * sizeof(Expr *));
         if (!e->as.call.args) {
             fprintf(stderr, "Out of memory\n");
             exit(1);
@@ -896,7 +1011,12 @@ static Stmt *parse_return_statement(Parser *p) {
     int col = p->cur.col;
 
     next_token(p);
-    Expr *value = parse_expression(p, PREC_LOWEST);
+    Expr *value = NULL;
+    if (p->cur.type == TOK_SEMI) {
+        value = new_expr(EXPR_NULL, line, col);
+    } else {
+        value = parse_expression(p, PREC_LOWEST);
+    }
 
     expect_current(p, TOK_SEMI, "expected ';' after return");
     next_token(p);
@@ -957,8 +1077,14 @@ static Stmt *parse_if_statement(Parser *p) {
     Block *else_block = NULL;
     if (p->cur.type == TOK_ELSE) {
         next_token(p);
-        expect_current(p, TOK_LBRACE, "expected '{' after else");
-        else_block = parse_block(p);
+        if (p->cur.type == TOK_IF) {
+            Stmt *else_if_stmt = parse_if_statement(p);
+            else_block = new_block();
+            block_add_stmt(else_block, else_if_stmt);
+        } else {
+            expect_current(p, TOK_LBRACE, "expected '{' after else");
+            else_block = parse_block(p);
+        }
     }
 
     Stmt *s = new_stmt(STMT_IF, line, col);
@@ -1000,8 +1126,15 @@ static Stmt *parse_for_statement(Parser *p) {
     next_token(p);
     expect_current(p, TOK_IDENT, "expected iterator variable in for statement");
     char *iter_name = xstrdup(p->cur.text);
+    char *iter_value_name = NULL;
 
     next_token(p);
+    if (p->cur.type == TOK_COMMA) {
+        next_token(p);
+        expect_current(p, TOK_IDENT, "expected second iterator variable in for statement");
+        iter_value_name = xstrdup(p->cur.text);
+        next_token(p);
+    }
     expect_current(p, TOK_IN, "expected 'in' in for statement");
 
     next_token(p);
@@ -1015,6 +1148,7 @@ static Stmt *parse_for_statement(Parser *p) {
 
     Stmt *s = new_stmt(STMT_FOR, line, col);
     s->as.for_stmt.iter_name = iter_name;
+    s->as.for_stmt.iter_value_name = iter_value_name;
     s->as.for_stmt.iter_expr = iter_expr;
     s->as.for_stmt.body = body;
     return s;
@@ -1141,7 +1275,7 @@ static Stmt *parse_fn_statement(Parser *p) {
     if (p->cur.type != TOK_RPAREN) {
         while (1) {
             expect_current(p, TOK_IDENT, "expected parameter name");
-            params = (char **)realloc(params, (size_t)(param_count + 1) * sizeof(char *));
+            params = (char **)xrealloc(params, (size_t)(param_count + 1) * sizeof(char *));
             if (!params) {
                 fprintf(stderr, "Out of memory\n");
                 exit(1);
@@ -1389,6 +1523,10 @@ static ImportSet *g_runtime_imports_ctx = NULL;
 static const char *g_runtime_file_ctx = NULL;
 static long long g_alloc_units = 0;
 static long long g_max_alloc_units = 10000000;
+static long long g_step_count = 0;
+static long long g_max_steps = 0;
+static int g_call_depth = 0;
+static int g_max_call_depth = 10000;
 
 typedef enum {
     CTRL_NONE = 0,
@@ -1543,6 +1681,14 @@ static void runtime_error(int line, int col, const char *msg) {
     die_at(line, col, msg);
 }
 
+static void step_guard(int line, int col) {
+    if (g_max_steps <= 0) return;
+    g_step_count++;
+    if (g_step_count > g_max_steps) {
+        runtime_error(line, col, "max step count exceeded");
+    }
+}
+
 static Env *env_new(Env *parent) {
     Env *env = (Env *)xmalloc(sizeof(Env));
     env->items = NULL;
@@ -1562,7 +1708,7 @@ static void env_define(Env *env, const char *name, Value value) {
 
     if (env->count == env->cap) {
         int next_cap = env->cap == 0 ? 8 : env->cap * 2;
-        env->items = (Binding *)realloc(env->items, (size_t)next_cap * sizeof(Binding));
+        env->items = (Binding *)xrealloc(env->items, (size_t)next_cap * sizeof(Binding));
         if (!env->items) {
             fprintf(stderr, "Out of memory\n");
             exit(1);
@@ -1602,7 +1748,7 @@ static int env_assign(Env *env, const char *name, Value value) {
 static void import_set_add(ImportSet *set, const char *path) {
     if (set->count == set->cap) {
         int next_cap = set->cap == 0 ? 8 : set->cap * 2;
-        set->items = (char **)realloc(set->items, (size_t)next_cap * sizeof(char *));
+        set->items = (char **)xrealloc(set->items, (size_t)next_cap * sizeof(char *));
         if (!set->items) {
             fprintf(stderr, "Out of memory\n");
             exit(1);
@@ -1642,9 +1788,102 @@ static char *resolve_path(const char *current_file, const char *raw_path) {
     char *dir = path_dirname(current_file);
     char *tmp = str_concat(dir, "/");
     char *full = str_concat(tmp, raw_path);
-    free(dir);
-    free(tmp);
+    xfree(dir);
+    xfree(tmp);
     return full;
+}
+
+static const char *g_builtin_math_module =
+    "module Math {\n"
+    "    fn __cy_math_abs(x) {\n"
+    "        if (x < 0) { return -x; }\n"
+    "        return x;\n"
+    "    }\n"
+    "    fn __cy_math_min(a, b) {\n"
+    "        if (a < b) { return a; }\n"
+    "        return b;\n"
+    "    }\n"
+    "    fn __cy_math_max(a, b) {\n"
+    "        if (a > b) { return a; }\n"
+    "        return b;\n"
+    "    }\n"
+    "    fn __cy_math_clamp(x, lo, hi) {\n"
+    "        if (x < lo) { return lo; }\n"
+    "        if (x > hi) { return hi; }\n"
+    "        return x;\n"
+    "    }\n"
+    "    fn __cy_math_pow(base, exp) {\n"
+    "        if (exp < 0) { return 0; }\n"
+    "        let acc = 1;\n"
+    "        let i = 0;\n"
+    "        while (i < exp) {\n"
+    "            acc = acc * base;\n"
+    "            i = i + 1;\n"
+    "        }\n"
+    "        return acc;\n"
+    "    }\n"
+    "    fn __cy_math_sum(xs) {\n"
+    "        let acc = 0;\n"
+    "        for (x in xs) { acc = acc + x; }\n"
+    "        return acc;\n"
+    "    }\n"
+    "    let abs = __cy_math_abs;\n"
+    "    let min = __cy_math_min;\n"
+    "    let max = __cy_math_max;\n"
+    "    let clamp = __cy_math_clamp;\n"
+    "    let pow = __cy_math_pow;\n"
+    "    let sum = __cy_math_sum;\n"
+    "}\n";
+
+static const char *g_builtin_arrays_module =
+    "module Arrays {\n"
+    "    fn __cy_arrays_first(xs) {\n"
+    "        if (len(xs) == 0) { return null; }\n"
+    "        return xs[0];\n"
+    "    }\n"
+    "    fn __cy_arrays_last(xs) {\n"
+    "        if (len(xs) == 0) { return null; }\n"
+    "        return xs[len(xs) - 1];\n"
+    "    }\n"
+    "    fn __cy_arrays_sum(xs) {\n"
+    "        let acc = 0;\n"
+    "        for (x in xs) { acc = acc + x; }\n"
+    "        return acc;\n"
+    "    }\n"
+    "    fn __cy_arrays_enumerate(xs) {\n"
+    "        return [[i, x] for i, x in xs];\n"
+    "    }\n"
+    "    let first = __cy_arrays_first;\n"
+    "    let last = __cy_arrays_last;\n"
+    "    let sum = __cy_arrays_sum;\n"
+    "    let enumerate = __cy_arrays_enumerate;\n"
+    "}\n";
+
+static const char *g_builtin_objects_module =
+    "module Objects {\n"
+    "    fn __cy_objects_merge(a, b) {\n"
+    "        let out = object_new();\n"
+    "        for (k, v in a) { object_set(out, k, v); }\n"
+    "        for (k, v in b) { object_set(out, k, v); }\n"
+    "        return out;\n"
+    "    }\n"
+    "    fn __cy_objects_get_or(obj, key, fallback) {\n"
+    "        if (has(obj, key)) { return object_get(obj, key); }\n"
+    "        return fallback;\n"
+    "    }\n"
+    "    let merge = __cy_objects_merge;\n"
+    "    let get_or = __cy_objects_get_or;\n"
+    "}\n";
+
+static int is_builtin_module_path(const char *path) {
+    return path != NULL && strncmp(path, "cy:", 3) == 0;
+}
+
+static const char *builtin_module_source(const char *path) {
+    if (strcmp(path, "cy:math") == 0) return g_builtin_math_module;
+    if (strcmp(path, "cy:arrays") == 0) return g_builtin_arrays_module;
+    if (strcmp(path, "cy:objects") == 0) return g_builtin_objects_module;
+    return NULL;
 }
 
 static char *read_file(const char *path) {
@@ -1782,12 +2021,33 @@ static int values_equal(Value a, Value b) {
     return 0;
 }
 
+static int parse_int_value(const char *s, long long *out) {
+    if (s == NULL) return 0;
+
+    while (*s && isspace((unsigned char)*s)) s++;
+    if (*s == '\0') return 0;
+
+    errno = 0;
+    char *end = NULL;
+    long long v = strtoll(s, &end, 10);
+    if (errno != 0 || end == s) return 0;
+
+    while (*end && isspace((unsigned char)*end)) end++;
+    if (*end != '\0') return 0;
+
+    *out = v;
+    return 1;
+}
+
 static Value eval_expr(Expr *expr, Env *env, ImportSet *imports, const char *current_file);
 static Value eval_expr_ast(Expr *expr, Env *env, ImportSet *imports, const char *current_file);
 static Value eval_expr_vm(Expr *expr, Env *env, ImportSet *imports, const char *current_file);
+static Value object_get_member_value(Value object_value, const char *member, int line, int col);
 static Value apply_function(Value fn, Value *args, int argc, int line, int col, ImportSet *imports,
                             const char *current_file);
+static EvalResult eval_statement(Stmt *stmt, Env *env, ImportSet *imports, const char *current_file, int top_level);
 static EvalResult eval_block(Block *block, Env *env, ImportSet *imports, const char *current_file, int top_level);
+static EvalResult vm_eval_block(Block *block, Env *env, ImportSet *imports, const char *current_file, int top_level);
 
 static Value builtin_print(Value *args, int argc, int line, int col, const char *current_file) {
     (void)line;
@@ -1819,17 +2079,92 @@ static Value builtin_len(Value *args, int argc, int line, int col, const char *c
     return value_null();
 }
 
+static Value builtin_abs(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 1) runtime_error(line, col, "abs() expects exactly 1 argument");
+    if (args[0].type != VAL_INT) runtime_error(line, col, "abs() expects integer argument");
+    long long n = args[0].as.int_val;
+    if (n < 0) n = -n;
+    return value_int(n);
+}
+
+static Value builtin_min(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 2) runtime_error(line, col, "min() expects exactly 2 arguments");
+    if (args[0].type != VAL_INT || args[1].type != VAL_INT) runtime_error(line, col, "min() expects integer arguments");
+    return value_int(args[0].as.int_val < args[1].as.int_val ? args[0].as.int_val : args[1].as.int_val);
+}
+
+static Value builtin_max(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 2) runtime_error(line, col, "max() expects exactly 2 arguments");
+    if (args[0].type != VAL_INT || args[1].type != VAL_INT) runtime_error(line, col, "max() expects integer arguments");
+    return value_int(args[0].as.int_val > args[1].as.int_val ? args[0].as.int_val : args[1].as.int_val);
+}
+
+static Value builtin_clamp(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 3) runtime_error(line, col, "clamp() expects exactly 3 arguments");
+    if (args[0].type != VAL_INT || args[1].type != VAL_INT || args[2].type != VAL_INT) {
+        runtime_error(line, col, "clamp() expects integer arguments");
+    }
+    long long v = args[0].as.int_val;
+    long long lo = args[1].as.int_val;
+    long long hi = args[2].as.int_val;
+    if (v < lo) return value_int(lo);
+    if (v > hi) return value_int(hi);
+    return value_int(v);
+}
+
+static Value builtin_sum(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 1) runtime_error(line, col, "sum() expects exactly 1 argument");
+    if (args[0].type != VAL_ARRAY) runtime_error(line, col, "sum() expects array argument");
+
+    long long acc = 0;
+    Array *arr = args[0].as.array_val;
+    for (int i = 0; i < arr->count; i++) {
+        if (arr->items[i].type != VAL_INT) runtime_error(line, col, "sum() expects array[int]");
+        acc += arr->items[i].as.int_val;
+    }
+    return value_int(acc);
+}
+
+static Value builtin_all(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 1) runtime_error(line, col, "all() expects exactly 1 argument");
+    if (args[0].type != VAL_ARRAY) runtime_error(line, col, "all() expects array argument");
+
+    Array *arr = args[0].as.array_val;
+    for (int i = 0; i < arr->count; i++) {
+        if (!is_truthy(arr->items[i])) return value_bool(0);
+    }
+    return value_bool(1);
+}
+
+static Value builtin_any(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 1) runtime_error(line, col, "any() expects exactly 1 argument");
+    if (args[0].type != VAL_ARRAY) runtime_error(line, col, "any() expects array argument");
+
+    Array *arr = args[0].as.array_val;
+    for (int i = 0; i < arr->count; i++) {
+        if (is_truthy(arr->items[i])) return value_bool(1);
+    }
+    return value_bool(0);
+}
+
 static Value builtin_read(Value *args, int argc, int line, int col, const char *current_file) {
     if (argc != 1) runtime_error(line, col, "read() expects exactly 1 argument");
     if (args[0].type != VAL_STRING) runtime_error(line, col, "read() path must be a string");
 
     char *full_path = resolve_path(current_file, args[0].as.str_val);
     char *content = read_file(full_path);
-    free(full_path);
+    xfree(full_path);
     if (!content) runtime_error(line, col, "read() could not open file");
 
     Value v = value_string(content);
-    free(content);
+    xfree(content);
     return v;
 }
 
@@ -1842,16 +2177,16 @@ static Value builtin_write(Value *args, int argc, int line, int col, const char 
 
     FILE *f = fopen(full_path, "wb");
     if (!f) {
-        free(data);
-        free(full_path);
+        xfree(data);
+        xfree(full_path);
         runtime_error(line, col, "write() could not open file");
     }
 
     size_t n = fwrite(data, 1, strlen(data), f);
     fclose(f);
 
-    free(data);
-    free(full_path);
+    xfree(data);
+    xfree(full_path);
 
     return value_int((long long)n);
 }
@@ -1873,6 +2208,124 @@ static Value builtin_type(Value *args, int argc, int line, int col, const char *
     }
 
     return value_string("unknown");
+}
+
+static Value builtin_type_of(Value *args, int argc, int line, int col, const char *current_file) {
+    return builtin_type(args, argc, line, col, current_file);
+}
+
+static Value builtin_is_int(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 1) runtime_error(line, col, "is_int() expects exactly 1 argument");
+    return value_bool(args[0].type == VAL_INT);
+}
+
+static Value builtin_is_bool(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 1) runtime_error(line, col, "is_bool() expects exactly 1 argument");
+    return value_bool(args[0].type == VAL_BOOL);
+}
+
+static Value builtin_is_string(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 1) runtime_error(line, col, "is_string() expects exactly 1 argument");
+    return value_bool(args[0].type == VAL_STRING);
+}
+
+static Value builtin_is_array(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 1) runtime_error(line, col, "is_array() expects exactly 1 argument");
+    return value_bool(args[0].type == VAL_ARRAY);
+}
+
+static Value builtin_is_function(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 1) runtime_error(line, col, "is_function() expects exactly 1 argument");
+    return value_bool(args[0].type == VAL_FUNCTION || args[0].type == VAL_BUILTIN || args[0].type == VAL_BOUND_METHOD);
+}
+
+static Value builtin_is_null(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 1) runtime_error(line, col, "is_null() expects exactly 1 argument");
+    return value_bool(args[0].type == VAL_NULL);
+}
+
+static Value builtin_str(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 1) runtime_error(line, col, "str() expects exactly 1 argument");
+    char *s = value_to_string(args[0]);
+    Value out = value_string(s);
+    xfree(s);
+    return out;
+}
+
+static Value builtin_int(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 1) runtime_error(line, col, "int() expects exactly 1 argument");
+
+    Value v = args[0];
+    if (v.type == VAL_INT) return v;
+    if (v.type == VAL_BOOL) return value_int(v.as.bool_val ? 1 : 0);
+    if (v.type == VAL_STRING) {
+        long long out = 0;
+        if (!parse_int_value(v.as.str_val, &out)) runtime_error(line, col, "int() invalid string integer");
+        return value_int(out);
+    }
+
+    runtime_error(line, col, "int() expects int, bool, or string");
+    return value_null();
+}
+
+static Value builtin_range(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc < 1 || argc > 3) runtime_error(line, col, "range() expects 1 to 3 integer arguments");
+
+    long long start = 0;
+    long long stop = 0;
+    long long step = 1;
+
+    if (argc == 1) {
+        if (args[0].type != VAL_INT) runtime_error(line, col, "range() expects integer arguments");
+        stop = args[0].as.int_val;
+    } else if (argc == 2) {
+        if (args[0].type != VAL_INT || args[1].type != VAL_INT) runtime_error(line, col, "range() expects integer arguments");
+        start = args[0].as.int_val;
+        stop = args[1].as.int_val;
+    } else {
+        if (args[0].type != VAL_INT || args[1].type != VAL_INT || args[2].type != VAL_INT) {
+            runtime_error(line, col, "range() expects integer arguments");
+        }
+        start = args[0].as.int_val;
+        stop = args[1].as.int_val;
+        step = args[2].as.int_val;
+        if (step == 0) runtime_error(line, col, "range() step must not be zero");
+    }
+
+    Value *items = NULL;
+    int count = 0;
+    int cap = 0;
+
+    if (step > 0) {
+        for (long long i = start; i < stop; i += step) {
+            if (count == cap) {
+                int next = cap == 0 ? 8 : cap * 2;
+                items = (Value *)xrealloc(items, (size_t)next * sizeof(Value));
+                cap = next;
+            }
+            items[count++] = value_int(i);
+        }
+    } else {
+        for (long long i = start; i > stop; i += step) {
+            if (count == cap) {
+                int next = cap == 0 ? 8 : cap * 2;
+                items = (Value *)xrealloc(items, (size_t)next * sizeof(Value));
+                cap = next;
+            }
+            items[count++] = value_int(i);
+        }
+    }
+
+    return value_array(items, count);
 }
 
 static Value builtin_push(Value *args, int argc, int line, int col, const char *current_file) {
@@ -1956,6 +2409,43 @@ static Value builtin_keys(Value *args, int argc, int line, int col, const char *
     return value_array(items, obj->count);
 }
 
+static Value builtin_values(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 1) runtime_error(line, col, "values() expects exactly 1 argument");
+    if (args[0].type != VAL_OBJECT) runtime_error(line, col, "values() expects object argument");
+
+    Object *obj = args[0].as.object_val;
+    Value *items = (Value *)xmalloc((size_t)obj->count * sizeof(Value));
+    for (int i = 0; i < obj->count; i++) {
+        items[i] = obj->items[i].value;
+    }
+    return value_array(items, obj->count);
+}
+
+static Value builtin_items(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 1) runtime_error(line, col, "items() expects exactly 1 argument");
+    if (args[0].type != VAL_OBJECT) runtime_error(line, col, "items() expects object argument");
+
+    Object *obj = args[0].as.object_val;
+    Value *pairs = (Value *)xmalloc((size_t)obj->count * sizeof(Value));
+    for (int i = 0; i < obj->count; i++) {
+        Value *pair_items = (Value *)xmalloc(2 * sizeof(Value));
+        pair_items[0] = value_string(obj->items[i].key);
+        pair_items[1] = obj->items[i].value;
+        pairs[i] = value_array(pair_items, 2);
+    }
+    return value_array(pairs, obj->count);
+}
+
+static Value builtin_has(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 2) runtime_error(line, col, "has() expects exactly 2 arguments");
+    if (args[0].type != VAL_OBJECT) runtime_error(line, col, "has() first argument must be an object");
+    if (args[1].type != VAL_STRING) runtime_error(line, col, "has() second argument must be a string");
+    return value_bool(object_has(args[0].as.object_val, args[1].as.str_val));
+}
+
 static Value builtin_lang_version(Value *args, int argc, int line, int col, const char *current_file) {
     (void)args;
     (void)current_file;
@@ -1994,18 +2484,124 @@ static Value builtin_new(Value *args, int argc, int line, int col, const char *c
                                         g_runtime_imports_ctx ? g_runtime_imports_ctx : NULL,
                                         g_runtime_file_ctx ? g_runtime_file_ctx : current_file);
         (void)ctor_out;
-        free(call_args);
+        xfree(call_args);
     }
 
     return instance_value;
 }
 
+static Value builtin_class_new(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 1) runtime_error(line, col, "class_new() expects 1 argument");
+    if (args[0].type != VAL_STRING) runtime_error(line, col, "class_new() expects string class name");
+
+    Object *cls = object_new_kind(OBJ_CLASS);
+    object_set(cls, "__name__", value_string(args[0].as.str_val));
+    return value_object(cls);
+}
+
+static Value builtin_class_with_ctor(Value *args, int argc, int line, int col, const char *current_file) {
+    if (argc != 2) runtime_error(line, col, "class_with_ctor() expects 2 arguments");
+    Value cls = builtin_class_new(args, 1, line, col, current_file);
+    object_set(cls.as.object_val, "init", args[1]);
+    return cls;
+}
+
+static Value builtin_class_set_method(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 3) runtime_error(line, col, "class_set_method() expects 3 arguments");
+    if (args[0].type != VAL_OBJECT || args[0].as.object_val->kind != OBJ_CLASS) {
+        runtime_error(line, col, "class_set_method() first argument must be class object");
+    }
+    if (args[1].type != VAL_STRING) runtime_error(line, col, "class_set_method() method name must be string");
+    object_set(args[0].as.object_val, args[1].as.str_val, args[2]);
+    return args[0];
+}
+
+static Value builtin_class_name(Value *args, int argc, int line, int col, const char *current_file) {
+    (void)current_file;
+    if (argc != 1) runtime_error(line, col, "class_name() expects 1 argument");
+    if (args[0].type != VAL_OBJECT || args[0].as.object_val->kind != OBJ_CLASS) {
+        runtime_error(line, col, "class_name() expects class object");
+    }
+    return object_get(args[0].as.object_val, "__name__");
+}
+
+static Value builtin_class_instantiate0(Value *args, int argc, int line, int col, const char *current_file) {
+    if (argc != 1) runtime_error(line, col, "class_instantiate0() expects 1 argument");
+    return builtin_new(args, 1, line, col, current_file);
+}
+
+static Value builtin_class_instantiate1(Value *args, int argc, int line, int col, const char *current_file) {
+    if (argc != 2) runtime_error(line, col, "class_instantiate1() expects 2 arguments");
+    return builtin_new(args, 2, line, col, current_file);
+}
+
+static Value builtin_class_instantiate2(Value *args, int argc, int line, int col, const char *current_file) {
+    if (argc != 3) runtime_error(line, col, "class_instantiate2() expects 3 arguments");
+    return builtin_new(args, 3, line, col, current_file);
+}
+
+static Value class_call_dispatch(Value *args, int argc, int line, int col, const char *current_file) {
+    if (argc < 2) runtime_error(line, col, "class_call expects at least 2 arguments");
+    if (args[0].type != VAL_OBJECT) runtime_error(line, col, "class_call first argument must be object instance");
+    if (args[1].type != VAL_STRING) runtime_error(line, col, "class_call second argument must be method name string");
+
+    Value method = object_get_member_value(args[0], args[1].as.str_val, line, col);
+    if (method.type == VAL_NULL) runtime_error(line, col, "class_call method not found");
+
+    int call_argc = argc - 2;
+    Value *call_args = NULL;
+    if (call_argc > 0) {
+        call_args = (Value *)xmalloc((size_t)call_argc * sizeof(Value));
+        for (int i = 0; i < call_argc; i++) call_args[i] = args[i + 2];
+    }
+
+    Value out = apply_function(method, call_args, call_argc, line, col,
+                               g_runtime_imports_ctx ? g_runtime_imports_ctx : NULL,
+                               g_runtime_file_ctx ? g_runtime_file_ctx : current_file);
+    xfree(call_args);
+    return out;
+}
+
+static Value builtin_class_call0(Value *args, int argc, int line, int col, const char *current_file) {
+    if (argc != 2) runtime_error(line, col, "class_call0() expects 2 arguments");
+    return class_call_dispatch(args, argc, line, col, current_file);
+}
+
+static Value builtin_class_call1(Value *args, int argc, int line, int col, const char *current_file) {
+    if (argc != 3) runtime_error(line, col, "class_call1() expects 3 arguments");
+    return class_call_dispatch(args, argc, line, col, current_file);
+}
+
+static Value builtin_class_call2(Value *args, int argc, int line, int col, const char *current_file) {
+    if (argc != 4) runtime_error(line, col, "class_call2() expects 4 arguments");
+    return class_call_dispatch(args, argc, line, col, current_file);
+}
+
 static void install_builtins(Env *env) {
     env_define(env, "print", value_builtin(builtin_print));
     env_define(env, "len", value_builtin(builtin_len));
+    env_define(env, "abs", value_builtin(builtin_abs));
+    env_define(env, "min", value_builtin(builtin_min));
+    env_define(env, "max", value_builtin(builtin_max));
+    env_define(env, "clamp", value_builtin(builtin_clamp));
+    env_define(env, "sum", value_builtin(builtin_sum));
+    env_define(env, "all", value_builtin(builtin_all));
+    env_define(env, "any", value_builtin(builtin_any));
+    env_define(env, "range", value_builtin(builtin_range));
     env_define(env, "read", value_builtin(builtin_read));
     env_define(env, "write", value_builtin(builtin_write));
     env_define(env, "type", value_builtin(builtin_type));
+    env_define(env, "type_of", value_builtin(builtin_type_of));
+    env_define(env, "is_int", value_builtin(builtin_is_int));
+    env_define(env, "is_bool", value_builtin(builtin_is_bool));
+    env_define(env, "is_string", value_builtin(builtin_is_string));
+    env_define(env, "is_array", value_builtin(builtin_is_array));
+    env_define(env, "is_function", value_builtin(builtin_is_function));
+    env_define(env, "is_null", value_builtin(builtin_is_null));
+    env_define(env, "str", value_builtin(builtin_str));
+    env_define(env, "int", value_builtin(builtin_int));
     env_define(env, "push", value_builtin(builtin_push));
     env_define(env, "pop", value_builtin(builtin_pop));
     env_define(env, "argc", value_builtin(builtin_argc));
@@ -2014,7 +2610,20 @@ static void install_builtins(Env *env) {
     env_define(env, "object_set", value_builtin(builtin_object_set));
     env_define(env, "object_get", value_builtin(builtin_object_get));
     env_define(env, "keys", value_builtin(builtin_keys));
+    env_define(env, "values", value_builtin(builtin_values));
+    env_define(env, "items", value_builtin(builtin_items));
+    env_define(env, "has", value_builtin(builtin_has));
     env_define(env, "new", value_builtin(builtin_new));
+    env_define(env, "class_new", value_builtin(builtin_class_new));
+    env_define(env, "class_with_ctor", value_builtin(builtin_class_with_ctor));
+    env_define(env, "class_set_method", value_builtin(builtin_class_set_method));
+    env_define(env, "class_name", value_builtin(builtin_class_name));
+    env_define(env, "class_instantiate0", value_builtin(builtin_class_instantiate0));
+    env_define(env, "class_instantiate1", value_builtin(builtin_class_instantiate1));
+    env_define(env, "class_instantiate2", value_builtin(builtin_class_instantiate2));
+    env_define(env, "class_call0", value_builtin(builtin_class_call0));
+    env_define(env, "class_call1", value_builtin(builtin_class_call1));
+    env_define(env, "class_call2", value_builtin(builtin_class_call2));
     env_define(env, "lang_version", value_builtin(builtin_lang_version));
     env_define(env, "require_version", value_builtin(builtin_require_version));
 }
@@ -2029,7 +2638,7 @@ static Value apply_function(Value fn, Value *args, int argc, int line, int col, 
             full_args[i + 1] = args[i];
         }
         Value out = apply_function(bm->fn, full_args, argc + 1, line, col, imports, current_file);
-        free(full_args);
+        xfree(full_args);
         return out;
     }
 
@@ -2051,12 +2660,19 @@ static Value apply_function(Value fn, Value *args, int argc, int line, int col, 
     Function *f = fn.as.fn_val;
     if (argc != f->param_count) runtime_error(line, col, "wrong number of function arguments");
 
+    g_call_depth++;
+    if (g_call_depth > g_max_call_depth) {
+        runtime_error(line, col, "max call depth exceeded");
+    }
+
     Env *call_env = env_new(f->closure);
     for (int i = 0; i < f->param_count; i++) {
         env_define(call_env, f->params[i], args[i]);
     }
 
-    EvalResult r = eval_block(f->body, call_env, imports, f->def_file, 0);
+    EvalResult r = g_use_vm ? vm_eval_block(f->body, call_env, imports, f->def_file, 0)
+                            : eval_block(f->body, call_env, imports, f->def_file, 0);
+    g_call_depth--;
     if (r.control == CTRL_RETURN) return r.value;
     if (r.control == CTRL_BREAK || r.control == CTRL_CONTINUE) {
         runtime_error(line, col, "break/continue not allowed outside loops");
@@ -2126,7 +2742,12 @@ static Value eval_expr_ast(Expr *expr, Env *env, ImportSet *imports, const char 
             if (iter.type == VAL_ARRAY) {
                 for (int i = 0; i < iter.as.array_val->count; i++) {
                     Env *loop_env = env_new(env);
-                    env_define(loop_env, expr->as.array_comp.iter_name, iter.as.array_val->items[i]);
+                    if (expr->as.array_comp.iter_value_name != NULL) {
+                        env_define(loop_env, expr->as.array_comp.iter_name, value_int(i));
+                        env_define(loop_env, expr->as.array_comp.iter_value_name, iter.as.array_val->items[i]);
+                    } else {
+                        env_define(loop_env, expr->as.array_comp.iter_name, iter.as.array_val->items[i]);
+                    }
                     if (expr->as.array_comp.filter_expr != NULL) {
                         Value keep = eval_expr_ast(expr->as.array_comp.filter_expr, loop_env, imports, current_file);
                         if (!is_truthy(keep)) continue;
@@ -2142,7 +2763,12 @@ static Value eval_expr_ast(Expr *expr, Env *env, ImportSet *imports, const char 
                 Object *obj = iter.as.object_val;
                 for (int i = 0; i < obj->count; i++) {
                     Env *loop_env = env_new(env);
-                    env_define(loop_env, expr->as.array_comp.iter_name, value_string(obj->items[i].key));
+                    if (expr->as.array_comp.iter_value_name != NULL) {
+                        env_define(loop_env, expr->as.array_comp.iter_name, value_string(obj->items[i].key));
+                        env_define(loop_env, expr->as.array_comp.iter_value_name, obj->items[i].value);
+                    } else {
+                        env_define(loop_env, expr->as.array_comp.iter_name, value_string(obj->items[i].key));
+                    }
                     if (expr->as.array_comp.filter_expr != NULL) {
                         Value keep = eval_expr_ast(expr->as.array_comp.filter_expr, loop_env, imports, current_file);
                         if (!is_truthy(keep)) continue;
@@ -2198,8 +2824,19 @@ static Value eval_expr_ast(Expr *expr, Env *env, ImportSet *imports, const char 
         }
         case EXPR_BINARY: {
             Value left = eval_expr_ast(expr->as.binary.left, env, imports, current_file);
-            Value right = eval_expr_ast(expr->as.binary.right, env, imports, current_file);
             TokenType op = expr->as.binary.op;
+
+            if (op == TOK_ANDAND) {
+                Value right = eval_expr_ast(expr->as.binary.right, env, imports, current_file);
+                return value_bool(is_truthy(left) && is_truthy(right));
+            }
+
+            if (op == TOK_OROR) {
+                Value right = eval_expr_ast(expr->as.binary.right, env, imports, current_file);
+                return value_bool(is_truthy(left) || is_truthy(right));
+            }
+
+            Value right = eval_expr_ast(expr->as.binary.right, env, imports, current_file);
 
             if (op == TOK_PLUS) {
                 if (left.type == VAL_INT && right.type == VAL_INT) {
@@ -2208,20 +2845,21 @@ static Value eval_expr_ast(Expr *expr, Env *env, ImportSet *imports, const char 
                 if (left.type == VAL_STRING && right.type == VAL_STRING) {
                     char *joined = str_concat(left.as.str_val, right.as.str_val);
                     Value v = value_string(joined);
-                    free(joined);
+                    xfree(joined);
                     return v;
                 }
                 runtime_error(expr->line, expr->col, "'+' expects int+int or string+string");
             }
 
-            if (op == TOK_MINUS || op == TOK_STAR || op == TOK_SLASH) {
+            if (op == TOK_MINUS || op == TOK_STAR || op == TOK_SLASH || op == TOK_PERCENT) {
                 if (left.type != VAL_INT || right.type != VAL_INT) {
                     runtime_error(expr->line, expr->col, "arithmetic expects integers");
                 }
                 if (op == TOK_MINUS) return value_int(left.as.int_val - right.as.int_val);
                 if (op == TOK_STAR) return value_int(left.as.int_val * right.as.int_val);
                 if (right.as.int_val == 0) runtime_error(expr->line, expr->col, "division by zero");
-                return value_int(left.as.int_val / right.as.int_val);
+                if (op == TOK_SLASH) return value_int(left.as.int_val / right.as.int_val);
+                return value_int(left.as.int_val % right.as.int_val);
             }
 
             if (op == TOK_EQ) return value_bool(values_equal(left, right));
@@ -2251,7 +2889,7 @@ static Value eval_expr_ast(Expr *expr, Env *env, ImportSet *imports, const char 
                 }
             }
             Value out = apply_function(callee, args, argc, expr->line, expr->col, imports, current_file);
-            free(args);
+            xfree(args);
             return out;
         }
     }
@@ -2278,8 +2916,11 @@ typedef enum {
     BC_SUB,
     BC_MUL,
     BC_DIV,
+    BC_MOD,
     BC_EQ,
     BC_NEQ,
+    BC_AND,
+    BC_OR,
     BC_LT,
     BC_GT,
     BC_LE,
@@ -2340,7 +2981,25 @@ static int expr_vm_supported(Expr *expr) {
         case EXPR_UNARY:
             return expr_vm_supported(expr->as.unary.right);
         case EXPR_BINARY:
-            return expr_vm_supported(expr->as.binary.left) && expr_vm_supported(expr->as.binary.right);
+            if (!expr_vm_supported(expr->as.binary.left) || !expr_vm_supported(expr->as.binary.right)) return 0;
+            switch (expr->as.binary.op) {
+                case TOK_PLUS:
+                case TOK_MINUS:
+                case TOK_STAR:
+                case TOK_SLASH:
+                case TOK_PERCENT:
+                case TOK_EQ:
+                case TOK_NEQ:
+                case TOK_ANDAND:
+                case TOK_OROR:
+                case TOK_LT:
+                case TOK_GT:
+                case TOK_LE:
+                case TOK_GE:
+                    return 1;
+                default:
+                    return 0;
+            }
         case EXPR_CALL:
             if (!expr_vm_supported(expr->as.call.callee)) return 0;
             for (int i = 0; i < expr->as.call.argc; i++) {
@@ -2435,11 +3094,20 @@ static void compile_expr_bytecode(Expr *expr, Bytecode *bc) {
                 case TOK_SLASH:
                     bytecode_emit(bc, BC_DIV, 0, NULL, expr->line, expr->col);
                     return;
+                case TOK_PERCENT:
+                    bytecode_emit(bc, BC_MOD, 0, NULL, expr->line, expr->col);
+                    return;
                 case TOK_EQ:
                     bytecode_emit(bc, BC_EQ, 0, NULL, expr->line, expr->col);
                     return;
                 case TOK_NEQ:
                     bytecode_emit(bc, BC_NEQ, 0, NULL, expr->line, expr->col);
+                    return;
+                case TOK_ANDAND:
+                    bytecode_emit(bc, BC_AND, 0, NULL, expr->line, expr->col);
+                    return;
+                case TOK_OROR:
+                    bytecode_emit(bc, BC_OR, 0, NULL, expr->line, expr->col);
                     return;
                 case TOK_LT:
                     bytecode_emit(bc, BC_LT, 0, NULL, expr->line, expr->col);
@@ -2521,7 +3189,12 @@ static Value eval_array_comp_vm_expr(Expr *expr, Env *env, ImportSet *imports, c
     if (iter.type == VAL_ARRAY) {
         for (int i = 0; i < iter.as.array_val->count; i++) {
             Env *loop_env = env_new(env);
-            env_define(loop_env, expr->as.array_comp.iter_name, iter.as.array_val->items[i]);
+            if (expr->as.array_comp.iter_value_name != NULL) {
+                env_define(loop_env, expr->as.array_comp.iter_name, value_int(i));
+                env_define(loop_env, expr->as.array_comp.iter_value_name, iter.as.array_val->items[i]);
+            } else {
+                env_define(loop_env, expr->as.array_comp.iter_name, iter.as.array_val->items[i]);
+            }
             if (expr->as.array_comp.filter_expr) {
                 Value keep = eval_expr_vm(expr->as.array_comp.filter_expr, loop_env, imports, current_file);
                 if (!is_truthy(keep)) continue;
@@ -2540,7 +3213,12 @@ static Value eval_array_comp_vm_expr(Expr *expr, Env *env, ImportSet *imports, c
     if (iter.type == VAL_OBJECT) {
         for (int i = 0; i < iter.as.object_val->count; i++) {
             Env *loop_env = env_new(env);
-            env_define(loop_env, expr->as.array_comp.iter_name, value_string(iter.as.object_val->items[i].key));
+            if (expr->as.array_comp.iter_value_name != NULL) {
+                env_define(loop_env, expr->as.array_comp.iter_name, value_string(iter.as.object_val->items[i].key));
+                env_define(loop_env, expr->as.array_comp.iter_value_name, iter.as.object_val->items[i].value);
+            } else {
+                env_define(loop_env, expr->as.array_comp.iter_name, value_string(iter.as.object_val->items[i].key));
+            }
             if (expr->as.array_comp.filter_expr) {
                 Value keep = eval_expr_vm(expr->as.array_comp.filter_expr, loop_env, imports, current_file);
                 if (!is_truthy(keep)) continue;
@@ -2657,7 +3335,7 @@ static Value vm_exec(Bytecode *bc, Env *env, ImportSet *imports, const char *cur
                 if (left.type == VAL_STRING && right.type == VAL_STRING) {
                     char *joined = str_concat(left.as.str_val, right.as.str_val);
                     Value out = value_string(joined);
-                    free(joined);
+                    xfree(joined);
                     vstack_push(&st, out);
                     break;
                 }
@@ -2666,7 +3344,8 @@ static Value vm_exec(Bytecode *bc, Env *env, ImportSet *imports, const char *cur
             }
             case BC_SUB:
             case BC_MUL:
-            case BC_DIV: {
+            case BC_DIV:
+            case BC_MOD: {
                 Value right = vstack_pop(&st, in.line, in.col);
                 Value left = vstack_pop(&st, in.line, in.col);
                 if (left.type != VAL_INT || right.type != VAL_INT) {
@@ -2676,9 +3355,12 @@ static Value vm_exec(Bytecode *bc, Env *env, ImportSet *imports, const char *cur
                     vstack_push(&st, value_int(left.as.int_val - right.as.int_val));
                 } else if (in.op == BC_MUL) {
                     vstack_push(&st, value_int(left.as.int_val * right.as.int_val));
-                } else {
+                } else if (in.op == BC_DIV) {
                     if (right.as.int_val == 0) runtime_error(in.line, in.col, "division by zero");
                     vstack_push(&st, value_int(left.as.int_val / right.as.int_val));
+                } else {
+                    if (right.as.int_val == 0) runtime_error(in.line, in.col, "division by zero");
+                    vstack_push(&st, value_int(left.as.int_val % right.as.int_val));
                 }
                 break;
             }
@@ -2688,6 +3370,15 @@ static Value vm_exec(Bytecode *bc, Env *env, ImportSet *imports, const char *cur
                 Value left = vstack_pop(&st, in.line, in.col);
                 int eq = values_equal(left, right);
                 vstack_push(&st, value_bool(in.op == BC_EQ ? eq : !eq));
+                break;
+            }
+            case BC_AND:
+            case BC_OR: {
+                Value right = vstack_pop(&st, in.line, in.col);
+                Value left = vstack_pop(&st, in.line, in.col);
+                int lv = is_truthy(left);
+                int rv = is_truthy(right);
+                vstack_push(&st, value_bool(in.op == BC_AND ? (lv && rv) : (lv || rv)));
                 break;
             }
             case BC_LT:
@@ -2717,7 +3408,7 @@ static Value vm_exec(Bytecode *bc, Env *env, ImportSet *imports, const char *cur
                 }
                 Value callee = vstack_pop(&st, in.line, in.col);
                 Value out = apply_function(callee, args, argc, in.line, in.col, imports, current_file);
-                free(args);
+                xfree(args);
                 vstack_push(&st, out);
                 break;
             }
@@ -2752,11 +3443,96 @@ static EvalResult eval_result(Value value, ControlKind control) {
     return r;
 }
 
+typedef enum {
+    SBC_EXEC_STMT = 0
+} StmtBytecodeOp;
+
+typedef struct {
+    StmtBytecodeOp op;
+    Stmt *stmt;
+} StmtBytecodeInstr;
+
+typedef struct {
+    StmtBytecodeInstr *items;
+    int count;
+    int cap;
+} StmtBytecode;
+
+typedef struct {
+    Block *block;
+    StmtBytecode code;
+} StmtVmCacheEntry;
+
+static StmtVmCacheEntry *g_stmt_vm_cache = NULL;
+static int g_stmt_vm_cache_count = 0;
+static int g_stmt_vm_cache_cap = 0;
+
+static void stmt_bytecode_emit(StmtBytecode *bc, StmtBytecodeOp op, Stmt *stmt) {
+    if (bc->count == bc->cap) {
+        int next_cap = bc->cap == 0 ? 32 : bc->cap * 2;
+        bc->items = (StmtBytecodeInstr *)xrealloc(bc->items, (size_t)next_cap * sizeof(StmtBytecodeInstr));
+        bc->cap = next_cap;
+    }
+    bc->items[bc->count].op = op;
+    bc->items[bc->count].stmt = stmt;
+    bc->count++;
+}
+
+static void compile_stmt_bytecode(Block *block, StmtBytecode *bc) {
+    for (int i = 0; i < block->count; i++) {
+        stmt_bytecode_emit(bc, SBC_EXEC_STMT, block->items[i]);
+    }
+}
+
+static StmtBytecode *vm_bytecode_for_block(Block *block) {
+    for (int i = 0; i < g_stmt_vm_cache_count; i++) {
+        if (g_stmt_vm_cache[i].block == block) {
+            return &g_stmt_vm_cache[i].code;
+        }
+    }
+
+    if (g_stmt_vm_cache_count == g_stmt_vm_cache_cap) {
+        int next_cap = g_stmt_vm_cache_cap == 0 ? 64 : g_stmt_vm_cache_cap * 2;
+        g_stmt_vm_cache =
+            (StmtVmCacheEntry *)xrealloc(g_stmt_vm_cache, (size_t)next_cap * sizeof(StmtVmCacheEntry));
+        g_stmt_vm_cache_cap = next_cap;
+    }
+
+    StmtVmCacheEntry *entry = &g_stmt_vm_cache[g_stmt_vm_cache_count++];
+    entry->block = block;
+    entry->code.items = NULL;
+    entry->code.count = 0;
+    entry->code.cap = 0;
+    compile_stmt_bytecode(block, &entry->code);
+    return &entry->code;
+}
+
+static EvalResult vm_exec_block(StmtBytecode *bc, Env *env, ImportSet *imports, const char *current_file,
+                                int top_level) {
+    Value last = value_null();
+    for (int pc = 0; pc < bc->count; pc++) {
+        StmtBytecodeInstr in = bc->items[pc];
+        if (in.op != SBC_EXEC_STMT || in.stmt == NULL) {
+            runtime_error(0, 0, "invalid VM statement bytecode");
+        }
+        EvalResult r = eval_statement(in.stmt, env, imports, current_file, top_level);
+        if (r.control != CTRL_NONE) return r;
+        last = r.value;
+    }
+    return eval_result(last, CTRL_NONE);
+}
+
+static EvalResult vm_eval_block(Block *block, Env *env, ImportSet *imports, const char *current_file, int top_level) {
+    StmtBytecode *bc = vm_bytecode_for_block(block);
+    return vm_exec_block(bc, env, imports, current_file, top_level);
+}
+
 static EvalResult eval_program_source(const char *source, Env *env, ImportSet *imports, const char *current_file,
                                       int top_level) {
     Parser p;
     parser_init(&p, source);
     Block *program = parse_program(&p);
+    if (g_use_vm) return vm_eval_block(program, env, imports, current_file, top_level);
     return eval_block(program, env, imports, current_file, top_level);
 }
 
@@ -2919,6 +3695,7 @@ static EvalResult eval_statement(Stmt *stmt, Env *env, ImportSet *imports, const
     if (g_trace) {
         fprintf(stderr, "[trace] %s at %d:%d\n", stmt_kind_name(stmt->kind), stmt->line, stmt->col);
     }
+    step_guard(stmt->line, stmt->col);
 
     switch (stmt->kind) {
         case STMT_LET: {
@@ -2971,11 +3748,13 @@ static EvalResult eval_statement(Stmt *stmt, Env *env, ImportSet *imports, const
             Value cond = eval_expr(stmt->as.if_stmt.cond, env, imports, current_file);
             if (is_truthy(cond)) {
                 Env *branch_env = env_new(env);
-                EvalResult r = eval_block(stmt->as.if_stmt.then_block, branch_env, imports, current_file, 0);
+                EvalResult r = g_use_vm ? vm_eval_block(stmt->as.if_stmt.then_block, branch_env, imports, current_file, 0)
+                                        : eval_block(stmt->as.if_stmt.then_block, branch_env, imports, current_file, 0);
                 if (r.control != CTRL_NONE) return r;
             } else if (stmt->as.if_stmt.else_block != NULL) {
                 Env *branch_env = env_new(env);
-                EvalResult r = eval_block(stmt->as.if_stmt.else_block, branch_env, imports, current_file, 0);
+                EvalResult r = g_use_vm ? vm_eval_block(stmt->as.if_stmt.else_block, branch_env, imports, current_file, 0)
+                                        : eval_block(stmt->as.if_stmt.else_block, branch_env, imports, current_file, 0);
                 if (r.control != CTRL_NONE) return r;
             }
             return eval_result(value_null(), CTRL_NONE);
@@ -2985,7 +3764,8 @@ static EvalResult eval_statement(Stmt *stmt, Env *env, ImportSet *imports, const
                 Value cond = eval_expr(stmt->as.while_stmt.cond, env, imports, current_file);
                 if (!is_truthy(cond)) break;
                 Env *loop_env = env_new(env);
-                EvalResult r = eval_block(stmt->as.while_stmt.body, loop_env, imports, current_file, 0);
+                EvalResult r = g_use_vm ? vm_eval_block(stmt->as.while_stmt.body, loop_env, imports, current_file, 0)
+                                        : eval_block(stmt->as.while_stmt.body, loop_env, imports, current_file, 0);
                 if (r.control == CTRL_RETURN) return r;
                 if (r.control == CTRL_BREAK) break;
                 if (r.control == CTRL_CONTINUE) continue;
@@ -2997,8 +3777,14 @@ static EvalResult eval_statement(Stmt *stmt, Env *env, ImportSet *imports, const
             if (iter.type == VAL_ARRAY) {
                 for (int i = 0; i < iter.as.array_val->count; i++) {
                     Env *loop_env = env_new(env);
-                    env_define(loop_env, stmt->as.for_stmt.iter_name, iter.as.array_val->items[i]);
-                    EvalResult r = eval_block(stmt->as.for_stmt.body, loop_env, imports, current_file, 0);
+                    if (stmt->as.for_stmt.iter_value_name != NULL) {
+                        env_define(loop_env, stmt->as.for_stmt.iter_name, value_int(i));
+                        env_define(loop_env, stmt->as.for_stmt.iter_value_name, iter.as.array_val->items[i]);
+                    } else {
+                        env_define(loop_env, stmt->as.for_stmt.iter_name, iter.as.array_val->items[i]);
+                    }
+                    EvalResult r = g_use_vm ? vm_eval_block(stmt->as.for_stmt.body, loop_env, imports, current_file, 0)
+                                            : eval_block(stmt->as.for_stmt.body, loop_env, imports, current_file, 0);
                     if (r.control == CTRL_RETURN) return r;
                     if (r.control == CTRL_BREAK) break;
                     if (r.control == CTRL_CONTINUE) continue;
@@ -3009,8 +3795,14 @@ static EvalResult eval_statement(Stmt *stmt, Env *env, ImportSet *imports, const
                 Object *obj = iter.as.object_val;
                 for (int i = 0; i < obj->count; i++) {
                     Env *loop_env = env_new(env);
-                    env_define(loop_env, stmt->as.for_stmt.iter_name, value_string(obj->items[i].key));
-                    EvalResult r = eval_block(stmt->as.for_stmt.body, loop_env, imports, current_file, 0);
+                    if (stmt->as.for_stmt.iter_value_name != NULL) {
+                        env_define(loop_env, stmt->as.for_stmt.iter_name, value_string(obj->items[i].key));
+                        env_define(loop_env, stmt->as.for_stmt.iter_value_name, obj->items[i].value);
+                    } else {
+                        env_define(loop_env, stmt->as.for_stmt.iter_name, value_string(obj->items[i].key));
+                    }
+                    EvalResult r = g_use_vm ? vm_eval_block(stmt->as.for_stmt.body, loop_env, imports, current_file, 0)
+                                            : eval_block(stmt->as.for_stmt.body, loop_env, imports, current_file, 0);
                     if (r.control == CTRL_RETURN) return r;
                     if (r.control == CTRL_BREAK) break;
                     if (r.control == CTRL_CONTINUE) continue;
@@ -3026,7 +3818,8 @@ static EvalResult eval_statement(Stmt *stmt, Env *env, ImportSet *imports, const
             return eval_result(value_null(), CTRL_CONTINUE);
         case STMT_CLASS: {
             Env *class_env = env_new(env);
-            EvalResult r = eval_block(stmt->as.class_stmt.body, class_env, imports, current_file, 0);
+            EvalResult r = g_use_vm ? vm_eval_block(stmt->as.class_stmt.body, class_env, imports, current_file, 0)
+                                    : eval_block(stmt->as.class_stmt.body, class_env, imports, current_file, 0);
             if (r.control != CTRL_NONE) {
                 runtime_error(stmt->line, stmt->col, "class body cannot use return/break/continue");
             }
@@ -3040,7 +3833,8 @@ static EvalResult eval_statement(Stmt *stmt, Env *env, ImportSet *imports, const
         }
         case STMT_MODULE: {
             Env *mod_env = env_new(env);
-            EvalResult r = eval_block(stmt->as.module_stmt.body, mod_env, imports, current_file, 0);
+            EvalResult r = g_use_vm ? vm_eval_block(stmt->as.module_stmt.body, mod_env, imports, current_file, 0)
+                                    : eval_block(stmt->as.module_stmt.body, mod_env, imports, current_file, 0);
             if (r.control != CTRL_NONE) {
                 runtime_error(stmt->line, stmt->col, "module body cannot use return/break/continue");
             }
@@ -3062,7 +3856,8 @@ static EvalResult eval_statement(Stmt *stmt, Env *env, ImportSet *imports, const
             g_exception_top = &frame;
 
             if (setjmp(frame.env) == 0) {
-                EvalResult r = eval_block(stmt->as.try_stmt.try_block, env_new(env), imports, current_file, 0);
+                EvalResult r = g_use_vm ? vm_eval_block(stmt->as.try_stmt.try_block, env_new(env), imports, current_file, 0)
+                                        : eval_block(stmt->as.try_stmt.try_block, env_new(env), imports, current_file, 0);
                 g_exception_top = frame.prev;
                 if (r.control != CTRL_NONE) return r;
                 return eval_result(value_null(), CTRL_NONE);
@@ -3071,7 +3866,8 @@ static EvalResult eval_statement(Stmt *stmt, Env *env, ImportSet *imports, const
             g_exception_top = frame.prev;
             Env *catch_env = env_new(env);
             env_define(catch_env, stmt->as.try_stmt.catch_name, g_exception_value);
-            EvalResult r = eval_block(stmt->as.try_stmt.catch_block, catch_env, imports, current_file, 0);
+            EvalResult r = g_use_vm ? vm_eval_block(stmt->as.try_stmt.catch_block, catch_env, imports, current_file, 0)
+                                    : eval_block(stmt->as.try_stmt.catch_block, catch_env, imports, current_file, 0);
             if (r.control != CTRL_NONE) return r;
             return eval_result(value_null(), CTRL_NONE);
         }
@@ -3095,22 +3891,38 @@ static EvalResult eval_statement(Stmt *stmt, Env *env, ImportSet *imports, const
             return eval_result(value_null(), CTRL_NONE);
         }
         case STMT_IMPORT: {
-            char *path = resolve_path(current_file, stmt->as.import_stmt.path);
+            char *path = NULL;
+            if (is_builtin_module_path(stmt->as.import_stmt.path)) {
+                path = xstrdup(stmt->as.import_stmt.path);
+            } else {
+                path = resolve_path(current_file, stmt->as.import_stmt.path);
+            }
             if (import_set_contains(imports, path)) {
-                free(path);
+                xfree(path);
                 return eval_result(value_null(), CTRL_NONE);
             }
 
             import_set_add(imports, path);
-            char *source = read_file(path);
+            char *source = NULL;
+            if (is_builtin_module_path(path)) {
+                const char *builtin_src = builtin_module_source(path);
+                if (builtin_src != NULL) {
+                    source = xstrdup(builtin_src);
+                }
+            } else {
+                source = read_file(path);
+            }
             if (!source) {
-                free(path);
+                xfree(path);
+                if (is_builtin_module_path(stmt->as.import_stmt.path)) {
+                    runtime_error(stmt->line, stmt->col, "import failed: unknown builtin package");
+                }
                 runtime_error(stmt->line, stmt->col, "import failed: file not found");
             }
 
             EvalResult r = eval_program_source(source, env, imports, path, 0);
-            free(source);
-            free(path);
+            xfree(source);
+            xfree(path);
             if (r.control != CTRL_NONE) {
                 runtime_error(stmt->line, stmt->col, "import top-level cannot return/break/continue");
             }
@@ -3182,6 +3994,36 @@ int main(int argc, char **argv) {
             script_arg_index += 2;
             continue;
         }
+        if (strcmp(arg, "--max-steps") == 0) {
+            if (script_arg_index + 1 >= argc) {
+                fprintf(stderr, "Error: --max-steps expects a value\n");
+                return 1;
+            }
+            char *endp = NULL;
+            long long v = strtoll(argv[script_arg_index + 1], &endp, 10);
+            if (endp == argv[script_arg_index + 1] || *endp != '\0' || v < 0) {
+                fprintf(stderr, "Error: --max-steps expects a non-negative integer\n");
+                return 1;
+            }
+            g_max_steps = v;
+            script_arg_index += 2;
+            continue;
+        }
+        if (strcmp(arg, "--max-call-depth") == 0) {
+            if (script_arg_index + 1 >= argc) {
+                fprintf(stderr, "Error: --max-call-depth expects a value\n");
+                return 1;
+            }
+            char *endp = NULL;
+            long long v = strtoll(argv[script_arg_index + 1], &endp, 10);
+            if (endp == argv[script_arg_index + 1] || *endp != '\0' || v <= 0 || v > INT_MAX) {
+                fprintf(stderr, "Error: --max-call-depth expects an integer in [1, %d]\n", INT_MAX);
+                return 1;
+            }
+            g_max_call_depth = (int)v;
+            script_arg_index += 2;
+            continue;
+        }
         if (strcmp(arg, "--debug") == 0) {
             g_debug_enabled = 1;
             explicit_debug = 1;
@@ -3243,7 +4085,7 @@ int main(int argc, char **argv) {
 
     if (argc <= script_arg_index) {
         fprintf(stderr,
-                "Usage: cy [--trace] [--parse-only|--lint] [--vm|--vm-strict] [--max-alloc N] [--debug] [--break lines] [--step] [--step-count N] "
+                "Usage: cy [--trace] [--parse-only|--lint] [--vm|--vm-strict] [--max-alloc N] [--max-steps N] [--max-call-depth N] [--debug] [--break lines] [--step] [--step-count N] "
                 "[--debug-no-prompt] [--version] "
                 "<file.cy> [args...]\n");
         return 1;
@@ -3259,12 +4101,14 @@ int main(int argc, char **argv) {
         Parser p;
         parser_init(&p, source);
         (void)parse_program(&p);
-        free(source);
+        xfree(source);
         return 0;
     }
 
     g_script_argc = argc - script_arg_index;
     g_script_argv = argv + script_arg_index;
+    g_step_count = 0;
+    g_call_depth = 0;
 
     Env *global = env_new(NULL);
     install_builtins(global);
@@ -3277,7 +4121,7 @@ int main(int argc, char **argv) {
     import_set_add(&imports, argv[script_arg_index]);
 
     EvalResult r = eval_program_source(source, global, &imports, argv[script_arg_index], 1);
-    free(source);
+    xfree(source);
 
     if (r.control == CTRL_RETURN) {
         fprintf(stderr, "Error: return at top-level is not allowed\n");

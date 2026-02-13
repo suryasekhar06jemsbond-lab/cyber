@@ -1,7 +1,41 @@
 #!/usr/bin/env sh
 set -eu
 
-target=${1:-.}
+usage() {
+  cat <<'USAGE'
+Usage: cylint [--strict] [target]
+USAGE
+}
+
+strict=0
+target="."
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --strict)
+      strict=1
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    -*)
+      echo "Error: unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+    *)
+      if [ "$target" != "." ]; then
+        echo "Error: multiple targets are not supported" >&2
+        usage >&2
+        exit 1
+      fi
+      target="$1"
+      ;;
+  esac
+  shift
+done
 
 if [ -x ./cy ]; then
   runtime=./cy
@@ -15,6 +49,9 @@ fi
 lint_file() {
   file="$1"
   "$runtime" --parse-only "$file" >/dev/null
+  if [ "$strict" -eq 1 ]; then
+    "$SCRIPT_DIR/cyfmt.sh" --check "$file" >/dev/null
+  fi
 }
 
 if [ -f "$target" ]; then

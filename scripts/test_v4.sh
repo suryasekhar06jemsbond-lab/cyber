@@ -56,6 +56,36 @@ for (n in [1, 2, 3]) {
 }
 print(total);
 
+if (false) {
+    print("bad");
+} else if (true) {
+    print("elif");
+} else {
+    print("bad");
+}
+
+let pair_sum = 0;
+for (i, n in [10, 20, 30]) {
+    pair_sum = pair_sum + i + n;
+}
+print(pair_sum);
+
+let obj2 = {x: 4, y: 5};
+let obj_sum = 0;
+for (k, v in obj2) {
+    obj_sum = obj_sum + v;
+}
+print(obj_sum);
+
+let pair_comp = [i + n for i, n in [1, 2, 3]];
+print(pair_comp[2]);
+print(len(range(1, 8, 3)));
+print(int("42"));
+print(str(99));
+print(has(obj2, "x"));
+print(len(values(obj2)));
+print(len(items(obj2)));
+
 let obj = {a: 1, b: 2};
 let keys_arr = [k for k in obj];
 print(len(keys_arr));
@@ -63,6 +93,30 @@ print(len(keys_arr));
 let ys = [n * 2 for n in [1, 2, 3, 4] if n > 2];
 print(ys[0]);
 print(len(ys));
+
+print(10 % 3);
+print(abs(-11));
+print(min(5, 8));
+print(max(5, 8));
+print(clamp(15, 0, 10));
+print(sum([1, 2, 3, 4]));
+print(all([1, true, 3]));
+print(any([0, false, 7]));
+
+import "cy:math";
+import "cy:arrays";
+import "cy:objects";
+
+print(Math.pow(2, 5));
+print(Arrays.first([9, 8, 7]));
+print(Arrays.last([9, 8, 7]));
+let em = Arrays.enumerate([4, 5, 6]);
+print(em[1][0]);
+print(em[1][1]);
+let merged = Objects.merge({a: 1}, {b: 2});
+print(len(keys(merged)));
+print(Objects.get_or(merged, "a", 0));
+print(Objects.get_or(merged, "z", 9));
 CYEOF
 
 expected='int
@@ -70,9 +124,35 @@ expected='int
 7
 12
 6
+elif
+63
+9
+5
+3
+42
+99
+true
+2
+2
 2
 6
-2'
+2
+1
+11
+5
+8
+10
+10
+true
+true
+32
+9
+7
+1
+5
+2
+1
+9'
 
 echo "[v4] running interpreter path..."
 out_ast=$(./cy "$tmpd/v4.cy")
@@ -108,6 +188,6 @@ out_vm_strict=$(./cy --vm-strict "$tmpd/v4.cy")
 }
 
 echo "[v4] lint check..."
-./scripts/cylint.sh "$tmpd/v4.cy" >/dev/null
+./scripts/cylint.sh --strict "$tmpd/v4.cy" >/dev/null
 
 echo "[v4] PASS"

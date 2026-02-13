@@ -42,7 +42,10 @@ typedef enum {
     TOK_MINUS,
     TOK_STAR,
     TOK_SLASH,
+    TOK_PERCENT,
     TOK_BANG,
+    TOK_ANDAND,
+    TOK_OROR,
     TOK_EQ,
     TOK_NEQ,
     TOK_LT,
@@ -113,6 +116,7 @@ struct Expr {
         struct {
             Expr *value_expr;
             char *iter_name;
+            char *iter_value_name;
             Expr *iter_expr;
             Expr *filter_expr;
         } array_comp;
@@ -204,6 +208,7 @@ struct Stmt {
         } while_stmt;
         struct {
             char *iter_name;
+            char *iter_value_name;
             Expr *iter_expr;
             Block *body;
         } for_stmt;
@@ -432,6 +437,99 @@ static char *resolve_import_path(const char *current_file, const char *import_pa
     char *out = path_join(dir, import_path);
     free(dir);
     return out;
+}
+
+static const char *g_builtin_math_module =
+    "module Math {\n"
+    "    fn __cy_math_abs(x) {\n"
+    "        if (x < 0) { return -x; }\n"
+    "        return x;\n"
+    "    }\n"
+    "    fn __cy_math_min(a, b) {\n"
+    "        if (a < b) { return a; }\n"
+    "        return b;\n"
+    "    }\n"
+    "    fn __cy_math_max(a, b) {\n"
+    "        if (a > b) { return a; }\n"
+    "        return b;\n"
+    "    }\n"
+    "    fn __cy_math_clamp(x, lo, hi) {\n"
+    "        if (x < lo) { return lo; }\n"
+    "        if (x > hi) { return hi; }\n"
+    "        return x;\n"
+    "    }\n"
+    "    fn __cy_math_pow(base, exp) {\n"
+    "        if (exp < 0) { return 0; }\n"
+    "        let acc = 1;\n"
+    "        let i = 0;\n"
+    "        while (i < exp) {\n"
+    "            acc = acc * base;\n"
+    "            i = i + 1;\n"
+    "        }\n"
+    "        return acc;\n"
+    "    }\n"
+    "    fn __cy_math_sum(xs) {\n"
+    "        let acc = 0;\n"
+    "        for (x in xs) { acc = acc + x; }\n"
+    "        return acc;\n"
+    "    }\n"
+    "    let abs = __cy_math_abs;\n"
+    "    let min = __cy_math_min;\n"
+    "    let max = __cy_math_max;\n"
+    "    let clamp = __cy_math_clamp;\n"
+    "    let pow = __cy_math_pow;\n"
+    "    let sum = __cy_math_sum;\n"
+    "}\n";
+
+static const char *g_builtin_arrays_module =
+    "module Arrays {\n"
+    "    fn __cy_arrays_first(xs) {\n"
+    "        if (len(xs) == 0) { return null; }\n"
+    "        return xs[0];\n"
+    "    }\n"
+    "    fn __cy_arrays_last(xs) {\n"
+    "        if (len(xs) == 0) { return null; }\n"
+    "        return xs[len(xs) - 1];\n"
+    "    }\n"
+    "    fn __cy_arrays_sum(xs) {\n"
+    "        let acc = 0;\n"
+    "        for (x in xs) { acc = acc + x; }\n"
+    "        return acc;\n"
+    "    }\n"
+    "    fn __cy_arrays_enumerate(xs) {\n"
+    "        return [[i, x] for i, x in xs];\n"
+    "    }\n"
+    "    let first = __cy_arrays_first;\n"
+    "    let last = __cy_arrays_last;\n"
+    "    let sum = __cy_arrays_sum;\n"
+    "    let enumerate = __cy_arrays_enumerate;\n"
+    "}\n";
+
+static const char *g_builtin_objects_module =
+    "module Objects {\n"
+    "    fn __cy_objects_merge(a, b) {\n"
+    "        let out = object_new();\n"
+    "        for (k, v in a) { object_set(out, k, v); }\n"
+    "        for (k, v in b) { object_set(out, k, v); }\n"
+    "        return out;\n"
+    "    }\n"
+    "    fn __cy_objects_get_or(obj, key, fallback) {\n"
+    "        if (has(obj, key)) { return object_get(obj, key); }\n"
+    "        return fallback;\n"
+    "    }\n"
+    "    let merge = __cy_objects_merge;\n"
+    "    let get_or = __cy_objects_get_or;\n"
+    "}\n";
+
+static int is_builtin_module_path(const char *path) {
+    return path != NULL && strncmp(path, "cy:", 3) == 0;
+}
+
+static const char *builtin_module_source(const char *path) {
+    if (strcmp(path, "cy:math") == 0) return g_builtin_math_module;
+    if (strcmp(path, "cy:arrays") == 0) return g_builtin_arrays_module;
+    if (strcmp(path, "cy:objects") == 0) return g_builtin_objects_module;
+    return NULL;
 }
 
 static void strset_init(StrSet *set) {
@@ -726,6 +824,20 @@ static Token lexer_next_token(Lexer *lx) {
         }
         return make_token(TOK_BANG, line, col);
     }
+    if (ch == '&') {
+        if (lx_peek(lx) == '&') {
+            lx_next(lx);
+            return make_token(TOK_ANDAND, line, col);
+        }
+        return make_token(TOK_ILLEGAL, line, col);
+    }
+    if (ch == '|') {
+        if (lx_peek(lx) == '|') {
+            lx_next(lx);
+            return make_token(TOK_OROR, line, col);
+        }
+        return make_token(TOK_ILLEGAL, line, col);
+    }
     if (ch == '<') {
         if (lx_peek(lx) == '=') {
             lx_next(lx);
@@ -746,6 +858,7 @@ static Token lexer_next_token(Lexer *lx) {
         case '-': return make_token(TOK_MINUS, line, col);
         case '*': return make_token(TOK_STAR, line, col);
         case '/': return make_token(TOK_SLASH, line, col);
+        case '%': return make_token(TOK_PERCENT, line, col);
         case '(': return make_token(TOK_LPAREN, line, col);
         case ')': return make_token(TOK_RPAREN, line, col);
         case '{': return make_token(TOK_LBRACE, line, col);
@@ -777,6 +890,8 @@ static void expect_current(Parser *p, TokenType t, const char *msg) {
 
 enum {
     PREC_LOWEST = 0,
+    PREC_OR = 1,
+    PREC_AND = 2,
     PREC_EQUALITY = 5,
     PREC_COMPARE = 6,
     PREC_SUM = 10,
@@ -787,6 +902,10 @@ enum {
 
 static int precedence(TokenType t) {
     switch (t) {
+        case TOK_OROR:
+            return PREC_OR;
+        case TOK_ANDAND:
+            return PREC_AND;
         case TOK_EQ:
         case TOK_NEQ:
             return PREC_EQUALITY;
@@ -800,6 +919,7 @@ static int precedence(TokenType t) {
             return PREC_SUM;
         case TOK_STAR:
         case TOK_SLASH:
+        case TOK_PERCENT:
             return PREC_PRODUCT;
         case TOK_LPAREN:
         case TOK_LBRACKET:
@@ -829,12 +949,19 @@ static Expr *parse_array_literal(Parser *p) {
     if (p->cur.type == TOK_FOR) {
         Expr *comp = new_expr(EX_ARRAY_COMP, line, col);
         comp->as.array_comp.value_expr = first;
+        comp->as.array_comp.iter_value_name = NULL;
 
         next_token(p);
         expect_current(p, TOK_IDENT, "expected iterator variable after 'for'");
         comp->as.array_comp.iter_name = xstrdup(p->cur.text);
 
         next_token(p);
+        if (p->cur.type == TOK_COMMA) {
+            next_token(p);
+            expect_current(p, TOK_IDENT, "expected second iterator variable after ','");
+            comp->as.array_comp.iter_value_name = xstrdup(p->cur.text);
+            next_token(p);
+        }
         expect_current(p, TOK_IN, "expected 'in' in array comprehension");
 
         next_token(p);
@@ -1114,8 +1241,14 @@ static Stmt *parse_if_statement(Parser *p) {
     Block *else_block = NULL;
     if (p->cur.type == TOK_ELSE) {
         next_token(p);
-        expect_current(p, TOK_LBRACE, "expected '{' after else");
-        else_block = parse_block(p);
+        if (p->cur.type == TOK_IF) {
+            Stmt *else_if_stmt = parse_if_statement(p);
+            else_block = new_block();
+            block_add_stmt(else_block, else_if_stmt);
+        } else {
+            expect_current(p, TOK_LBRACE, "expected '{' after else");
+            else_block = parse_block(p);
+        }
     }
 
     Stmt *s = new_stmt(ST_IF, line, col);
@@ -1156,8 +1289,15 @@ static Stmt *parse_for_statement(Parser *p) {
     next_token(p);
     expect_current(p, TOK_IDENT, "expected iterator variable in for statement");
     char *iter_name = xstrdup(p->cur.text);
+    char *iter_value_name = NULL;
 
     next_token(p);
+    if (p->cur.type == TOK_COMMA) {
+        next_token(p);
+        expect_current(p, TOK_IDENT, "expected second iterator variable in for statement");
+        iter_value_name = xstrdup(p->cur.text);
+        next_token(p);
+    }
     expect_current(p, TOK_IN, "expected 'in' in for statement");
 
     next_token(p);
@@ -1171,6 +1311,7 @@ static Stmt *parse_for_statement(Parser *p) {
 
     Stmt *s = new_stmt(ST_FOR, line, col);
     s->as.for_stmt.iter_name = iter_name;
+    s->as.for_stmt.iter_value_name = iter_value_name;
     s->as.for_stmt.iter_expr = iter_expr;
     s->as.for_stmt.body = body;
     return s;
@@ -1462,7 +1603,13 @@ static Block *parse_program(Parser *p) {
 static void load_program_recursive(const char *path, Block *out, StrSet *visited) {
     if (!strset_add(visited, path)) return;
 
-    char *source = read_file(path);
+    char *source = NULL;
+    const char *builtin_src = builtin_module_source(path);
+    if (builtin_src) {
+        source = xstrdup(builtin_src);
+    } else {
+        source = read_file(path);
+    }
     if (!source) {
         fprintf(stderr, "Error: could not read input source: %s\n", path);
         exit(1);
@@ -1475,7 +1622,12 @@ static void load_program_recursive(const char *path, Block *out, StrSet *visited
     for (int i = 0; i < program->count; i++) {
         Stmt *s = program->items[i];
         if (s->kind == ST_IMPORT) {
-            char *child = resolve_import_path(path, s->as.import_stmt.path);
+            char *child = NULL;
+            if (is_builtin_module_path(s->as.import_stmt.path)) {
+                child = xstrdup(s->as.import_stmt.path);
+            } else {
+                child = resolve_import_path(path, s->as.import_stmt.path);
+            }
             load_program_recursive(child, out, visited);
             free(child);
             continue;
@@ -1577,6 +1729,14 @@ typedef enum {
     BUILTIN_NONE = 0,
     BUILTIN_PRINT,
     BUILTIN_LEN,
+    BUILTIN_ABS,
+    BUILTIN_MIN,
+    BUILTIN_MAX,
+    BUILTIN_CLAMP,
+    BUILTIN_SUM,
+    BUILTIN_ALL,
+    BUILTIN_ANY,
+    BUILTIN_RANGE,
     BUILTIN_TYPE,
     BUILTIN_TYPE_OF,
     BUILTIN_IS_INT,
@@ -1585,6 +1745,8 @@ typedef enum {
     BUILTIN_IS_ARRAY,
     BUILTIN_IS_FUNCTION,
     BUILTIN_IS_NULL,
+    BUILTIN_STR,
+    BUILTIN_INT,
     BUILTIN_PUSH,
     BUILTIN_POP,
     BUILTIN_ARGC,
@@ -1593,6 +1755,9 @@ typedef enum {
     BUILTIN_OBJECT_SET,
     BUILTIN_OBJECT_GET,
     BUILTIN_KEYS,
+    BUILTIN_VALUES,
+    BUILTIN_ITEMS,
+    BUILTIN_HAS,
     BUILTIN_NEW,
     BUILTIN_LANG_VERSION,
     BUILTIN_REQUIRE_VERSION,
@@ -1611,6 +1776,14 @@ typedef enum {
 static BuiltinKind builtin_kind(const char *name) {
     if (strcmp(name, "print") == 0) return BUILTIN_PRINT;
     if (strcmp(name, "len") == 0) return BUILTIN_LEN;
+    if (strcmp(name, "abs") == 0) return BUILTIN_ABS;
+    if (strcmp(name, "min") == 0) return BUILTIN_MIN;
+    if (strcmp(name, "max") == 0) return BUILTIN_MAX;
+    if (strcmp(name, "clamp") == 0) return BUILTIN_CLAMP;
+    if (strcmp(name, "sum") == 0) return BUILTIN_SUM;
+    if (strcmp(name, "all") == 0) return BUILTIN_ALL;
+    if (strcmp(name, "any") == 0) return BUILTIN_ANY;
+    if (strcmp(name, "range") == 0) return BUILTIN_RANGE;
     if (strcmp(name, "type") == 0) return BUILTIN_TYPE;
     if (strcmp(name, "type_of") == 0) return BUILTIN_TYPE_OF;
     if (strcmp(name, "is_int") == 0) return BUILTIN_IS_INT;
@@ -1619,6 +1792,8 @@ static BuiltinKind builtin_kind(const char *name) {
     if (strcmp(name, "is_array") == 0) return BUILTIN_IS_ARRAY;
     if (strcmp(name, "is_function") == 0) return BUILTIN_IS_FUNCTION;
     if (strcmp(name, "is_null") == 0) return BUILTIN_IS_NULL;
+    if (strcmp(name, "str") == 0) return BUILTIN_STR;
+    if (strcmp(name, "int") == 0) return BUILTIN_INT;
     if (strcmp(name, "push") == 0) return BUILTIN_PUSH;
     if (strcmp(name, "pop") == 0) return BUILTIN_POP;
     if (strcmp(name, "argc") == 0) return BUILTIN_ARGC;
@@ -1627,6 +1802,9 @@ static BuiltinKind builtin_kind(const char *name) {
     if (strcmp(name, "object_set") == 0) return BUILTIN_OBJECT_SET;
     if (strcmp(name, "object_get") == 0) return BUILTIN_OBJECT_GET;
     if (strcmp(name, "keys") == 0) return BUILTIN_KEYS;
+    if (strcmp(name, "values") == 0) return BUILTIN_VALUES;
+    if (strcmp(name, "items") == 0) return BUILTIN_ITEMS;
+    if (strcmp(name, "has") == 0) return BUILTIN_HAS;
     if (strcmp(name, "new") == 0) return BUILTIN_NEW;
     if (strcmp(name, "lang_version") == 0) return BUILTIN_LANG_VERSION;
     if (strcmp(name, "require_version") == 0) return BUILTIN_REQUIRE_VERSION;
@@ -1647,6 +1825,14 @@ static const char *builtin_callee_name(BuiltinKind kind) {
     switch (kind) {
         case BUILTIN_PRINT: return "cy_builtin_print";
         case BUILTIN_LEN: return "cy_builtin_len";
+        case BUILTIN_ABS: return "cy_builtin_abs";
+        case BUILTIN_MIN: return "cy_builtin_min";
+        case BUILTIN_MAX: return "cy_builtin_max";
+        case BUILTIN_CLAMP: return "cy_builtin_clamp";
+        case BUILTIN_SUM: return "cy_builtin_sum";
+        case BUILTIN_ALL: return "cy_builtin_all";
+        case BUILTIN_ANY: return "cy_builtin_any";
+        case BUILTIN_RANGE: return "cy_builtin_range";
         case BUILTIN_TYPE:
         case BUILTIN_TYPE_OF:
             return "cy_builtin_type";
@@ -1656,6 +1842,8 @@ static const char *builtin_callee_name(BuiltinKind kind) {
         case BUILTIN_IS_ARRAY: return "cy_builtin_is_array";
         case BUILTIN_IS_FUNCTION: return "cy_builtin_is_function";
         case BUILTIN_IS_NULL: return "cy_builtin_is_null";
+        case BUILTIN_STR: return "cy_builtin_str";
+        case BUILTIN_INT: return "cy_builtin_int";
         case BUILTIN_PUSH: return "cy_builtin_push";
         case BUILTIN_POP: return "cy_builtin_pop";
         case BUILTIN_ARGC: return "cy_builtin_argc";
@@ -1664,6 +1852,9 @@ static const char *builtin_callee_name(BuiltinKind kind) {
         case BUILTIN_OBJECT_SET: return "cy_builtin_object_set";
         case BUILTIN_OBJECT_GET: return "cy_builtin_object_get";
         case BUILTIN_KEYS: return "cy_builtin_keys";
+        case BUILTIN_VALUES: return "cy_builtin_values";
+        case BUILTIN_ITEMS: return "cy_builtin_items";
+        case BUILTIN_HAS: return "cy_builtin_has";
         case BUILTIN_NEW: return "cy_builtin_new";
         case BUILTIN_LANG_VERSION: return "cy_builtin_lang_version";
         case BUILTIN_REQUIRE_VERSION: return "cy_builtin_require_version";
@@ -1784,6 +1975,7 @@ static int expr_uses_ident(Expr *e, const char *name) {
         case EX_ARRAY_COMP:
             if (expr_uses_ident(e->as.array_comp.iter_expr, name)) return 1;
             if (strcmp(e->as.array_comp.iter_name, name) == 0) return 0;
+            if (e->as.array_comp.iter_value_name && strcmp(e->as.array_comp.iter_value_name, name) == 0) return 0;
             if (expr_uses_ident(e->as.array_comp.value_expr, name)) return 1;
             if (e->as.array_comp.filter_expr && expr_uses_ident(e->as.array_comp.filter_expr, name)) return 1;
             return 0;
@@ -1822,6 +2014,8 @@ static void gen_array_comp_expr(Expr *e, StrBuf *sb, GenCtx *ctx) {
     scope_collect_visible_bindings(ctx, &visible);
     for (int i = 0; i < visible.count; i++) {
         const char *name = visible.cy_names[i];
+        if (strcmp(name, e->as.array_comp.iter_name) == 0) continue;
+        if (e->as.array_comp.iter_value_name && strcmp(name, e->as.array_comp.iter_value_name) == 0) continue;
         int used = 0;
         if (expr_uses_ident(e->as.array_comp.iter_expr, name)) used = 1;
         if (!used && expr_uses_ident(e->as.array_comp.value_expr, name)) used = 1;
@@ -1878,10 +2072,25 @@ static void gen_array_comp_expr(Expr *e, StrBuf *sb, GenCtx *ctx) {
                   idx_tmp, iter_tmp, idx_tmp);
 
     scope_push(&hctx);
-    char *item_tmp = make_temp_name(&hctx, e->as.array_comp.iter_name);
-    scope_add(&hctx, e->as.array_comp.iter_name, item_tmp);
-    sb_append_fmt(ctx->comp_cases, "                    CyValue %s = %s.as.array_val->items[%s];\n", item_tmp, iter_tmp,
-                  idx_tmp);
+    char *item_tmp = NULL;
+    char *index_tmp = NULL;
+    if (e->as.array_comp.iter_value_name) {
+        index_tmp = make_temp_name(&hctx, e->as.array_comp.iter_name);
+        item_tmp = make_temp_name(&hctx, e->as.array_comp.iter_value_name);
+        scope_add(&hctx, e->as.array_comp.iter_name, index_tmp);
+        scope_add(&hctx, e->as.array_comp.iter_value_name, item_tmp);
+        sb_append_fmt(ctx->comp_cases, "                    CyValue %s = cy_int(%s);\n", index_tmp, idx_tmp);
+        sb_append_fmt(ctx->comp_cases, "                    (void)%s;\n", index_tmp);
+        sb_append_fmt(ctx->comp_cases, "                    CyValue %s = %s.as.array_val->items[%s];\n", item_tmp, iter_tmp,
+                      idx_tmp);
+        sb_append_fmt(ctx->comp_cases, "                    (void)%s;\n", item_tmp);
+    } else {
+        item_tmp = make_temp_name(&hctx, e->as.array_comp.iter_name);
+        scope_add(&hctx, e->as.array_comp.iter_name, item_tmp);
+        sb_append_fmt(ctx->comp_cases, "                    CyValue %s = %s.as.array_val->items[%s];\n", item_tmp, iter_tmp,
+                      idx_tmp);
+        sb_append_fmt(ctx->comp_cases, "                    (void)%s;\n", item_tmp);
+    }
 
     if (e->as.array_comp.filter_expr) {
         StrBuf filter_expr;
@@ -1898,6 +2107,7 @@ static void gen_array_comp_expr(Expr *e, StrBuf *sb, GenCtx *ctx) {
                   value_expr.buf);
     free(value_expr.buf);
     scope_pop(&hctx);
+    free(index_tmp);
     free(item_tmp);
 
     sb_append_str(ctx->comp_cases, "                }\n");
@@ -1906,10 +2116,19 @@ static void gen_array_comp_expr(Expr *e, StrBuf *sb, GenCtx *ctx) {
                   idx_tmp, iter_tmp, idx_tmp);
 
     scope_push(&hctx);
-    char *obj_item_tmp = make_temp_name(&hctx, e->as.array_comp.iter_name);
-    scope_add(&hctx, e->as.array_comp.iter_name, obj_item_tmp);
+    char *obj_key_tmp = make_temp_name(&hctx, e->as.array_comp.iter_name);
+    char *obj_value_tmp = NULL;
+    scope_add(&hctx, e->as.array_comp.iter_name, obj_key_tmp);
     sb_append_fmt(ctx->comp_cases, "                    CyValue %s = cy_string(%s.as.object_val->items[%s].key);\n",
-                  obj_item_tmp, iter_tmp, idx_tmp);
+                  obj_key_tmp, iter_tmp, idx_tmp);
+    sb_append_fmt(ctx->comp_cases, "                    (void)%s;\n", obj_key_tmp);
+    if (e->as.array_comp.iter_value_name) {
+        obj_value_tmp = make_temp_name(&hctx, e->as.array_comp.iter_value_name);
+        scope_add(&hctx, e->as.array_comp.iter_value_name, obj_value_tmp);
+        sb_append_fmt(ctx->comp_cases, "                    CyValue %s = %s.as.object_val->items[%s].value;\n",
+                      obj_value_tmp, iter_tmp, idx_tmp);
+        sb_append_fmt(ctx->comp_cases, "                    (void)%s;\n", obj_value_tmp);
+    }
 
     if (e->as.array_comp.filter_expr) {
         StrBuf filter_expr_obj;
@@ -1926,7 +2145,8 @@ static void gen_array_comp_expr(Expr *e, StrBuf *sb, GenCtx *ctx) {
                   value_expr_obj.buf);
     free(value_expr_obj.buf);
     scope_pop(&hctx);
-    free(obj_item_tmp);
+    free(obj_key_tmp);
+    free(obj_value_tmp);
 
     sb_append_str(ctx->comp_cases, "                }\n");
     sb_append_str(ctx->comp_cases, "            } else {\n");
@@ -2066,6 +2286,22 @@ static void gen_expr(Expr *e, StrBuf *sb, GenCtx *ctx) {
             fail_at(e->line, e->col, "unsupported unary operator");
             return;
         case EX_BINARY:
+            if (e->as.binary.op == TOK_ANDAND) {
+                sb_append_str(sb, "cy_bool(cy_truthy(");
+                gen_expr(e->as.binary.left, sb, ctx);
+                sb_append_str(sb, ") && cy_truthy(");
+                gen_expr(e->as.binary.right, sb, ctx);
+                sb_append_str(sb, "))");
+                return;
+            }
+            if (e->as.binary.op == TOK_OROR) {
+                sb_append_str(sb, "cy_bool(cy_truthy(");
+                gen_expr(e->as.binary.left, sb, ctx);
+                sb_append_str(sb, ") || cy_truthy(");
+                gen_expr(e->as.binary.right, sb, ctx);
+                sb_append_str(sb, "))");
+                return;
+            }
             switch (e->as.binary.op) {
                 case TOK_PLUS:
                     sb_append_str(sb, "cy_add(");
@@ -2078,6 +2314,9 @@ static void gen_expr(Expr *e, StrBuf *sb, GenCtx *ctx) {
                     break;
                 case TOK_SLASH:
                     sb_append_str(sb, "cy_div(");
+                    break;
+                case TOK_PERCENT:
+                    sb_append_str(sb, "cy_mod(");
                     break;
                 case TOK_EQ:
                     sb_append_str(sb, "cy_eq(");
@@ -2147,6 +2386,8 @@ static void emit_stmt(FILE *out, Stmt *s, GenCtx *ctx, int indent, int top_level
             scope_add(ctx, s->as.let_stmt.name, tmp);
             emit_indent(out, indent);
             fprintf(out, "CyValue %s = %s;\n", tmp, expr.buf);
+            emit_indent(out, indent);
+            fprintf(out, "(void)%s;\n", tmp);
             free(tmp);
             free(expr.buf);
             return;
@@ -2307,6 +2548,7 @@ static void emit_stmt(FILE *out, Stmt *s, GenCtx *ctx, int indent, int top_level
             char *iter_tmp = make_temp_name(ctx, "iter");
             char *idx_tmp = make_temp_name(ctx, "i");
             char *item_tmp = NULL;
+            char *index_tmp = NULL;
             emit_indent(out, indent);
             fprintf(out, "CyValue %s = %s;\n", iter_tmp, expr.buf);
             free(expr.buf);
@@ -2317,16 +2559,36 @@ static void emit_stmt(FILE *out, Stmt *s, GenCtx *ctx, int indent, int top_level
             fprintf(out, "for (int %s = 0; %s < %s.as.array_val->count; %s++) {\n", idx_tmp, idx_tmp, iter_tmp, idx_tmp);
 
             scope_push(ctx);
-            item_tmp = make_temp_name(ctx, s->as.for_stmt.iter_name);
-            scope_add(ctx, s->as.for_stmt.iter_name, item_tmp);
-            emit_indent(out, indent + 2);
-            fprintf(out, "CyValue %s = %s.as.array_val->items[%s];\n", item_tmp, iter_tmp, idx_tmp);
+            if (s->as.for_stmt.iter_value_name) {
+                index_tmp = make_temp_name(ctx, s->as.for_stmt.iter_name);
+                item_tmp = make_temp_name(ctx, s->as.for_stmt.iter_value_name);
+                scope_add(ctx, s->as.for_stmt.iter_name, index_tmp);
+                scope_add(ctx, s->as.for_stmt.iter_value_name, item_tmp);
+                emit_indent(out, indent + 2);
+                fprintf(out, "CyValue %s = cy_int(%s);\n", index_tmp, idx_tmp);
+                emit_indent(out, indent + 2);
+                fprintf(out, "(void)%s;\n", index_tmp);
+                emit_indent(out, indent + 2);
+                fprintf(out, "CyValue %s = %s.as.array_val->items[%s];\n", item_tmp, iter_tmp, idx_tmp);
+                emit_indent(out, indent + 2);
+                fprintf(out, "(void)%s;\n", item_tmp);
+            } else {
+                item_tmp = make_temp_name(ctx, s->as.for_stmt.iter_name);
+                scope_add(ctx, s->as.for_stmt.iter_name, item_tmp);
+                emit_indent(out, indent + 2);
+                fprintf(out, "CyValue %s = %s.as.array_val->items[%s];\n", item_tmp, iter_tmp, idx_tmp);
+                emit_indent(out, indent + 2);
+                fprintf(out, "(void)%s;\n", item_tmp);
+            }
             int prev_depth = ctx->loop_depth;
             ctx->loop_depth++;
             emit_block(out, s->as.for_stmt.body, ctx, indent + 2, 0, in_function);
             ctx->loop_depth = prev_depth;
             scope_pop(ctx);
+            free(index_tmp);
             free(item_tmp);
+            index_tmp = NULL;
+            item_tmp = NULL;
 
             emit_indent(out, indent + 1);
             fprintf(out, "}\n");
@@ -2340,12 +2602,25 @@ static void emit_stmt(FILE *out, Stmt *s, GenCtx *ctx, int indent, int top_level
             scope_add(ctx, s->as.for_stmt.iter_name, item_tmp);
             emit_indent(out, indent + 2);
             fprintf(out, "CyValue %s = cy_string(%s.as.object_val->items[%s].key);\n", item_tmp, iter_tmp, idx_tmp);
+            emit_indent(out, indent + 2);
+            fprintf(out, "(void)%s;\n", item_tmp);
+            if (s->as.for_stmt.iter_value_name) {
+                index_tmp = make_temp_name(ctx, s->as.for_stmt.iter_value_name);
+                scope_add(ctx, s->as.for_stmt.iter_value_name, index_tmp);
+                emit_indent(out, indent + 2);
+                fprintf(out, "CyValue %s = %s.as.object_val->items[%s].value;\n", index_tmp, iter_tmp, idx_tmp);
+                emit_indent(out, indent + 2);
+                fprintf(out, "(void)%s;\n", index_tmp);
+            }
             prev_depth = ctx->loop_depth;
             ctx->loop_depth++;
             emit_block(out, s->as.for_stmt.body, ctx, indent + 2, 0, in_function);
             ctx->loop_depth = prev_depth;
             scope_pop(ctx);
+            free(index_tmp);
             free(item_tmp);
+            index_tmp = NULL;
+            item_tmp = NULL;
 
             emit_indent(out, indent + 1);
             fprintf(out, "}\n");
@@ -2394,6 +2669,8 @@ static void emit_stmt(FILE *out, Stmt *s, GenCtx *ctx, int indent, int top_level
             scope_add(ctx, s->as.class_stmt.name, tmp);
             emit_indent(out, indent);
             fprintf(out, "CyValue %s = cy_object_value(%s);\n", tmp, obj_tmp);
+            emit_indent(out, indent);
+            fprintf(out, "(void)%s;\n", tmp);
 
             free(name_lit.buf);
             free(obj_tmp);
@@ -2417,6 +2694,8 @@ static void emit_stmt(FILE *out, Stmt *s, GenCtx *ctx, int indent, int top_level
             scope_add(ctx, s->as.module_stmt.name, tmp);
             emit_indent(out, indent);
             fprintf(out, "CyValue %s = cy_object_value(%s);\n", tmp, obj_tmp);
+            emit_indent(out, indent);
+            fprintf(out, "(void)%s;\n", tmp);
 
             free(obj_tmp);
             free(tmp);
@@ -2430,6 +2709,8 @@ static void emit_stmt(FILE *out, Stmt *s, GenCtx *ctx, int indent, int top_level
             scope_add(ctx, s->as.type_stmt.name, tmp);
             emit_indent(out, indent);
             fprintf(out, "CyValue %s = %s;\n", tmp, expr.buf);
+            emit_indent(out, indent);
+            fprintf(out, "(void)%s;\n", tmp);
             free(tmp);
             free(expr.buf);
             return;
@@ -2492,6 +2773,8 @@ static void emit_stmt(FILE *out, Stmt *s, GenCtx *ctx, int indent, int top_level
             scope_add(ctx, s->as.fn_stmt.name, tmp);
             emit_indent(out, indent);
             fprintf(out, "CyValue %s = cy_fn(\"%s\");\n", tmp, s->as.fn_stmt.name);
+            emit_indent(out, indent);
+            fprintf(out, "(void)%s;\n", tmp);
             free(tmp);
             return;
 
@@ -2920,6 +3203,12 @@ static void emit_generated_runtime(FILE *out) {
     fputs("    if (rhs == 0) cy_runtime_error(\"division by zero\");\n", out);
     fputs("    return cy_int(lhs / rhs);\n", out);
     fputs("}\n\n", out);
+    fputs("static CyValue cy_mod(CyValue a, CyValue b) {\n", out);
+    fputs("    long long lhs = cy_expect_int(a, \"'%'\");\n", out);
+    fputs("    long long rhs = cy_expect_int(b, \"'%'\");\n", out);
+    fputs("    if (rhs == 0) cy_runtime_error(\"division by zero\");\n", out);
+    fputs("    return cy_int(lhs % rhs);\n", out);
+    fputs("}\n\n", out);
 
     fputs("static CyValue cy_neg(CyValue v) { return cy_int(-cy_expect_int(v, \"unary '-'\")); }\n", out);
     fputs("static CyValue cy_not(CyValue v) { return cy_bool(!cy_truthy(v)); }\n", out);
@@ -2982,6 +3271,89 @@ static void emit_generated_runtime(FILE *out) {
     fputs("    return cy_null();\n", out);
     fputs("}\n\n", out);
 
+    fputs("static CyValue cy_builtin_abs(int argc, CyValue *args) {\n", out);
+    fputs("    if (argc != 1) cy_runtime_error(\"abs() expects exactly 1 argument\");\n", out);
+    fputs("    return cy_int(llabs(cy_expect_int(args[0], \"abs\")));\n", out);
+    fputs("}\n\n", out);
+
+    fputs("static CyValue cy_builtin_min(int argc, CyValue *args) {\n", out);
+    fputs("    if (argc != 2) cy_runtime_error(\"min() expects exactly 2 arguments\");\n", out);
+    fputs("    long long a = cy_expect_int(args[0], \"min\");\n", out);
+    fputs("    long long b = cy_expect_int(args[1], \"min\");\n", out);
+    fputs("    return cy_int(a < b ? a : b);\n", out);
+    fputs("}\n\n", out);
+
+    fputs("static CyValue cy_builtin_max(int argc, CyValue *args) {\n", out);
+    fputs("    if (argc != 2) cy_runtime_error(\"max() expects exactly 2 arguments\");\n", out);
+    fputs("    long long a = cy_expect_int(args[0], \"max\");\n", out);
+    fputs("    long long b = cy_expect_int(args[1], \"max\");\n", out);
+    fputs("    return cy_int(a > b ? a : b);\n", out);
+    fputs("}\n\n", out);
+
+    fputs("static CyValue cy_builtin_clamp(int argc, CyValue *args) {\n", out);
+    fputs("    if (argc != 3) cy_runtime_error(\"clamp() expects exactly 3 arguments\");\n", out);
+    fputs("    long long v = cy_expect_int(args[0], \"clamp\");\n", out);
+    fputs("    long long lo = cy_expect_int(args[1], \"clamp\");\n", out);
+    fputs("    long long hi = cy_expect_int(args[2], \"clamp\");\n", out);
+    fputs("    if (v < lo) return cy_int(lo);\n", out);
+    fputs("    if (v > hi) return cy_int(hi);\n", out);
+    fputs("    return cy_int(v);\n", out);
+    fputs("}\n\n", out);
+
+    fputs("static CyValue cy_builtin_sum(int argc, CyValue *args) {\n", out);
+    fputs("    if (argc != 1) cy_runtime_error(\"sum() expects exactly 1 argument\");\n", out);
+    fputs("    if (args[0].type != CY_ARRAY) cy_runtime_error(\"sum() expects array argument\");\n", out);
+    fputs("    long long acc = 0;\n", out);
+    fputs("    CyArray *arr = args[0].as.array_val;\n", out);
+    fputs("    for (int i = 0; i < arr->count; i++) acc += cy_expect_int(arr->items[i], \"sum item\");\n", out);
+    fputs("    return cy_int(acc);\n", out);
+    fputs("}\n\n", out);
+
+    fputs("static CyValue cy_builtin_all(int argc, CyValue *args) {\n", out);
+    fputs("    if (argc != 1) cy_runtime_error(\"all() expects exactly 1 argument\");\n", out);
+    fputs("    if (args[0].type != CY_ARRAY) cy_runtime_error(\"all() expects array argument\");\n", out);
+    fputs("    CyArray *arr = args[0].as.array_val;\n", out);
+    fputs("    for (int i = 0; i < arr->count; i++) {\n", out);
+    fputs("        if (!cy_truthy(arr->items[i])) return cy_bool(0);\n", out);
+    fputs("    }\n", out);
+    fputs("    return cy_bool(1);\n", out);
+    fputs("}\n\n", out);
+
+    fputs("static CyValue cy_builtin_any(int argc, CyValue *args) {\n", out);
+    fputs("    if (argc != 1) cy_runtime_error(\"any() expects exactly 1 argument\");\n", out);
+    fputs("    if (args[0].type != CY_ARRAY) cy_runtime_error(\"any() expects array argument\");\n", out);
+    fputs("    CyArray *arr = args[0].as.array_val;\n", out);
+    fputs("    for (int i = 0; i < arr->count; i++) {\n", out);
+    fputs("        if (cy_truthy(arr->items[i])) return cy_bool(1);\n", out);
+    fputs("    }\n", out);
+    fputs("    return cy_bool(0);\n", out);
+    fputs("}\n\n", out);
+
+    fputs("static CyValue cy_builtin_range(int argc, CyValue *args) {\n", out);
+    fputs("    if (argc < 1 || argc > 3) cy_runtime_error(\"range() expects 1 to 3 integer arguments\");\n", out);
+    fputs("    long long start = 0;\n", out);
+    fputs("    long long stop = 0;\n", out);
+    fputs("    long long step = 1;\n", out);
+    fputs("    if (argc == 1) {\n", out);
+    fputs("        stop = cy_expect_int(args[0], \"range\");\n", out);
+    fputs("    } else if (argc == 2) {\n", out);
+    fputs("        start = cy_expect_int(args[0], \"range\");\n", out);
+    fputs("        stop = cy_expect_int(args[1], \"range\");\n", out);
+    fputs("    } else {\n", out);
+    fputs("        start = cy_expect_int(args[0], \"range\");\n", out);
+    fputs("        stop = cy_expect_int(args[1], \"range\");\n", out);
+    fputs("        step = cy_expect_int(args[2], \"range\");\n", out);
+    fputs("        if (step == 0) cy_runtime_error(\"range() step must not be zero\");\n", out);
+    fputs("    }\n", out);
+    fputs("    CyArray *arr = cy_array_alloc();\n", out);
+    fputs("    if (step > 0) {\n", out);
+    fputs("        for (long long i = start; i < stop; i += step) cy_array_push_raw(arr, cy_int(i));\n", out);
+    fputs("    } else {\n", out);
+    fputs("        for (long long i = start; i > stop; i += step) cy_array_push_raw(arr, cy_int(i));\n", out);
+    fputs("    }\n", out);
+    fputs("    return cy_array_value(arr);\n", out);
+    fputs("}\n\n", out);
+
     fputs("static CyValue cy_builtin_type(int argc, CyValue *args) {\n", out);
     fputs("    if (argc != 1) cy_runtime_error(\"type() expects exactly 1 argument\");\n", out);
     fputs("    return cy_string(cy_type_name(args[0]));\n", out);
@@ -3015,6 +3387,38 @@ static void emit_generated_runtime(FILE *out) {
     fputs("static CyValue cy_builtin_is_null(int argc, CyValue *args) {\n", out);
     fputs("    if (argc != 1) cy_runtime_error(\"is_null() expects exactly 1 argument\");\n", out);
     fputs("    return cy_bool(args[0].type == CY_NULL);\n", out);
+    fputs("}\n\n", out);
+
+    fputs("static CyValue cy_builtin_str(int argc, CyValue *args) {\n", out);
+    fputs("    if (argc != 1) cy_runtime_error(\"str() expects exactly 1 argument\");\n", out);
+    fputs("    char buf[64];\n", out);
+    fputs("    switch (args[0].type) {\n", out);
+    fputs("        case CY_STRING: return cy_string(args[0].as.str_val);\n", out);
+    fputs("        case CY_INT:\n", out);
+    fputs("            snprintf(buf, sizeof(buf), \"%lld\", args[0].as.int_val);\n", out);
+    fputs("            return cy_string(buf);\n", out);
+    fputs("        case CY_BOOL: return cy_string(args[0].as.bool_val ? \"true\" : \"false\");\n", out);
+    fputs("        case CY_NULL: return cy_string(\"null\");\n", out);
+    fputs("        case CY_ARRAY: return cy_string(\"[array]\");\n", out);
+    fputs("        case CY_OBJECT: return cy_string(\"[object]\");\n", out);
+    fputs("        case CY_FNREF: return cy_string(\"<fn>\");\n", out);
+    fputs("        case CY_BOUND_FN: return cy_string(\"<bound-fn>\");\n", out);
+    fputs("    }\n", out);
+    fputs("    return cy_string(\"\");\n", out);
+    fputs("}\n\n", out);
+
+    fputs("static CyValue cy_builtin_int(int argc, CyValue *args) {\n", out);
+    fputs("    if (argc != 1) cy_runtime_error(\"int() expects exactly 1 argument\");\n", out);
+    fputs("    if (args[0].type == CY_INT) return args[0];\n", out);
+    fputs("    if (args[0].type == CY_BOOL) return cy_int(args[0].as.bool_val ? 1 : 0);\n", out);
+    fputs("    if (args[0].type == CY_STRING) {\n", out);
+    fputs("        char *endp = NULL;\n", out);
+    fputs("        long long v = strtoll(args[0].as.str_val, &endp, 10);\n", out);
+    fputs("        if (endp == args[0].as.str_val || *endp != '\\0') cy_runtime_error(\"int() invalid string integer\");\n", out);
+    fputs("        return cy_int(v);\n", out);
+    fputs("    }\n", out);
+    fputs("    cy_runtime_error(\"int() expects int, bool, or string\");\n", out);
+    fputs("    return cy_null();\n", out);
     fputs("}\n\n", out);
 
     fputs("static CyValue cy_builtin_push(int argc, CyValue *args) {\n", out);
@@ -3094,6 +3498,34 @@ static void emit_generated_runtime(FILE *out) {
     fputs("        cy_array_push_raw(arr, cy_string(obj->items[i].key));\n", out);
     fputs("    }\n", out);
     fputs("    return cy_array_value(arr);\n", out);
+    fputs("}\n\n", out);
+
+    fputs("static CyValue cy_builtin_values(int argc, CyValue *args) {\n", out);
+    fputs("    if (argc != 1) cy_runtime_error(\"values() expects exactly 1 argument\");\n", out);
+    fputs("    CyObject *obj = cy_expect_object(args[0], \"values\");\n", out);
+    fputs("    CyArray *arr = cy_array_alloc();\n", out);
+    fputs("    for (int i = 0; i < obj->count; i++) {\n", out);
+    fputs("        cy_array_push_raw(arr, obj->items[i].value);\n", out);
+    fputs("    }\n", out);
+    fputs("    return cy_array_value(arr);\n", out);
+    fputs("}\n\n", out);
+
+    fputs("static CyValue cy_builtin_items(int argc, CyValue *args) {\n", out);
+    fputs("    if (argc != 1) cy_runtime_error(\"items() expects exactly 1 argument\");\n", out);
+    fputs("    CyObject *obj = cy_expect_object(args[0], \"items\");\n", out);
+    fputs("    CyArray *arr = cy_array_alloc();\n", out);
+    fputs("    for (int i = 0; i < obj->count; i++) {\n", out);
+    fputs("        CyValue pair = cy_array_make(2, (CyValue[]){cy_string(obj->items[i].key), obj->items[i].value});\n", out);
+    fputs("        cy_array_push_raw(arr, pair);\n", out);
+    fputs("    }\n", out);
+    fputs("    return cy_array_value(arr);\n", out);
+    fputs("}\n\n", out);
+
+    fputs("static CyValue cy_builtin_has(int argc, CyValue *args) {\n", out);
+    fputs("    if (argc != 2) cy_runtime_error(\"has() expects exactly 2 arguments\");\n", out);
+    fputs("    CyObject *obj = cy_expect_object(args[0], \"has\");\n", out);
+    fputs("    const char *key = cy_expect_string(args[1], \"has\");\n", out);
+    fputs("    return cy_bool(cy_object_find_index(obj, key) >= 0);\n", out);
     fputs("}\n\n", out);
 
     fputs("static CyValue cy_builtin_lang_version(int argc, CyValue *args) {\n", out);

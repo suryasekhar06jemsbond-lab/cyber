@@ -51,6 +51,11 @@ if ($hasSh -and $hasMake) {
     Run-Checked -Exe 'sh' -Args @('./scripts/test_v4.sh')
     Run-Checked -Exe 'sh' -Args @('./scripts/test_compatibility.sh')
     Run-Checked -Exe 'sh' -Args @('./scripts/test_ecosystem.sh')
+    Run-Checked -Exe 'sh' -Args @('./scripts/test_registry.sh')
+    Run-Checked -Exe 'sh' -Args @('./scripts/test_runtime_hardening.sh')
+    Run-Checked -Exe 'sh' -Args @('./scripts/test_sanitizers.sh')
+    Run-Checked -Exe 'sh' -Args @('./scripts/test_fuzz_vm.sh', '4242', '500')
+    Run-Checked -Exe 'sh' -Args @('./scripts/test_soak_runtime.sh', '40')
 } elseif ($hasSh -and -not $hasMake) {
     Write-Host "[prod-win] warning: 'sh' found but 'make' not found; skipping shell test suite"
 } else {
@@ -64,6 +69,11 @@ Write-Host "[prod-win] powershell suite..."
 Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/test_v3.ps1')
 Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/test_v4.ps1')
 Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/test_compatibility.ps1')
+Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/test_registry.ps1')
+Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/test_runtime_hardening.ps1')
+Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/test_sanitizers.ps1')
+Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/test_fuzz_vm.ps1', '-Seed', '4242', '-Cases', '500')
+Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/test_soak_runtime.ps1', '-Iterations', '40')
 
 Write-Host "[prod-win] powershell tooling smoke..."
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_prod_" + [guid]::NewGuid().ToString('N'))
@@ -76,6 +86,7 @@ print(x);
 "@ | Set-Content -NoNewline -LiteralPath $minPath
 
     Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/cyfmt.ps1', $minPath)
+    Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/cyfmt.ps1', '-Check', $minPath)
     Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/cydbg.ps1', $minPath)
 
     Push-Location $tmp
@@ -89,6 +100,8 @@ print(x);
         Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'resolve', 'app')
         Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'lock', 'app')
         Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'verify-lock')
+        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'install', 'app', './.cydeps')
+        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'doctor')
     }
     finally {
         Pop-Location

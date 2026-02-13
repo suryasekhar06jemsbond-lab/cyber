@@ -1,4 +1,5 @@
 param(
+    [switch]$Strict,
     [string]$Target = '.'
 )
 
@@ -22,6 +23,13 @@ function Lint-CyFile {
     & $runtime --parse-only $Path | Out-Null
     if ($LASTEXITCODE -ne 0) {
         throw "Lint failed for $Path"
+    }
+    if ($Strict) {
+        $fmtScript = Join-Path $PSScriptRoot 'cyfmt.ps1'
+        & $fmtScript -Check $Path | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            throw "Formatting check failed for $Path"
+        }
     }
 }
 

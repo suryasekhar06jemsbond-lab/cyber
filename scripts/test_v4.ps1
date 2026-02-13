@@ -119,6 +119,36 @@ for (n in [1, 2, 3]) {
 }
 print(total);
 
+if (false) {
+    print("bad");
+} else if (true) {
+    print("elif");
+} else {
+    print("bad");
+}
+
+let pair_sum = 0;
+for (i, n in [10, 20, 30]) {
+    pair_sum = pair_sum + i + n;
+}
+print(pair_sum);
+
+let obj2 = {x: 4, y: 5};
+let obj_sum = 0;
+for (k, v in obj2) {
+    obj_sum = obj_sum + v;
+}
+print(obj_sum);
+
+let pair_comp = [i + n for i, n in [1, 2, 3]];
+print(pair_comp[2]);
+print(len(range(1, 8, 3)));
+print(int("42"));
+print(str(99));
+print(has(obj2, "x"));
+print(len(values(obj2)));
+print(len(items(obj2)));
+
 let obj = {a: 1, b: 2};
 let keys_arr = [k for k in obj];
 print(len(keys_arr));
@@ -126,9 +156,33 @@ print(len(keys_arr));
 let ys = [n * 2 for n in [1, 2, 3, 4] if n > 2];
 print(ys[0]);
 print(len(ys));
+
+print(10 % 3);
+print(abs(-11));
+print(min(5, 8));
+print(max(5, 8));
+print(clamp(15, 0, 10));
+print(sum([1, 2, 3, 4]));
+print(all([1, true, 3]));
+print(any([0, false, 7]));
+
+import "cy:math";
+import "cy:arrays";
+import "cy:objects";
+
+print(Math.pow(2, 5));
+print(Arrays.first([9, 8, 7]));
+print(Arrays.last([9, 8, 7]));
+let em = Arrays.enumerate([4, 5, 6]);
+print(em[1][0]);
+print(em[1][1]);
+let merged = Objects.merge({a: 1}, {b: 2});
+print(len(keys(merged)));
+print(Objects.get_or(merged, "a", 0));
+print(Objects.get_or(merged, "z", 9));
 "@ | Set-Content -NoNewline $programPath
 
-    $expected = "int`n42`n7`n12`n6`n2`n6`n2"
+    $expected = "int`n42`n7`n12`n6`nelif`n63`n9`n5`n3`n42`n99`ntrue`n2`n2`n2`n6`n2`n1`n11`n5`n8`n10`n10`ntrue`ntrue`n32`n9`n7`n1`n5`n2`n1`n9"
 
     Write-Host "[v4-win] running interpreter path..."
     $outAst = Run-ProcessText -Exe $runtimeExe -Args @($programPath)
@@ -150,7 +204,7 @@ print(len(ys));
 
     Write-Host "[v4-win] lint check..."
     $lintScript = Join-Path $root 'scripts/cylint.ps1'
-    Invoke-Checked -Exe $lintScript -Args @($programPath)
+    Invoke-Checked -Exe $lintScript -Args @('-Strict', $programPath)
 
     Write-Host "[v4-win] PASS"
 }

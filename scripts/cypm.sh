@@ -3,6 +3,7 @@ set -eu
 
 manifest="cy.pkg"
 lockfile="cy.lock"
+registry_config="cypm.config"
 
 usage() {
   cat <<'USAGE'
@@ -10,19 +11,27 @@ Usage: cypm <command> [args]
 Commands:
   init [project]
   add <name> <path> [version] [deps_csv]
+  add-remote <name> [constraint]
   dep <name> <deps_csv>
   version <name> <version>
   remove <name>
   list
   path <name>
+  search [pattern]
+  publish <name> <version> <path> [deps_csv]
+  registry [get|set <path_or_url>]
   resolve [roots_csv]
   lock [roots_csv]
   verify-lock
+  install [roots_csv] [target_dir]
+  doctor
 
 Version examples:
   1.2.3
 Dependency examples:
   core@^1.0.0,util@>=2.1.0,fmt@1.4.2
+Note:
+  quote constraints containing > or < in POSIX shells
 USAGE
 }
 
@@ -115,6 +124,198 @@ project_name() {
   printf '%s\n' "$project"
 }
 
+registry_get_source() {
+  line=$(grep '^registry=' "$registry_config" 2>/dev/null | tail -n1 || true)
+  if [ -n "$line" ]; then
+    printf '%s\n' "${line#registry=}"
+    return 0
+  fi
+  printf 'cy.registry\n'
+}
+
+registry_set_source() {
+  src=$1
+  {
+    echo "# cypm configuration"
+    echo "registry=$src"
+  } > "$registry_config"
+}
+
+registry_is_url() {
+  case "$1" in
+    http://*|https://*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+path_is_absolute() {
+  p=$1
+  case "$p" in
+    /*) return 0 ;;
+  esac
+  printf '%s' "$p" | grep -Eq '^[A-Za-z]:[\\/]'
+}
+
+registry_fetch_to_file() {
+  src=$1
+  out=$2
+  if registry_is_url "$src"; then
+    if command -v curl >/dev/null 2>&1; then
+      curl -fsSL "$src" -o "$out"
+      return 0
+    fi
+    if command -v wget >/dev/null 2>&1; then
+      wget -qO "$out" "$src"
+      return 0
+    fi
+    echo "Error: neither curl nor wget is available to fetch registry URL" >&2
+    return 1
+  fi
+
+  [ -f "$src" ] || {
+    echo "Error: registry source not found: $src" >&2
+    return 1
+  }
+  cp "$src" "$out"
+}
+
+registry_entry_resolve_source() {
+  registry_src=$1
+  entry_src=$2
+
+  if registry_is_url "$entry_src"; then
+    printf '%s\n' "$entry_src"
+    return 0
+  fi
+  if path_is_absolute "$entry_src"; then
+    printf '%s\n' "$entry_src"
+    return 0
+  fi
+
+  if registry_is_url "$registry_src"; then
+    base=${registry_src%/*}
+    printf '%s/%s\n' "$base" "$entry_src"
+    return 0
+  fi
+
+  base_dir=$(dirname "$registry_src")
+  if [ "$base_dir" = "." ]; then
+    base_dir=$(pwd)
+  fi
+  printf '%s/%s\n' "$base_dir" "$entry_src"
+}
+
+semver_cmp() {
+  a=$1
+  b=$2
+  awk -v a="$a" -v b="$b" '
+    function split_sem(v, out, n) {
+      n = split(v, out, ".")
+      return n == 3
+    }
+    BEGIN {
+      if (!split_sem(a, A) || !split_sem(b, B)) {
+        print 0
+        exit
+      }
+      for (i = 1; i <= 3; i++) {
+        if ((A[i] + 0) < (B[i] + 0)) { print -1; exit }
+        if ((A[i] + 0) > (B[i] + 0)) { print 1; exit }
+      }
+      print 0
+    }
+  '
+}
+
+semver_next_major() {
+  v=$1
+  awk -v v="$v" '
+    BEGIN {
+      n = split(v, S, ".")
+      if (n != 3) { print ""; exit }
+      print (S[1] + 1) ".0.0"
+    }
+  '
+}
+
+semver_next_minor() {
+  v=$1
+  awk -v v="$v" '
+    BEGIN {
+      n = split(v, S, ".")
+      if (n != 3) { print ""; exit }
+      print S[1] "." (S[2] + 1) ".0"
+    }
+  '
+}
+
+constraint_ok_sh() {
+  ver=$1
+  c=$(trim_spaces "$2")
+  [ -z "$c" ] && return 0
+
+  case "$c" in
+    '>='*)
+      base=${c#>=}
+      is_semver "$base" || return 1
+      [ "$(semver_cmp "$ver" "$base")" -ge 0 ]
+      return
+      ;;
+    '<='*)
+      base=${c#<=}
+      is_semver "$base" || return 1
+      [ "$(semver_cmp "$ver" "$base")" -le 0 ]
+      return
+      ;;
+    '>'*)
+      base=${c#>}
+      is_semver "$base" || return 1
+      [ "$(semver_cmp "$ver" "$base")" -gt 0 ]
+      return
+      ;;
+    '<'*)
+      base=${c#<}
+      is_semver "$base" || return 1
+      [ "$(semver_cmp "$ver" "$base")" -lt 0 ]
+      return
+      ;;
+    '='*)
+      base=${c#=}
+      is_semver "$base" || return 1
+      [ "$(semver_cmp "$ver" "$base")" -eq 0 ]
+      return
+      ;;
+    '^'*)
+      base=${c#^}
+      is_semver "$base" || return 1
+      lo=$base
+      maj=$(printf '%s\n' "$base" | cut -d. -f1)
+      min=$(printf '%s\n' "$base" | cut -d. -f2)
+      pat=$(printf '%s\n' "$base" | cut -d. -f3)
+      if [ "$maj" -gt 0 ]; then
+        hi=$(semver_next_major "$base")
+      elif [ "$min" -gt 0 ]; then
+        hi="0.$((min + 1)).0"
+      else
+        hi="0.0.$((pat + 1))"
+      fi
+      [ "$(semver_cmp "$ver" "$lo")" -ge 0 ] && [ "$(semver_cmp "$ver" "$hi")" -lt 0 ]
+      return
+      ;;
+    '~'*)
+      base=${c#~}
+      is_semver "$base" || return 1
+      lo=$base
+      hi=$(semver_next_minor "$base")
+      [ "$(semver_cmp "$ver" "$lo")" -ge 0 ] && [ "$(semver_cmp "$ver" "$hi")" -lt 0 ]
+      return
+      ;;
+  esac
+
+  is_semver "$c" || return 1
+  [ "$(semver_cmp "$ver" "$c")" -eq 0 ]
+}
+
 cmd=${1:-}
 case "$cmd" in
   init)
@@ -173,6 +374,62 @@ case "$cmd" in
 
     write_manifest "$(project_name)"
     echo "Added $name -> $path (version $ver)"
+    ;;
+
+  add-remote)
+    ensure_manifest
+    name=${2:-}
+    constraint=${3:-}
+    [ -n "$name" ] || { usage; exit 1; }
+
+    registry_src=$(registry_get_source)
+    reg_tmp=$(mktemp)
+    trap 'rm -f "$reg_tmp"' EXIT
+    registry_fetch_to_file "$registry_src" "$reg_tmp"
+
+    best_ver=""
+    best_source=""
+    best_deps=""
+
+    while IFS='|' read -r r_name r_ver r_source r_deps _; do
+      r_name=$(trim_spaces "${r_name:-}")
+      r_ver=$(trim_spaces "${r_ver:-}")
+      r_source=$(trim_spaces "${r_source:-}")
+      r_deps=$(normalize_csv "${r_deps:-}")
+      [ -n "$r_name" ] || continue
+      [ "$r_name" = "$name" ] || continue
+      is_semver "$r_ver" || continue
+      [ -n "$r_source" ] || continue
+
+      if ! constraint_ok_sh "$r_ver" "$constraint"; then
+        continue
+      fi
+
+      if [ -z "$best_ver" ] || [ "$(semver_cmp "$r_ver" "$best_ver")" -gt 0 ]; then
+        best_ver="$r_ver"
+        best_source="$r_source"
+        best_deps="$r_deps"
+      fi
+    done < "$reg_tmp"
+
+    rm -f "$reg_tmp"
+    trap - EXIT
+
+    if [ -z "$best_ver" ]; then
+      if [ -n "$constraint" ]; then
+        echo "Error: no registry match for $name@$constraint" >&2
+      else
+        echo "Error: no registry match for $name" >&2
+      fi
+      exit 1
+    fi
+
+    resolved_source=$(registry_entry_resolve_source "$registry_src" "$best_source")
+    if [ -n "$best_deps" ]; then
+      "$0" add "$name" "$resolved_source" "$best_ver" "$best_deps"
+    else
+      "$0" add "$name" "$resolved_source" "$best_ver"
+    fi
     ;;
 
   dep)
@@ -264,6 +521,91 @@ case "$cmd" in
     path=$(get_pkg_path "$name" || true)
     [ -n "$path" ] || { echo "Error: package '$name' not found" >&2; exit 1; }
     echo "$path"
+    ;;
+
+  registry)
+    subcmd=${2:-get}
+    case "$subcmd" in
+      get)
+        registry_get_source
+        ;;
+      set)
+        src=${3:-}
+        [ -n "$src" ] || { echo "Error: registry set expects <path_or_url>" >&2; exit 1; }
+        registry_set_source "$src"
+        echo "Registry set to $src"
+        ;;
+      *)
+        echo "Error: unknown registry subcommand '$subcmd'" >&2
+        usage >&2
+        exit 1
+        ;;
+    esac
+    ;;
+
+  search)
+    pattern=${2:-}
+    registry_src=$(registry_get_source)
+    reg_tmp=$(mktemp)
+    trap 'rm -f "$reg_tmp"' EXIT
+    registry_fetch_to_file "$registry_src" "$reg_tmp"
+
+    while IFS='|' read -r r_name r_ver r_source r_deps _; do
+      r_name=$(trim_spaces "${r_name:-}")
+      r_ver=$(trim_spaces "${r_ver:-}")
+      r_source=$(trim_spaces "${r_source:-}")
+      r_deps=$(normalize_csv "${r_deps:-}")
+      [ -n "$r_name" ] || continue
+      [ -n "$r_ver" ] || continue
+      [ -n "$r_source" ] || continue
+      if [ -n "$pattern" ]; then
+        if ! printf '%s %s %s\n' "$r_name" "$r_ver" "$r_source" | grep -i -- "$pattern" >/dev/null 2>&1; then
+          continue
+        fi
+      fi
+      if [ -n "$r_deps" ]; then
+        echo "$r_name version=$r_ver source=$r_source deps=$r_deps"
+      else
+        echo "$r_name version=$r_ver source=$r_source"
+      fi
+    done < "$reg_tmp"
+
+    rm -f "$reg_tmp"
+    trap - EXIT
+    ;;
+
+  publish)
+    name=${2:-}
+    ver=${3:-}
+    src_path=${4:-}
+    deps=$(normalize_csv "${5:-}")
+    [ -n "$name" ] && [ -n "$ver" ] && [ -n "$src_path" ] || { usage; exit 1; }
+    is_semver "$ver" || { echo "Error: version must match MAJOR.MINOR.PATCH" >&2; exit 1; }
+    [ -e "$src_path" ] || { echo "Error: publish path not found: $src_path" >&2; exit 1; }
+
+    registry_src=$(registry_get_source)
+    if registry_is_url "$registry_src"; then
+      echo "Error: publish supports only file registry sources" >&2
+      exit 1
+    fi
+
+    mkdir -p "$(dirname "$registry_src")"
+    [ -f "$registry_src" ] || : > "$registry_src"
+
+    tmp=$(mktemp)
+    trap 'rm -f "$tmp"' EXIT
+    awk -F'|' -v n="$name" -v v="$ver" '
+      /^[[:space:]]*$/ { print; next }
+      /^[[:space:]]*#/ { print; next }
+      {
+        if ($1 == n && $2 == v) next
+        print
+      }
+    ' "$registry_src" > "$tmp"
+    printf '%s|%s|%s|%s\n' "$name" "$ver" "$src_path" "$deps" >> "$tmp"
+    mv "$tmp" "$registry_src"
+    trap - EXIT
+    echo "Published $name $ver to $registry_src"
     ;;
 
   resolve)
@@ -564,6 +906,120 @@ case "$cmd" in
       exit 1
     fi
     echo "Lockfile verified"
+    ;;
+
+  install)
+    ensure_manifest
+    roots=$(normalize_csv "${2:-}")
+    target=${3:-.cydeps}
+    resolved=$("$0" resolve "$roots")
+
+    mkdir -p "$target"
+    log_file="$target/.install-log"
+    : > "$log_file"
+
+    err=0
+    resolved_tmp=$(mktemp)
+    trap 'rm -f "$resolved_tmp"' EXIT
+    printf '%s\n' "$resolved" > "$resolved_tmp"
+    while IFS= read -r name; do
+      [ -n "$name" ] || continue
+      path=$(get_pkg_path "$name" || true)
+      ver=$(get_pkg_version "$name")
+      if [ -z "$path" ]; then
+        echo "Error: package '$name' not found" >&2
+        err=1
+        continue
+      fi
+      if [ ! -e "$path" ]; then
+        echo "Error: package path for '$name' does not exist: $path" >&2
+        err=1
+        continue
+      fi
+
+      dest="$target/$name"
+      rm -rf "$dest"
+      if [ -d "$path" ]; then
+        cp -R "$path" "$dest"
+      else
+        cp "$path" "$dest"
+      fi
+      echo "$name $ver $path" >> "$log_file"
+    done < "$resolved_tmp"
+    rm -f "$resolved_tmp"
+    trap - EXIT
+
+    if [ "$err" -ne 0 ]; then
+      exit 1
+    fi
+    echo "Installed packages to $target"
+    ;;
+
+  doctor)
+    ensure_manifest
+    err=0
+    list_tmp=$(mktemp)
+    trap 'rm -f "$list_tmp"' EXIT
+    list_package_names > "$list_tmp"
+
+    while IFS= read -r name; do
+      [ -n "$name" ] || continue
+
+      path=$(get_pkg_path "$name" || true)
+      ver=$(get_pkg_version "$name")
+      deps=$(normalize_csv "$(get_pkg_deps "$name")")
+
+      if [ -z "$path" ]; then
+        echo "Error: package '$name' has no path entry" >&2
+        err=1
+      elif [ ! -e "$path" ]; then
+        echo "Error: package '$name' path does not exist: $path" >&2
+        err=1
+      fi
+
+      if ! is_semver "$ver"; then
+        echo "Error: package '$name' has invalid version '$ver'" >&2
+        err=1
+      fi
+
+      if [ -n "$deps" ]; then
+        old_ifs=$IFS
+        IFS=','
+        set -- $deps
+        IFS=$old_ifs
+        for spec in "$@"; do
+          dep_name=${spec%%@*}
+          [ -n "$dep_name" ] || continue
+          if ! get_pkg_path "$dep_name" >/dev/null 2>&1; then
+            echo "Error: package '$name' depends on missing package '$dep_name'" >&2
+            err=1
+          fi
+        done
+      fi
+    done < "$list_tmp"
+    rm -f "$list_tmp"
+    trap - EXIT
+
+    if ! "$0" resolve >/dev/null 2>&1; then
+      echo "Error: dependency resolution failed" >&2
+      err=1
+    fi
+
+    lock_state="missing"
+    if [ -f "$lockfile" ]; then
+      lock_state="present"
+      if ! "$0" verify-lock >/dev/null 2>&1; then
+        echo "Error: lockfile verification failed" >&2
+        err=1
+      else
+        lock_state="verified"
+      fi
+    fi
+
+    if [ "$err" -ne 0 ]; then
+      exit 1
+    fi
+    echo "Doctor OK: lockfile=$lock_state"
     ;;
 
   *)

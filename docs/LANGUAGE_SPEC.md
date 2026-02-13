@@ -23,15 +23,18 @@ Version: `0.6-draft` (`v4 runtime`)
 
 ## Expressions
 
-1. Arithmetic: `+ - * /`
+1. Arithmetic: `+ - * / %`
 2. Comparisons: `== != < > <= >=`
 3. Unary operators: `-expr`, `!expr`
-4. Grouping: `(expr)`
-5. Identifier references: `name`
-6. Function calls: `name(arg1, arg2)`
-7. Indexing: `arr[0]`, `obj["x"]`
-8. Member access: `obj.key`
-9. Array comprehensions: `[expr for x in iterable if cond]`
+4. Logical operators: `expr && expr`, `expr || expr`
+5. Grouping: `(expr)`
+6. Identifier references: `name`
+7. Function calls: `name(arg1, arg2)`
+8. Indexing: `arr[0]`, `obj["x"]`
+9. Member access: `obj.key`
+10. Array comprehensions:
+   - Single-variable: `[expr for x in iterable if cond]`
+   - Dual-variable: `[expr for i, x in iterable if cond]` (array: `i=index`, object: `i=key`)
 
 Direct-codegen note:
 1. Runtime interpreter supports comprehensions.
@@ -47,6 +50,8 @@ Direct-codegen note:
 
 ```cy
 if (cond) {
+    ...
+} else if (other_cond) {
     ...
 } else {
     ...
@@ -93,6 +98,12 @@ for (item in iterable) {
 }
 ```
 
+```cy
+for (k, v in iterable) {
+    ...
+}
+```
+
 11. Loop control:
 
 ```cy
@@ -135,20 +146,24 @@ Import behavior:
 
 1. `print(...)`
 2. `len(value)`
-3. `read(path)`
-4. `write(path, value)`
-5. `argc()`
-6. `argv(index)`
-7. `type(value)`
-8. `push(array, value)`
-9. `pop(array)`
-10. Type predicates: `type_of`, `is_int`, `is_bool`, `is_string`, `is_array`, `is_function`, `is_null`
-11. Object helpers: `object_new`, `object_set`, `object_get`
-12. Object utilities: `keys(object)`
-13. Class/object construction: `new(class_obj, ...)`
-14. Class helpers: `class_new`, `class_with_ctor`, `class_set_method`, `class_name`
-15. Class calls: `class_instantiate0/1/2`, `class_call0/1/2`
-16. Compatibility/version: `lang_version()`, `require_version(version_string)`
+3. Numeric helpers: `abs`, `min`, `max`, `clamp`, `sum`
+4. Boolean helpers: `all`, `any`
+5. `range(stop)` / `range(start, stop)` / `range(start, stop, step)`
+6. `read(path)`
+7. `write(path, value)`
+8. `argc()`
+9. `argv(index)`
+10. `type(value)`
+11. `str(value)`, `int(value)`
+12. `push(array, value)`
+13. `pop(array)`
+14. Type predicates: `type_of`, `is_int`, `is_bool`, `is_string`, `is_array`, `is_function`, `is_null`
+15. Object helpers: `object_new`, `object_set`, `object_get`
+16. Object utilities: `keys(object)`, `values(object)`, `items(object)`, `has(object, key)`
+17. Class/object construction: `new(class_obj, ...)`
+18. Class helpers: `class_new`, `class_with_ctor`, `class_set_method`, `class_name`
+19. Class calls: `class_instantiate0/1/2`, `class_call0/1/2`
+20. Compatibility/version: `lang_version()`, `require_version(version_string)`
 
 ## Runtime Notes
 
@@ -158,13 +173,23 @@ Import behavior:
 4. `argc()` includes the script path at index `0` (same indexing used by `argv`).
 5. Runtime supports statement trace mode via `--trace` CLI flag.
 6. Runtime supports in-process debugger flags: `--debug`, `--break`, `--step`, `--step-count`.
-7. Runtime supports bytecode expression VM via `--vm`, with expression bytecode caching.
+7. Runtime supports bytecode VM mode via `--vm`, with bytecode caching for expressions and statement blocks.
 8. Runtime supports strict VM mode via `--vm-strict` (runtime error on VM fallback).
 9. Runtime supports parser/lint mode via `--parse-only` (alias: `--lint`).
 10. Runtime supports allocation guard flag `--max-alloc N`.
-11. Runtime supports CLI version output via `--version`.
+11. Runtime supports step guard flag `--max-steps N`.
+12. Runtime supports call depth guard flag `--max-call-depth N`.
+13. Runtime supports CLI version output via `--version`.
 
 ## Standard Library Modules
 
 1. `stdlib/types.cy`
 2. `stdlib/class.cy`
+
+## Builtin Packages
+
+Imports with `cy:` are built in to the runtime/compiler and do not require files on disk:
+
+1. `import "cy:math";` exposes `Math` module helpers (`abs`, `min`, `max`, `clamp`, `pow`, `sum`)
+2. `import "cy:arrays";` exposes `Arrays` module helpers (`first`, `last`, `sum`, `enumerate`)
+3. `import "cy:objects";` exposes `Objects` module helpers (`merge`, `get_or`)

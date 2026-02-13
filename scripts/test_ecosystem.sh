@@ -120,6 +120,22 @@ app'
     echo "FAIL: cypm verify-lock failed"
     exit 1
   }
+  "$ROOT_DIR/scripts/cypm.sh" install app ./.cydeps >/dev/null || {
+    echo "FAIL: cypm install failed"
+    exit 1
+  }
+  [ -d "$tmpd/.cydeps/stdlib" ] || {
+    echo "FAIL: cypm install missing stdlib package directory"
+    exit 1
+  }
+  [ -d "$tmpd/.cydeps/app" ] || {
+    echo "FAIL: cypm install missing app package directory"
+    exit 1
+  }
+  "$ROOT_DIR/scripts/cypm.sh" doctor >/dev/null || {
+    echo "FAIL: cypm doctor failed"
+    exit 1
+  }
 )
 
 cat > "$tmpd/fmt.cy" <<'EOCY'
@@ -128,6 +144,7 @@ let x = 1;
 EOCY
 
 ./scripts/cyfmt.sh "$tmpd/fmt.cy" >/dev/null
+./scripts/cyfmt.sh --check "$tmpd/fmt.cy" >/dev/null
 if grep -n $'\t' "$tmpd/fmt.cy" >/dev/null; then
   echo "FAIL: formatter did not replace tabs"
   exit 1
