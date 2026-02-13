@@ -7,6 +7,24 @@ cd "$ROOT_DIR"
 echo "[prod] building runtime..."
 make >/dev/null
 
+echo "[prod] release package sanity..."
+./scripts/package_release.sh --target linux-x64 --binary ./build/cy --out-dir ./dist >/dev/null
+pkg_entries=$(tar -tzf ./dist/cy-linux-x64.tar.gz)
+for required in \
+  "./cy" \
+  "./scripts/cypm.sh" \
+  "./scripts/cyfmt.sh" \
+  "./scripts/cylint.sh" \
+  "./scripts/cydbg.sh" \
+  "./stdlib/types.cy" \
+  "./compiler/bootstrap.cy" \
+  "./examples/fibonacci.cy"; do
+  echo "$pkg_entries" | grep -Fx "$required" >/dev/null || {
+    echo "[prod] FAIL: missing release payload file $required" >&2
+    exit 1
+  }
+done
+
 echo "[prod] core test suite..."
 ./scripts/test_v0.sh
 ./scripts/test_v1.sh

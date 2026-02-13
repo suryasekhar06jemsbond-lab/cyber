@@ -49,6 +49,64 @@ $hasSh = Has-Cmd -Name 'sh'
 $hasMake = Has-Cmd -Name 'make'
 $pwshExe = Resolve-PwshExe
 
+Write-Host "[prod-win] release package sanity..."
+if ($isWin) {
+    Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/build_windows.ps1', '-Output', '.\build\cy.exe')
+    Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/package_release.ps1', '-Target', 'windows-x64', '-BinaryPath', '.\build\cy.exe', '-OutDir', '.\dist')
+
+    $zipPath = Join-Path $root 'dist/cy-windows-x64.zip'
+    $tmpPkg = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_pkg_check_" + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $tmpPkg | Out-Null
+    try {
+        Expand-Archive -Path $zipPath -DestinationPath $tmpPkg -Force
+        foreach ($rel in @(
+            'cy.exe',
+            'scripts/cypm.ps1',
+            'scripts/cyfmt.ps1',
+            'scripts/cylint.ps1',
+            'scripts/cydbg.ps1',
+            'stdlib/types.cy',
+            'compiler/bootstrap.cy',
+            'examples/fibonacci.cy'
+        )) {
+            if (-not (Test-Path -LiteralPath (Join-Path $tmpPkg $rel))) {
+                throw "Missing release payload file: $rel"
+            }
+        }
+    }
+    finally {
+        Remove-Item -Recurse -Force $tmpPkg -ErrorAction SilentlyContinue
+    }
+} elseif ($hasSh) {
+    if (-not (Test-Path -LiteralPath './build/cy')) {
+        if (-not $hasMake) {
+            throw "build/cy is missing and make is not available for package sanity"
+        }
+        Run-Checked -Exe 'make' -Args @('build/cy')
+    }
+    Run-Checked -Exe 'sh' -Args @('./scripts/package_release.sh', '--target', 'linux-x64', '--binary', './build/cy', '--out-dir', './dist')
+    $entries = @(& tar -tzf ./dist/cy-linux-x64.tar.gz)
+    if ($LASTEXITCODE -ne 0) {
+        throw "Unable to inspect release archive: ./dist/cy-linux-x64.tar.gz"
+    }
+    foreach ($rel in @(
+        './cy',
+        './scripts/cypm.sh',
+        './scripts/cyfmt.sh',
+        './scripts/cylint.sh',
+        './scripts/cydbg.sh',
+        './stdlib/types.cy',
+        './compiler/bootstrap.cy',
+        './examples/fibonacci.cy'
+    )) {
+        if ($entries -notcontains $rel) {
+            throw "Missing release payload file: $rel"
+        }
+    }
+} else {
+    Write-Host "[prod-win] warning: package sanity skipped (no compatible shell available)"
+}
+
 if ($isWin -and $hasSh -and $hasMake) {
     Write-Host "[prod-win] warning: skipping shell test suite on Windows; use PowerShell suite for this platform"
 } elseif ($hasSh -and $hasMake) {

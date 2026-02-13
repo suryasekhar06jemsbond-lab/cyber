@@ -24,8 +24,6 @@ git push origin vX.Y.Z
 Published assets:
 
 - `cy-linux-x64.tar.gz`
-- `cy-macos-x64.tar.gz`
-- `cy-macos-arm64.tar.gz`
 - `cy-windows-x64.zip`
 - `cy-language.vsix`
 - `*.sha256` checksum files
@@ -43,6 +41,11 @@ Windows quick install:
 ```powershell
 irm https://raw.githubusercontent.com/suryasekhar06jemsbond-lab/cyber/main/scripts/install.ps1 | iex
 ```
+
+Notes:
+- One-line unauthenticated install requires the repo to be public.
+- Install scripts are idempotent: if the installed checksum matches the release checksum, download is skipped.
+- Support files (`cypm`, `cyfmt`, `cylint`, `cydbg`, stdlib/compiler/examples) are installed with the runtime.
 
 Pin a specific version:
 

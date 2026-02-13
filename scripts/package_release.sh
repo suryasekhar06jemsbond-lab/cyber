@@ -4,6 +4,7 @@ set -eu
 TARGET=""
 BINARY="./build/cy"
 OUT_DIR="./dist"
+ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 
 usage() {
   echo "Usage: $0 --target <linux-x64|linux-arm64|macos-x64|macos-arm64> [--binary path] [--out-dir dir]" >&2
@@ -63,7 +64,45 @@ trap cleanup EXIT
 cp "$BINARY" "$tmp_dir/cy"
 chmod +x "$tmp_dir/cy"
 
-tar -C "$tmp_dir" -czf "$archive_path" cy
+mkdir -p "$tmp_dir/scripts"
+mkdir -p "$tmp_dir/compiler"
+
+copy_file_if_exists() {
+  src="$1"
+  dst="$2"
+  [ -f "$src" ] || return 0
+  dst_dir=$(dirname "$dst")
+  mkdir -p "$dst_dir"
+  cp "$src" "$dst"
+}
+
+copy_dir_if_exists() {
+  src="$1"
+  dst="$2"
+  [ -d "$src" ] || return 0
+  dst_parent=$(dirname "$dst")
+  mkdir -p "$dst_parent"
+  cp -R "$src" "$dst"
+}
+
+for script_name in cydbg.sh cyfmt.sh cylint.sh cypm.sh cydbg.ps1 cyfmt.ps1 cylint.ps1 cypm.ps1; do
+  copy_file_if_exists "$ROOT_DIR/scripts/$script_name" "$tmp_dir/scripts/$script_name"
+done
+
+copy_file_if_exists "$ROOT_DIR/compiler/bootstrap.cy" "$tmp_dir/compiler/bootstrap.cy"
+copy_file_if_exists "$ROOT_DIR/compiler/v3_seed.cy" "$tmp_dir/compiler/v3_seed.cy"
+copy_dir_if_exists "$ROOT_DIR/stdlib" "$tmp_dir/stdlib"
+copy_dir_if_exists "$ROOT_DIR/examples" "$tmp_dir/examples"
+copy_file_if_exists "$ROOT_DIR/README.md" "$tmp_dir/README.md"
+copy_file_if_exists "$ROOT_DIR/docs/LANGUAGE_SPEC.md" "$tmp_dir/docs/LANGUAGE_SPEC.md"
+
+for sh_tool in cydbg cyfmt cylint cypm; do
+  if [ -f "$tmp_dir/scripts/$sh_tool.sh" ]; then
+    chmod +x "$tmp_dir/scripts/$sh_tool.sh"
+  fi
+done
+
+tar -C "$tmp_dir" -czf "$archive_path" .
 
 calc_sha256() {
   file="$1"

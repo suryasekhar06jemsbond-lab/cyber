@@ -6,12 +6,23 @@ if [ "$#" -lt 1 ]; then
   exit 1
 fi
 
-if [ -x ./cy ]; then
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+runtime=""
+
+if [ "${CY_RUNTIME:-}" != "" ] && [ -x "${CY_RUNTIME}" ]; then
+  runtime="${CY_RUNTIME}"
+elif [ -x "$SCRIPT_DIR/cy" ]; then
+  runtime="$SCRIPT_DIR/cy"
+elif [ -x "$SCRIPT_DIR/cy.exe" ]; then
+  runtime="$SCRIPT_DIR/cy.exe"
+elif command -v cy >/dev/null 2>&1; then
+  runtime="$(command -v cy)"
+elif [ -x ./cy ]; then
   runtime=./cy
 elif [ -x ./cy.exe ]; then
   runtime=./cy.exe
 else
-  echo "Error: cy runtime not found (expected ./cy or ./cy.exe)" >&2
+  echo "Error: cy runtime not found (set CY_RUNTIME or add cy to PATH)" >&2
   exit 1
 fi
 

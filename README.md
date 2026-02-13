@@ -34,9 +34,14 @@ Windows (PowerShell):
 irm https://raw.githubusercontent.com/suryasekhar06jemsbond-lab/cyber/main/scripts/install.ps1 | iex
 ```
 
+Important:
+- For unauthenticated one-line install, the GitHub repo must be `public`.
+- Installers are checksum-aware and skip re-download when the same release is already installed.
+- Installers place `cy` plus support files (`cypm`, `cyfmt`, `cylint`, `cydbg`, `stdlib`, compiler seed/examples) in the local install root.
+
 Manual install from a specific tag:
 - Linux/macOS: set `CY_VERSION=vX.Y.Z` before running `install.sh`.
-- Windows: run `install.ps1 -Version vX.Y.Z`.
+- Windows: run `install.ps1 -Version vX.Y.Z` (use `-Force` to reinstall).
 
 Runtime binary output:
 - `build/cy`
@@ -73,8 +78,6 @@ Extension source lives in `editor/vscode/cy-language`.
 - `git push origin vX.Y.Z`
 3. GitHub Actions workflow `.github/workflows/release.yml` builds and attaches:
 - `cy-linux-x64.tar.gz`
-- `cy-macos-x64.tar.gz`
-- `cy-macos-arm64.tar.gz`
 - `cy-windows-x64.zip`
 - `cy-language.vsix`
 

@@ -19,23 +19,36 @@ if ($CliArgs.Count -lt 1) {
     exit 1
 }
 
-$runtime = $null
-if ($isWin) {
-    if (Test-Path './cy.exe') {
-        $runtime = './cy.exe'
-    } elseif (Test-Path './cy') {
-        $runtime = './cy'
+function Resolve-RuntimePath {
+    if ($env:CY_RUNTIME -and (Test-Path -LiteralPath $env:CY_RUNTIME)) {
+        return $env:CY_RUNTIME
     }
-} else {
-    if (Test-Path './cy') {
-        $runtime = './cy'
-    } elseif (Test-Path './cy.exe') {
-        $runtime = './cy.exe'
+
+    $candidates = @(
+        (Join-Path $PSScriptRoot 'cy.exe'),
+        (Join-Path $PSScriptRoot 'cy'),
+        '.\cy.exe',
+        './cy.exe',
+        '.\cy',
+        './cy'
+    )
+    foreach ($p in $candidates) {
+        if (Test-Path -LiteralPath $p) {
+            return $p
+        }
     }
+
+    $cmd = Get-Command cy -ErrorAction SilentlyContinue
+    if ($cmd) { return $cmd.Source }
+    $cmdExe = Get-Command cy.exe -ErrorAction SilentlyContinue
+    if ($cmdExe) { return $cmdExe.Source }
+
+    return $null
 }
 
+$runtime = Resolve-RuntimePath
 if (-not $runtime) {
-    throw 'cy runtime not found (expected ./cy or ./cy.exe)'
+    throw 'cy runtime not found (set CY_RUNTIME or add cy to PATH)'
 }
 
 $hasMode = $false
