@@ -1,0 +1,26 @@
+name: Publish VS Code Extension
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    if: ${{ secrets.VSCE_PAT != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Publish extension to VS Code Marketplace
+        shell: bash
+        working-directory: editor/vscode/cy-language
+        run: |
+          npm install
+          npx @vscode/vsce publish -p "${{ secrets.VSCE_PAT }}"

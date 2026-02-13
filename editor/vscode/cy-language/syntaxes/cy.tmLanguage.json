@@ -1,0 +1,121 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Cy",
+  "scopeName": "source.cy",
+  "fileTypes": ["cy"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#keywords" },
+    { "include": "#constants" },
+    { "include": "#numbers" },
+    { "include": "#declarations" },
+    { "include": "#builtins" },
+    { "include": "#operators" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.number-sign.cy",
+          "match": "#.*$"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.cy",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.cy",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.cy",
+          "match": "\\b(if|else|switch|case|default|while|for|in|break|continue|try|catch|throw|return|import)\\b"
+        },
+        {
+          "name": "storage.type.cy",
+          "match": "\\b(fn|class|module|typealias|let)\\b"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.cy",
+          "match": "\\b(true|false|null)\\b"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.integer.cy",
+          "match": "\\b\\d+\\b"
+        }
+      ]
+    },
+    "declarations": {
+      "patterns": [
+        {
+          "name": "meta.function.cy",
+          "match": "\\b(fn)\\s+([A-Za-z_][A-Za-z0-9_]*)\\b",
+          "captures": {
+            "1": { "name": "storage.type.function.cy" },
+            "2": { "name": "entity.name.function.cy" }
+          }
+        },
+        {
+          "name": "meta.class.cy",
+          "match": "\\b(class)\\s+([A-Za-z_][A-Za-z0-9_]*)\\b",
+          "captures": {
+            "1": { "name": "storage.type.class.cy" },
+            "2": { "name": "entity.name.type.class.cy" }
+          }
+        },
+        {
+          "name": "meta.module.cy",
+          "match": "\\b(module)\\s+([A-Za-z_][A-Za-z0-9_]*)\\b",
+          "captures": {
+            "1": { "name": "storage.type.module.cy" },
+            "2": { "name": "entity.name.namespace.cy" }
+          }
+        },
+        {
+          "name": "meta.typealias.cy",
+          "match": "\\b(typealias)\\s+([A-Za-z_][A-Za-z0-9_]*)\\b",
+          "captures": {
+            "1": { "name": "storage.type.cy" },
+            "2": { "name": "entity.name.type.cy" }
+          }
+        }
+      ]
+    },
+    "builtins": {
+      "patterns": [
+        {
+          "name": "support.function.builtin.cy",
+          "match": "\\b(print|len|range|read|write|argc|argv|type|str|int|push|pop|abs|min|max|clamp|sum|all|any|type_of|is_int|is_bool|is_string|is_array|is_function|is_null|keys|values|items|has|object_new|object_set|object_get|class_new|class_with_ctor|class_set_method|class_name|class_instantiate0|class_instantiate1|class_instantiate2|class_call0|class_call1|class_call2|new|lang_version|require_version)\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.cy",
+          "match": "\\?\\?|&&|\\|\\||==|!=|<=|>=|[+\\-*/%<>=!]"
+        }
+      ]
+    }
+  }
+}

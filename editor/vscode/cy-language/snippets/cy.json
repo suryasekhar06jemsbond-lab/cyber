@@ -1,0 +1,81 @@
+{
+  "Function": {
+    "prefix": "fn",
+    "body": [
+      "fn ${1:name}(${2:args}) {",
+      "    ${3:return null;}",
+      "}"
+    ],
+    "description": "Create a function"
+  },
+  "If Else": {
+    "prefix": "if",
+    "body": [
+      "if (${1:condition}) {",
+      "    ${2}",
+      "} else {",
+      "    ${3}",
+      "}"
+    ],
+    "description": "Create an if/else block"
+  },
+  "While Loop": {
+    "prefix": "while",
+    "body": [
+      "while (${1:condition}) {",
+      "    ${2}",
+      "}"
+    ],
+    "description": "Create a while loop"
+  },
+  "For In Loop": {
+    "prefix": "for",
+    "body": [
+      "for (${1:item} in ${2:iterable}) {",
+      "    ${3}",
+      "}"
+    ],
+    "description": "Create a for-in loop"
+  },
+  "Try Catch": {
+    "prefix": "try",
+    "body": [
+      "try {",
+      "    ${1}",
+      "} catch (${2:err}) {",
+      "    ${3}",
+      "}"
+    ],
+    "description": "Create try/catch"
+  },
+  "Class": {
+    "prefix": "class",
+    "body": [
+      "class ${1:Name} {",
+      "    fn init(self${2:, args}) {",
+      "        ${3}",
+      "    }",
+      "}"
+    ],
+    "description": "Create a class"
+  },
+  "Module": {
+    "prefix": "module",
+    "body": [
+      "module ${1:Name} {",
+      "    ${2}",
+      "}"
+    ],
+    "description": "Create a module"
+  },
+  "Switch": {
+    "prefix": "switch",
+    "body": [
+      "switch (${1:value}) {",
+      "    case ${2:1}: { ${3} }",
+      "    default: { ${4} }",
+      "}"
+    ],
+    "description": "Create a switch statement"
+  }
+}

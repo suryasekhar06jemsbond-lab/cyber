@@ -1,0 +1,165 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  verify-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure executable bits
+        run: chmod +x scripts/*.sh
+
+      - name: Run production gate (shell)
+        run: ./scripts/test_production.sh
+
+  verify-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure clang is available
+        run: |
+          if (-not (Get-Command clang -ErrorAction SilentlyContinue)) {
+            choco install llvm -y --no-progress
+            "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+            $env:Path += ';C:\Program Files\LLVM\bin'
+          }
+          clang --version
+
+      - name: Run production gate (PowerShell)
+        run: ./scripts/test_production.ps1 -VmCases 300
+
+  build-binaries:
+    needs:
+      - verify-linux
+      - verify-windows
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux-x64
+          - os: macos-13
+            target: macos-x64
+          - os: macos-14
+            target: macos-arm64
+          - os: windows-latest
+            target: windows-x64
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure executable bits (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: chmod +x scripts/*.sh
+
+      - name: Ensure clang is available (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not (Get-Command clang -ErrorAction SilentlyContinue)) {
+            choco install llvm -y --no-progress
+            "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+            $env:Path += ';C:\Program Files\LLVM\bin'
+          }
+          clang --version
+
+      - name: Build runtime (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          make build/cy
+          ./build/cy main.cy
+
+      - name: Build runtime (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          ./scripts/build_windows.ps1 -Output .\build\cy.exe -SmokeTest
+
+      - name: Package release artifact (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          ./scripts/package_release.sh --target "${{ matrix.target }}" --binary "./build/cy" --out-dir "./dist"
+
+      - name: Package release artifact (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          ./scripts/package_release.ps1 -Target "${{ matrix.target }}" -BinaryPath ".\build\cy.exe" -OutDir ".\dist"
+
+      - name: Upload packaged artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.target }}
+          path: dist/*
+
+  build-vscode-extension:
+    needs:
+      - verify-linux
+      - verify-windows
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Package VS Code extension
+        shell: bash
+        working-directory: editor/vscode/cy-language
+        run: |
+          npm install
+          npx @vscode/vsce package -o ../../../dist/cy-language.vsix
+
+      - name: Upload VS Code extension
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-vscode
+          path: dist/cy-language.vsix
+
+  create-release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs:
+      - build-binaries
+      - build-vscode-extension
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: dist
+
+      - name: Show release payload
+        shell: bash
+        run: ls -la dist
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true

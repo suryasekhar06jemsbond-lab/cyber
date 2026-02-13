@@ -1,0 +1,61 @@
+{
+  "name": "cy-language",
+  "displayName": "Cy Language Support",
+  "description": "Syntax highlighting, snippets, and language configuration for Cy (.cy).",
+  "version": "0.1.0",
+  "publisher": "suryasekhar06jemsbond-lab",
+  "license": "UNLICENSED",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "cy",
+    "cypher",
+    "language",
+    "compiler",
+    "runtime"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/suryasekhar06jemsbond-lab/cyber.git",
+    "directory": "editor/vscode/cy-language"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "cy",
+        "aliases": [
+          "Cy",
+          "cy"
+        ],
+        "extensions": [
+          ".cy"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "cy",
+        "scopeName": "source.cy",
+        "path": "./syntaxes/cy.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "cy",
+        "path": "./snippets/cy.json"
+      }
+    ]
+  },
+  "scripts": {
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^3.1.0"
+  }
+}

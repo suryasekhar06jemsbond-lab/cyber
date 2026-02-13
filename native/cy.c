@@ -4246,18 +4246,35 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (argc <= script_arg_index) {
-        fprintf(stderr,
-                "Usage: cy [--trace] [--parse-only|--lint] [--vm|--vm-strict] [--max-alloc N] [--max-steps N] [--max-call-depth N] [--debug] [--break lines] [--step] [--step-count N] "
-                "[--debug-no-prompt] [--version] "
-                "<file.cy> [args...]\n");
-        return 1;
-    }
+    const char *script_path = NULL;
+    char **script_argv = NULL;
+    int script_argc = 0;
+    char *fallback_script_argv[1];
+    char *source = NULL;
 
-    char *source = read_file(argv[script_arg_index]);
-    if (!source) {
-        fprintf(stderr, "Error: could not read file: %s\n", argv[script_arg_index]);
-        return 1;
+    if (argc <= script_arg_index) {
+        script_path = "main.cy";
+        source = read_file(script_path);
+        if (!source) {
+            fprintf(stderr,
+                    "Usage: cy [--trace] [--parse-only|--lint] [--vm|--vm-strict] [--max-alloc N] [--max-steps N] [--max-call-depth N] [--debug] [--break lines] [--step] [--step-count N] "
+                    "[--debug-no-prompt] [--version] "
+                    "<file.cy> [args...]\n");
+            fprintf(stderr, "Hint: run from a directory that contains main.cy or pass a file path explicitly.\n");
+            return 1;
+        }
+        fallback_script_argv[0] = (char *)script_path;
+        script_argv = fallback_script_argv;
+        script_argc = 1;
+    } else {
+        script_path = argv[script_arg_index];
+        source = read_file(script_path);
+        if (!source) {
+            fprintf(stderr, "Error: could not read file: %s\n", script_path);
+            return 1;
+        }
+        script_argv = argv + script_arg_index;
+        script_argc = argc - script_arg_index;
     }
 
     if (g_parse_only) {
@@ -4268,8 +4285,8 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    g_script_argc = argc - script_arg_index;
-    g_script_argv = argv + script_arg_index;
+    g_script_argc = script_argc;
+    g_script_argv = script_argv;
     g_step_count = 0;
     g_call_depth = 0;
 
@@ -4281,9 +4298,9 @@ int main(int argc, char **argv) {
     imports.count = 0;
     imports.cap = 0;
 
-    import_set_add(&imports, argv[script_arg_index]);
+    import_set_add(&imports, script_path);
 
-    EvalResult r = eval_program_source(source, global, &imports, argv[script_arg_index], 1);
+    EvalResult r = eval_program_source(source, global, &imports, script_path, 1);
     xfree(source);
 
     if (r.control == CTRL_RETURN) {

@@ -59,3 +59,4 @@ A release is accepted only when all pass:
 - `scripts/test_soak_runtime.sh`
 4. Sanitizer gate enforces ASan/UBSan/LSan clean runs on supported platforms.
 5. CI workflow `.github/workflows/ci.yml` green on Linux and Windows
+6. Tag workflow `.github/workflows/release.yml` produces downloadable binary artifacts and checksums

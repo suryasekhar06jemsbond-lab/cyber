@@ -2,6 +2,8 @@
 
 Cy runs as a native executable (`cy`) with no Python runtime dependency.
 
+![Cy Logo](assets/cy-logo.ico)
+
 ## Build
 
 Requirements:
@@ -11,6 +13,30 @@ Requirements:
 ```bash
 make
 ```
+
+Windows (build `cy.exe` with embedded logo icon from `assets/cy-logo.ico`):
+
+```powershell
+.\scripts\build_windows.ps1 -SmokeTest
+```
+
+## Install From GitHub Releases
+
+Linux/macOS:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/suryasekhar06jemsbond-lab/cyber/main/scripts/install.sh | sh
+```
+
+Windows (PowerShell):
+
+```powershell
+irm https://raw.githubusercontent.com/suryasekhar06jemsbond-lab/cyber/main/scripts/install.ps1 | iex
+```
+
+Manual install from a specific tag:
+- Linux/macOS: set `CY_VERSION=vX.Y.Z` before running `install.sh`.
+- Windows: run `install.ps1 -Version vX.Y.Z`.
 
 Runtime binary output:
 - `build/cy`
@@ -24,6 +50,33 @@ Launcher:
 ./cy main.cy
 ./cy examples/fibonacci.cy
 ```
+
+If no file is passed and `main.cy` exists in the current directory, `cy` runs `main.cy` automatically.
+
+## VS Code
+
+Install the Cy extension from the release asset `cy-language.vsix`:
+
+1. Open VS Code command palette.
+2. Run `Extensions: Install from VSIX...`.
+3. Select `cy-language.vsix`.
+
+Extension source lives in `editor/vscode/cy-language`.
+
+## Formal Publish Flow
+
+1. Ensure release gates pass:
+- `./scripts/test_production.sh`
+- `.\scripts\test_production.ps1 -VmCases 300`
+2. Tag a release:
+- `git tag -a vX.Y.Z -m "Release vX.Y.Z"`
+- `git push origin vX.Y.Z`
+3. GitHub Actions workflow `.github/workflows/release.yml` builds and attaches:
+- `cy-linux-x64.tar.gz`
+- `cy-macos-x64.tar.gz`
+- `cy-macos-arm64.tar.gz`
+- `cy-windows-x64.zip`
+- `cy-language.vsix`
 
 Executable script style:
 
@@ -47,6 +100,7 @@ chmod +x main.cy
 - `BOOTSTRAP.md`: roadmap to self-hosting (`v2` and `v3`)
 - `docs/LANGUAGE_SPEC.md`: language spec draft
 - `docs/RELEASE_POLICY.md`: compatibility + release gate contract
+- `docs/PUBLISH.md`: formal release and distribution flow
 - `docs/COMPATIBILITY_LIFECYCLE.md`: deprecation/migration lifecycle
 - `SECURITY.md`: vulnerability reporting and response targets
 - `CONTRIBUTING.md`: contribution and gate expectations
