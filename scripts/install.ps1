@@ -222,9 +222,27 @@ try {
     Write-Host ("Installed {0}" -f $destPath)
     Write-Host ("Installed support files to {0}" -f $supportRoot)
 
+    $pathUpdatedNow = $false
     $pathParts = ($env:Path -split ';')
     if ($pathParts -notcontains $InstallDir) {
-        Write-Host ("Add to PATH (current user): [Environment]::SetEnvironmentVariable('Path', \$env:Path + ';{0}', 'User')" -f $InstallDir)
+        $env:Path = "$InstallDir;$env:Path"
+        $pathUpdatedNow = $true
+    }
+
+    $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+    if ([string]::IsNullOrWhiteSpace($userPath)) {
+        [Environment]::SetEnvironmentVariable('Path', $InstallDir, 'User')
+        $pathUpdatedNow = $true
+    } else {
+        $userParts = ($userPath -split ';')
+        if ($userParts -notcontains $InstallDir) {
+            [Environment]::SetEnvironmentVariable('Path', "$userPath;$InstallDir", 'User')
+            $pathUpdatedNow = $true
+        }
+    }
+
+    if ($pathUpdatedNow) {
+        Write-Host ("Added to PATH: {0}" -f $InstallDir)
     }
 
     & $destPath --version
