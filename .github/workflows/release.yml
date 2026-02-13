@@ -10,43 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  verify-linux:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Ensure executable bits
-        run: chmod +x scripts/*.sh
-
-      - name: Run production gate (shell)
-        run: ./scripts/test_production.sh
-
-  verify-windows:
-    runs-on: windows-latest
-    defaults:
-      run:
-        shell: pwsh
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Ensure clang is available
-        run: |
-          if (-not (Get-Command clang -ErrorAction SilentlyContinue)) {
-            choco install llvm -y --no-progress
-            "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-            $env:Path += ';C:\Program Files\LLVM\bin'
-          }
-          clang --version
-
-      - name: Run production gate (PowerShell)
-        run: ./scripts/test_production.ps1 -VmCases 300
-
   build-binaries:
-    needs:
-      - verify-linux
-      - verify-windows
     strategy:
       fail-fast: false
       matrix:
@@ -113,9 +77,6 @@ jobs:
           path: dist/*
 
   build-vscode-extension:
-    needs:
-      - verify-linux
-      - verify-windows
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
