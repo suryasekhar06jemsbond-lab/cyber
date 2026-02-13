@@ -1,19 +1,30 @@
 param(
     [switch]$Strict,
     [string]$Target = '.',
-    [switch]$Help,
-    [Parameter(ValueFromRemainingArguments = $true)]
-    [string[]]$CliArgs
+    [switch]$Help
 )
 
 $ErrorActionPreference = 'Stop'
 
-if ($null -eq $CliArgs) { $CliArgs = @() }
+$CliArgs = @($args)
 
 function Show-Usage {
 @"
 Usage: cylint [--strict] [target]
 "@
+}
+
+function Resolve-NormalizedPath {
+    param([string]$Path)
+    if ([string]::IsNullOrWhiteSpace($Path)) { return '' }
+    try {
+        if (Test-Path -LiteralPath $Path) {
+            return (Resolve-Path -LiteralPath $Path).ProviderPath.ToLowerInvariant()
+        }
+    }
+    catch {
+    }
+    return ($Path -replace '/', '\').Trim().ToLowerInvariant()
 }
 
 foreach ($arg in $CliArgs) {
@@ -24,6 +35,12 @@ foreach ($arg in $CliArgs) {
         '--strict' { $Strict = $true; continue }
         '-strict' { $Strict = $true; continue }
         default {
+            if ([string]::IsNullOrWhiteSpace($arg)) {
+                continue
+            }
+            if ($arg -eq 'True' -or $arg -eq 'False') {
+                continue
+            }
             if ($arg.StartsWith('-')) {
                 throw "Unknown option: $arg"
             }
@@ -35,7 +52,10 @@ foreach ($arg in $CliArgs) {
                 # PowerShell may include already-bound positional args in remaining args.
                 continue
             }
-            throw "Multiple targets are not supported"
+            if ((Resolve-NormalizedPath -Path $arg) -eq (Resolve-NormalizedPath -Path $Target)) {
+                continue
+            }
+            throw "Multiple targets are not supported (target='$Target', extra='$arg')"
         }
     }
 }

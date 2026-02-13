@@ -17,7 +17,9 @@
 #endif
 
 #define MAX_TOKEN_TEXT 1024
-#define CY_LANG_VERSION "0.6-v4"
+#ifndef CY_LANG_VERSION
+#define CY_LANG_VERSION "0.6.7"
+#endif
 
 typedef enum {
     TOK_EOF = 0,

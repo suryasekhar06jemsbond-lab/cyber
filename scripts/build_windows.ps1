@@ -1,7 +1,8 @@
 param(
     [string]$Output = 'cy.exe',
     [switch]$SmokeTest,
-    [switch]$NoIcon
+    [switch]$NoIcon,
+    [string]$LangVersion = $env:CY_LANG_VERSION
 )
 
 $ErrorActionPreference = 'Stop'
@@ -86,7 +87,8 @@ function Build-Runtime {
         [Parameter(Mandatory = $true)] [hashtable] $Compiler,
         [Parameter(Mandatory = $true)] [string] $OutputPath,
         [Parameter(Mandatory = $true)] [string] $SourcePath,
-        [Parameter()] [string] $ResPath
+        [Parameter()] [string] $ResPath,
+        [Parameter(Mandatory = $true)] [string] $LangVersion
     )
 
     if (Test-Path -LiteralPath $OutputPath) {
@@ -94,7 +96,8 @@ function Build-Runtime {
     }
 
     if ($Compiler.Kind -eq 'cl') {
-        $args = @('/nologo', '/W4', '/WX', $SourcePath)
+        $versionDefine = "/DCY_LANG_VERSION=`"$LangVersion`""
+        $args = @('/nologo', '/W4', '/WX', $versionDefine, $SourcePath)
         if ($ResPath) { $args += $ResPath }
         $args += "/Fe:$OutputPath"
         & $Compiler.Exe @args | Out-Null
@@ -103,7 +106,8 @@ function Build-Runtime {
         return
     }
 
-    $args = @('-O2', '-std=c99', '-Wall', '-Wextra', '-Werror', '-o', $OutputPath, $SourcePath)
+    $versionDefine = "-DCY_LANG_VERSION=`"$LangVersion`""
+    $args = @('-O2', '-std=c99', '-Wall', '-Wextra', '-Werror', $versionDefine, '-o', $OutputPath, $SourcePath)
     if ($ResPath) { $args += $ResPath }
     & $Compiler.Exe @args
     if ($null -ne $LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw "C compilation failed: $SourcePath -> $OutputPath" }
@@ -118,6 +122,11 @@ function Normalize-Text {
 
 $compiler = Resolve-CCompiler
 Write-Host ("[build-win] compiler: {0} ({1})" -f $compiler.Kind, $compiler.Exe)
+
+if ([string]::IsNullOrWhiteSpace($LangVersion)) {
+    $LangVersion = '0.6.7'
+}
+Write-Host ("[build-win] language version: {0}" -f $LangVersion)
 
 $outputPath = if ([System.IO.Path]::IsPathRooted($Output)) {
     $Output
@@ -156,7 +165,7 @@ try {
     }
 
     Write-Host ("[build-win] building {0}..." -f $outputPath)
-    Build-Runtime -Compiler $compiler -OutputPath $outputPath -SourcePath $sourcePath -ResPath $resPath
+    Build-Runtime -Compiler $compiler -OutputPath $outputPath -SourcePath $sourcePath -ResPath $resPath -LangVersion $LangVersion
 
     if ($SmokeTest) {
         $mainPath = Join-Path $root 'main.cy'

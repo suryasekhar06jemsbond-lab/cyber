@@ -20,6 +20,7 @@ git push origin vX.Y.Z
 ```
 
 2. Workflow `.github/workflows/release.yml` runs automatically and publishes a GitHub Release.
+   Runtime version in built binaries is injected from tag (`vX.Y.Z` -> `X.Y.Z`).
 
 Published assets:
 

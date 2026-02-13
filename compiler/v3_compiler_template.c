@@ -10,6 +10,9 @@
 #include <string.h>
 
 #define MAX_TOKEN_TEXT 1024
+#ifndef CY_LANG_VERSION
+#define CY_LANG_VERSION "0.6.7"
+#endif
 
 typedef enum {
     TOK_EOF = 0,
@@ -3034,7 +3037,7 @@ static void emit_generated_runtime(FILE *out) {
     fputs("#include <stdio.h>\n", out);
     fputs("#include <stdlib.h>\n", out);
     fputs("#include <string.h>\n\n", out);
-    fputs("#define CY_LANG_VERSION \"0.6-v4\"\n\n", out);
+    fprintf(out, "#define CY_LANG_VERSION \"%s\"\n\n", CY_LANG_VERSION);
 
     fputs("typedef enum { CY_NULL = 0, CY_INT, CY_BOOL, CY_STRING, CY_ARRAY, CY_OBJECT, CY_FNREF, CY_BOUND_FN } CyType;\n", out);
     fputs("typedef enum { CY_OBJ_PLAIN = 0, CY_OBJ_MODULE, CY_OBJ_CLASS, CY_OBJ_INSTANCE } CyObjectKind;\n", out);

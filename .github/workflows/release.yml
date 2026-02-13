@@ -25,6 +25,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Resolve language version (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            ver="${{ github.ref_name }}"
+            ver="${ver#v}"
+          else
+            ver="0.6.7"
+          fi
+          echo "CY_LANG_VERSION=$ver" >> "$GITHUB_ENV"
+          echo "[release] CY_LANG_VERSION=$ver"
+
+      - name: Resolve language version (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if ("${{ github.ref_type }}" -eq "tag") {
+            $ver = "${{ github.ref_name }}"
+            if ($ver.StartsWith('v')) { $ver = $ver.Substring(1) }
+          } else {
+            $ver = '0.6.7'
+          }
+          "CY_LANG_VERSION=$ver" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host ("[release] CY_LANG_VERSION={0}" -f $ver)
+
       - name: Ensure executable bits (Unix)
         if: runner.os != 'Windows'
         shell: bash
@@ -45,14 +71,24 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          make build/cy
+          make clean
+          make build/cy CY_LANG_VERSION="$CY_LANG_VERSION"
+          actual="$(./build/cy --version)"
+          if [ "$actual" != "$CY_LANG_VERSION" ]; then
+            echo "version mismatch: expected $CY_LANG_VERSION got $actual" >&2
+            exit 1
+          fi
           ./build/cy main.cy
 
       - name: Build runtime (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          ./scripts/build_windows.ps1 -Output .\build\cy.exe -SmokeTest
+          ./scripts/build_windows.ps1 -Output .\build\cy.exe -SmokeTest -LangVersion $env:CY_LANG_VERSION
+          $actual = (& .\build\cy.exe --version | Out-String).Trim()
+          if ($actual -ne $env:CY_LANG_VERSION) {
+            throw "version mismatch: expected $($env:CY_LANG_VERSION) got $actual"
+          }
 
       - name: Package release artifact (Unix)
         if: runner.os != 'Windows'
