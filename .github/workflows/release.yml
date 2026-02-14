@@ -124,6 +124,7 @@ jobs:
         working-directory: editor/vscode/nyx-language
         run: |
           cp ../../../assets/nyx-logo.png .
+          cp ../../../README.md .
           npm install
           mkdir -p ../../../dist
           npx @vscode/vsce package -o ../../../dist/nyx-language.vsix

@@ -25,5 +25,6 @@ jobs:
       - name: Publish extension to VS Code Marketplace
         run: |
           cp ../../../assets/nyx-logo.png .
+          cp ../../../README.md .
           npm install
           npx @vscode/vsce publish -p "${{ secrets.VSCE_PAT }}"

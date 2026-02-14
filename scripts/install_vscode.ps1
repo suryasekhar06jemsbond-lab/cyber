@@ -63,7 +63,7 @@ function Resolve-ReleaseAssetUrl {
     try {
         $params = @{
             Uri     = $api
-            Headers = @{ 'User-Agent' = 'cy-vscode-installer' }
+            Headers = @{ 'User-Agent' = 'nyx-vscode-installer' }
         }
         if ($PSVersionTable.PSVersion.Major -lt 6) {
             $params.UseBasicParsing = $true
@@ -116,7 +116,7 @@ if ($Version -eq 'latest') {
 }
 $url = "$baseUrl/$Asset"
 
-$tmpRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_vscode_" + [guid]::NewGuid().ToString('N'))
+$tmpRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("nyx_vscode_" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Force -Path $tmpRoot | Out-Null
 $vsixPath = Join-Path $tmpRoot $Asset
 
