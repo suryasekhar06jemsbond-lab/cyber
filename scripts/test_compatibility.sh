@@ -34,6 +34,11 @@ version=$("$runtime" --version)
   exit 1
 }
 
+# Patch compiler template to match runtime version
+if [ -f compiler/v3_compiler_template.c ]; then
+  sed "s/#define NYX_LANG_VERSION \".*\"/#define NYX_LANG_VERSION \"$version\"/" compiler/v3_compiler_template.c > compiler/v3_compiler_template.c.tmp && mv compiler/v3_compiler_template.c.tmp compiler/v3_compiler_template.c
+fi
+
 cat > "$tmpd/ok.nx" <<'CYEOF'
 print(lang_version());
 require_version(lang_version());

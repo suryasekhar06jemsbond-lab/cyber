@@ -82,6 +82,14 @@ try {
     if ([string]::IsNullOrWhiteSpace($version)) {
         throw "--version returned empty output"
     }
+    
+    # Patch compiler template to match runtime version
+    $templatePath = Join-Path $root 'compiler/v3_compiler_template.c'
+    if (Test-Path $templatePath) {
+        $tmplContent = Get-Content -Raw $templatePath
+        $newTmpl = $tmplContent -replace '#define NYX_LANG_VERSION "[^"]+"', "#define NYX_LANG_VERSION `"$version`""
+        Set-Content -NoNewline -Path $templatePath -Value $newTmpl
+    }
 
     $okPath = Join-Path $tmp 'ok.ny'
 @"

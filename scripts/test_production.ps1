@@ -69,7 +69,7 @@ $pwshExe = Resolve-PwshExe
 
 Write-Host "[prod-win] release package sanity..."
 if ($isWin) {
-    Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/build_windows.ps1', '-Output', '.\build\nyx.exe')
+    Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/build_windows.ps1', '-Output', '.\build\nyx.exe', '-LangVersion', '0.8.0')
     Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/package_release.ps1', '-Target', 'windows-x64', '-BinaryPath', '.\build\nyx.exe', '-OutDir', '.\dist')
 
     $zipPath = Join-Path $root 'dist/nyx-windows-x64.zip'
