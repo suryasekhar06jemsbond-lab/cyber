@@ -7,6 +7,13 @@ cd "$ROOT_DIR"
 echo "[v2] building native runtime..."
 make >/dev/null
 
+if [ -f ./build/nyx ]; then
+  chmod +x ./build/nyx
+fi
+if [ -f ./nyx ]; then
+  chmod +x ./nyx
+fi
+
 tmpd=$(mktemp -d)
 trap 'rm -rf "$tmpd"' EXIT
 

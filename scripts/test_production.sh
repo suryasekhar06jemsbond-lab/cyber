@@ -7,6 +7,9 @@ cd "$ROOT_DIR"
 echo "[prod] building runtime..."
 make >/dev/null
 
+if [ -f ./build/nyx ]; then
+  chmod +x ./build/nyx
+fi
 if [ -f ./nyx ]; then
   chmod +x ./nyx
 fi
