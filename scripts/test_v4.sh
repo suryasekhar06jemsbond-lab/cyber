@@ -7,6 +7,24 @@ cd "$ROOT_DIR"
 echo "[v4] building native runtime..."
 make >/dev/null
 
+if [ -f ./build/nyx ]; then
+  chmod +x ./build/nyx
+fi
+if [ -f ./nyx ]; then
+  chmod +x ./nyx
+fi
+
+if [ -x ./build/nyx ]; then
+  runtime=./build/nyx
+elif [ -x ./nyx ]; then
+  runtime=./nyx
+elif [ -x ./nyx.exe ]; then
+  runtime=./nyx.exe
+else
+  echo "FAIL: runtime not found" >&2
+  exit 1
+fi
+
 tmpd=$(mktemp -d)
 trap 'rm -rf "$tmpd"' EXIT
 payload_path="$tmpd/http_payload.txt"
@@ -244,7 +262,7 @@ true
 hello-http'
 
 echo "[v4] running interpreter path..."
-out_ast=$(./nyx "$tmpd/v4.ny")
+out_ast=$("$runtime" "$tmpd/v4.ny")
 [ "$out_ast" = "$expected" ] || {
   echo "FAIL: v4 interpreter output mismatch"
   echo "Expected:"
@@ -255,7 +273,7 @@ out_ast=$(./nyx "$tmpd/v4.ny")
 }
 
 echo "[v4] running vm path..."
-out_vm=$(./nyx --vm "$tmpd/v4.ny")
+out_vm=$("$runtime" --vm "$tmpd/v4.ny")
 [ "$out_vm" = "$expected" ] || {
   echo "FAIL: v4 vm output mismatch"
   echo "Expected:"
@@ -266,7 +284,7 @@ out_vm=$(./nyx --vm "$tmpd/v4.ny")
 }
 
 echo "[v4] running vm strict path..."
-out_vm_strict=$(./nyx --vm-strict "$tmpd/v4.ny")
+out_vm_strict=$("$runtime" --vm-strict "$tmpd/v4.ny")
 [ "$out_vm_strict" = "$expected" ] || {
   echo "FAIL: v4 vm-strict output mismatch"
   echo "Expected:"
