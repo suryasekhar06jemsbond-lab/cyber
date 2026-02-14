@@ -45,7 +45,7 @@ try {
 
     $runtime = Join-Path $tmp 'cy_san'
     Write-Host '[san-win] building sanitized runtime...'
-    & $cc @flags '-o' $runtime 'native/cy.c'
+    & $cc @flags '-o' $runtime 'native/nyx.c'
     if ($LASTEXITCODE -ne 0) {
         throw 'Failed to build sanitized runtime'
     }

@@ -64,11 +64,6 @@ resolve_pwsh() {
 if pwsh_bin="$(resolve_pwsh)"; then
   echo "[prod] powershell suite..."
 
-  # Fix stale reference in test_sanitizers.ps1
-  if [ -f ./scripts/test_sanitizers.ps1 ]; then
-    sed 's|native/cy.c|native/nyx.c|g' ./scripts/test_sanitizers.ps1 > ./scripts/test_sanitizers.ps1.tmp && mv ./scripts/test_sanitizers.ps1.tmp ./scripts/test_sanitizers.ps1
-  fi
-
   "$pwsh_bin" -NoLogo -NoProfile -File ./scripts/test_v3.ps1
   "$pwsh_bin" -NoLogo -NoProfile -File ./scripts/test_v4.ps1
   "$pwsh_bin" -NoLogo -NoProfile -File ./scripts/test_compatibility.ps1

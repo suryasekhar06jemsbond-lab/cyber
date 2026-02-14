@@ -18,7 +18,7 @@
 
 #define MAX_TOKEN_TEXT 1024
 #ifndef NYX_LANG_VERSION
-#define NYX_LANG_VERSION "0.6.13"
+#define NYX_LANG_VERSION "0.8.0"
 #endif
 
 typedef enum {
