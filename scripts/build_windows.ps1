@@ -141,7 +141,7 @@ $compiler = Resolve-CCompiler
 Write-Host ("[build-win] compiler: {0} ({1})" -f $compiler.Kind, $compiler.Exe)
 
 if ([string]::IsNullOrWhiteSpace($LangVersion)) {
-    $LangVersion = '0.6.13'
+    $LangVersion = '0.8.0'
 }
 Write-Host ("[build-win] language version: {0}" -f $LangVersion)
 
