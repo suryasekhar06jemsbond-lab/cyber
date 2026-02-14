@@ -102,6 +102,7 @@ foreach ($file in $files) {
     $formatted = Get-FormattedCyText -Path $file
     if ($Check) {
         $current = Get-Content -Raw -LiteralPath $file
+        $current = $current -replace "`r", ''
         if ($current -ne $formatted) {
             Write-Host "Needs formatting: $file"
             $checkFailed = $true
