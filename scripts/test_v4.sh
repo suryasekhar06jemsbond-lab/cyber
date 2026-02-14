@@ -180,9 +180,9 @@ print(sum([1, 2, 3, 4]));
 print(all([1, true, 3]));
 print(any([0, false, 7]));
 
-import "$tmpd/nymath.ny";
-import "$tmpd/nyarrays.ny";
-import "$tmpd/nyobjects.ny";
+import "nymath";
+import "nyarrays";
+import "nyobjects";
 
 print(nymath.pow(2, 5));
 print(nyarrays.first([9, 8, 7]));
@@ -204,8 +204,8 @@ switch (2) {
 print(null ?? 99);
 print(5 ?? 99);
 
-import "$tmpd/nyjson.ny";
-import "$tmpd/nyhttp.ny";
+import "nyjson";
+import "nyhttp";
 
 print(nyjson.parse("42"));
 print(nyjson.parse("true"));
