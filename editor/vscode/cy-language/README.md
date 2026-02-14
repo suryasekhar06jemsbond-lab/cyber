@@ -7,6 +7,8 @@ Provides language support for `.cy` files:
 - comments/bracket auto-pairs
 - common Cy snippets
 
+For `.cy` file icons in Explorer, set icon theme to `Cy Seti Icons`.
+
 ## Install From `.vsix`
 
 1. In VS Code, open command palette.

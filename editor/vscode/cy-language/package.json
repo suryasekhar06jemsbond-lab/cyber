@@ -54,6 +54,13 @@
         "language": "cy",
         "path": "./snippets/cy.json"
       }
+    ],
+    "iconThemes": [
+      {
+        "id": "cy-seti-icons",
+        "label": "Cy Seti Icons",
+        "path": "./icons/cy-seti-icon-theme.json"
+      }
     ]
   },
   "scripts": {

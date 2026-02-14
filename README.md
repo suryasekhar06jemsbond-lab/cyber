@@ -72,6 +72,8 @@ Or install automatically on Windows:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install_vscode.ps1 -Version v0.6.13
 ```
 
+Then in VS Code set file icon theme to `Cy Seti Icons` to show `.cy` logo icons in Explorer.
+
 Extension source lives in `editor/vscode/cy-language`.
 
 ## Formal Publish Flow
