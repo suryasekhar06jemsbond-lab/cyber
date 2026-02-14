@@ -5,6 +5,7 @@
   "version": "0.1.0",
   "publisher": "suryasekhar06jemsbond-lab",
   "license": "UNLICENSED",
+  "icon": "icons/cy-logo.png",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -34,7 +35,11 @@
         "extensions": [
           ".cy"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/cy-file-light.png",
+          "dark": "./icons/cy-file-dark.png"
+        }
       }
     ],
     "grammars": [

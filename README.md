@@ -2,7 +2,7 @@
 
 Cy runs as a native executable (`cy`) with no Python runtime dependency.
 
-![Cy Logo](assets/cy-logo.ico)
+![Cy Logo](assets/cy-logo.png)
 
 ## Build
 
@@ -65,6 +65,12 @@ Install the Cy extension from the release asset `cy-language.vsix`:
 1. Open VS Code command palette.
 2. Run `Extensions: Install from VSIX...`.
 3. Select `cy-language.vsix`.
+
+Or install automatically on Windows:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install_vscode.ps1 -Version v0.6.13
+```
 
 Extension source lives in `editor/vscode/cy-language`.
 
