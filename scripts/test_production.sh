@@ -7,6 +7,10 @@ cd "$ROOT_DIR"
 echo "[prod] building runtime..."
 make >/dev/null
 
+if [ -f ./nyx ]; then
+  chmod +x ./nyx
+fi
+
 echo "[prod] release package sanity..."
 ./scripts/package_release.sh --target linux-x64 --binary ./build/nyx --out-dir ./dist >/dev/null
 pkg_entries=$(tar -tzf ./dist/nyx-linux-x64.tar.gz)

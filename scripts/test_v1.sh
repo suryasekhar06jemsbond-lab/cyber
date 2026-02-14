@@ -7,6 +7,24 @@ cd "$ROOT_DIR"
 echo "[v1] building native runtime..."
 make >/dev/null
 
+if [ -f ./build/nyx ]; then
+  chmod +x ./build/nyx
+fi
+if [ -f ./nyx ]; then
+  chmod +x ./nyx
+fi
+
+if [ -x ./build/nyx ]; then
+  runtime=./build/nyx
+elif [ -x ./nyx ]; then
+  runtime=./nyx
+elif [ -x ./nyx.exe ]; then
+  runtime=./nyx.exe
+else
+  echo "FAIL: runtime not found" >&2
+  exit 1
+fi
+
 tmpd=$(mktemp -d)
 trap 'rm -rf "$tmpd"' EXIT
 
@@ -38,7 +56,7 @@ print(read("out.txt"));
 NYEOF
 
 echo "[v1] running scenario..."
-out=$(./nyx "$tmpd/main.ny")
+out=$("$runtime" "$tmpd/main.ny")
 expected='ok
 3
 2
