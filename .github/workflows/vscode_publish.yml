@@ -7,20 +7,32 @@ on:
 
 jobs:
   publish:
-    if: ${{ secrets.VSCE_PAT != '' }}
+    if: ${{ secrets.VSCE_PAT && secrets.VSCE_PAT != '' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install deps
+        run: npm ci
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
+      - name: Publish to Visual Studio Marketplace
+        if: github.event_name != 'pull_request'
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
       - name: Publish extension to VS Code Marketplace
         shell: bash
-        working-directory: editor/vscode/cy-language
+        working-directory: editor/vscode/nyx-language
         run: |
+          npx vsce publish -p "$VSCE_PAT"
+          cp ../../../assets/nyx-logo.png .
           npm install
           npx @vscode/vsce publish -p "${{ secrets.VSCE_PAT }}"

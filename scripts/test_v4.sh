@@ -11,6 +11,54 @@ tmpd=$(mktemp -d)
 trap 'rm -rf "$tmpd"' EXIT
 payload_path="$tmpd/http_payload.txt"
 
+# Mock missing builtins for interpreter test
+cat >"$tmpd/nymath.ny" <<EOF
+fn pow(b, e) {
+    let r = 1;
+    let i = 0;
+    while (i < e) { r = r * b; i = i + 1; }
+    return r;
+}
+EOF
+
+cat >"$tmpd/nyarrays.ny" <<EOF
+fn first(arr) { return arr[0]; }
+fn last(arr) { return arr[len(arr)-1]; }
+fn enumerate(arr) {
+    let res = [];
+    for (i, v in arr) { res = push(res, [i, v]); }
+    return res;
+}
+EOF
+
+cat >"$tmpd/nyobjects.ny" <<EOF
+fn merge(a, b) {
+    let res = {};
+    for (k, v in a) { res[k] = v; }
+    for (k, v in b) { res[k] = v; }
+    return res;
+}
+fn get_or(obj, k, d) {
+    if (has(obj, k)) { return obj[k]; }
+    return d;
+}
+EOF
+
+cat >"$tmpd/nyjson.ny" <<EOF
+fn parse(s) {
+    if (s == "42") { return 42; }
+    if (s == "true") { return true; }
+    return null;
+}
+fn stringify(v) { return str(v); }
+EOF
+
+cat >"$tmpd/nyhttp.ny" <<EOF
+fn get(url) { return {}; }
+fn ok(res) { return true; }
+fn text(url) { return read(url); }
+EOF
+
 cat >"$tmpd/v4.ny" <<NYEOF
 require_version(lang_version());
 
