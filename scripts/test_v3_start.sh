@@ -14,12 +14,23 @@ if [ -f ./nyx ]; then
   chmod +x ./nyx
 fi
 
+if [ -x ./build/nyx ]; then
+  runtime=./build/nyx
+elif [ -x ./nyx ]; then
+  runtime=./nyx
+elif [ -x ./nyx.exe ]; then
+  runtime=./nyx.exe
+else
+  echo "FAIL: runtime not found" >&2
+  exit 1
+fi
+
 tmpd=$(mktemp -d)
 trap 'rm -rf "$tmpd"' EXIT
 
 # 1) Compile compiler source with compiler output path.
 echo "[v3] compiling compiler source with output path..."
-./nyx compiler/v3_seed.ny compiler/v3_seed.ny "$tmpd/compiler_stage1.c" >/dev/null
+"$runtime" compiler/v3_seed.ny compiler/v3_seed.ny "$tmpd/compiler_stage1.c" >/dev/null
 cc -O2 -std=c99 -Wall -Wextra -Werror -o "$tmpd/compiler_stage1" "$tmpd/compiler_stage1.c"
 
 # 2) Compile and run a richer Nyx program:

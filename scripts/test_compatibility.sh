@@ -7,10 +7,28 @@ cd "$ROOT_DIR"
 echo "[compat] building native runtime..."
 make >/dev/null
 
+if [ -f ./build/nyx ]; then
+  chmod +x ./build/nyx
+fi
+if [ -f ./nyx ]; then
+  chmod +x ./nyx
+fi
+
+if [ -x ./build/nyx ]; then
+  runtime=./build/nyx
+elif [ -x ./nyx ]; then
+  runtime=./nyx
+elif [ -x ./nyx.exe ]; then
+  runtime=./nyx.exe
+else
+  echo "FAIL: runtime not found" >&2
+  exit 1
+fi
+
 tmpd=$(mktemp -d)
 trap 'rm -rf "$tmpd"' EXIT
 
-version=$(./nyx --version)
+version=$("$runtime" --version)
 [ -n "$version" ] || {
   echo "FAIL: --version returned empty output"
   exit 1
@@ -27,7 +45,7 @@ require_version("999.0.0");
 print("unreachable");
 CYEOF
 
-out_ok=$(./nyx "$tmpd/ok.nx")
+out_ok=$("$runtime" "$tmpd/ok.nx")
 expected_ok="$version
 ok"
 if [ "$out_ok" != "$expected_ok" ]; then
@@ -39,7 +57,7 @@ if [ "$out_ok" != "$expected_ok" ]; then
   exit 1
 fi
 
-if ./nyx "$tmpd/bad.nx" >/dev/null 2>"$tmpd/bad_runtime.log"; then
+if "$runtime" "$tmpd/bad.nx" >/dev/null 2>"$tmpd/bad_runtime.log"; then
   echo "FAIL: require_version mismatch should fail in runtime"
   exit 1
 fi
@@ -50,7 +68,7 @@ grep -q "language version mismatch" "$tmpd/bad_runtime.log" || {
 }
 
 echo "[compat] verifying compiled runtime compatibility..."
-./nyx compiler/v3_seed.nx compiler/v3_seed.nx "$tmpd/compiler_stage1.c" >/dev/null
+"$runtime" compiler/v3_seed.ny compiler/v3_seed.ny "$tmpd/compiler_stage1.c" >/dev/null
 cc -O2 -std=c99 -Wall -Wextra -Werror -o "$tmpd/compiler_stage1" "$tmpd/compiler_stage1.c"
 
 "$tmpd/compiler_stage1" "$tmpd/ok.nx" "$tmpd/ok.c" >/dev/null

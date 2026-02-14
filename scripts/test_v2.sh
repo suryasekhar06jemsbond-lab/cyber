@@ -14,6 +14,17 @@ if [ -f ./nyx ]; then
   chmod +x ./nyx
 fi
 
+if [ -x ./build/nyx ]; then
+  runtime=./build/nyx
+elif [ -x ./nyx ]; then
+  runtime=./nyx
+elif [ -x ./nyx.exe ]; then
+  runtime=./nyx.exe
+else
+  echo "FAIL: runtime not found" >&2
+  exit 1
+fi
+
 tmpd=$(mktemp -d)
 trap 'rm -rf "$tmpd"' EXIT
 
@@ -22,7 +33,7 @@ cat > "$tmpd/input.ny" << 'NYEOF'
 NYEOF
 
 echo "[v2] compiling Nyx source with compiler/bootstrap.ny..."
-./nyx compiler/bootstrap.ny "$tmpd/input.ny" "$tmpd/output.c" >/dev/null
+"$runtime" compiler/bootstrap.ny "$tmpd/input.ny" "$tmpd/output.c" >/dev/null
 
 [ -f "$tmpd/output.c" ] || {
   echo "FAIL: compiler did not produce output.c"
