@@ -13,50 +13,60 @@ payload_path="$tmpd/http_payload.txt"
 
 # Mock missing builtins for interpreter test
 cat >"$tmpd/nymath.ny" <<EOF
-fn pow(b, e) {
-    let r = 1;
-    let i = 0;
-    while (i < e) { r = r * b; i = i + 1; }
-    return r;
+module nymath {
+    fn pow(b, e) {
+        let r = 1;
+        let i = 0;
+        while (i < e) { r = r * b; i = i + 1; }
+        return r;
+    }
 }
 EOF
 
 cat >"$tmpd/nyarrays.ny" <<EOF
-fn first(arr) { return arr[0]; }
-fn last(arr) { return arr[len(arr)-1]; }
-fn enumerate(arr) {
-    let res = [];
-    for (i, v in arr) { res = push(res, [i, v]); }
-    return res;
+module nyarrays {
+    fn first(arr) { return arr[0]; }
+    fn last(arr) { return arr[len(arr)-1]; }
+    fn enumerate(arr) {
+        let res = [];
+        for (i, v in arr) { res = push(res, [i, v]); }
+        return res;
+    }
 }
 EOF
 
 cat >"$tmpd/nyobjects.ny" <<EOF
-fn merge(a, b) {
-    let res = {};
-    for (k, v in a) { res[k] = v; }
-    for (k, v in b) { res[k] = v; }
-    return res;
-}
-fn get_or(obj, k, d) {
-    if (has(obj, k)) { return obj[k]; }
-    return d;
+module nyobjects {
+    fn merge(a, b) {
+        let res = {};
+        for (k, v in a) { res[k] = v; }
+        for (k, v in b) { res[k] = v; }
+        return res;
+    }
+    fn get_or(obj, k, d) {
+        if (has(obj, k)) { return obj[k]; }
+        return d;
+    }
 }
 EOF
 
 cat >"$tmpd/nyjson.ny" <<EOF
-fn parse(s) {
-    if (s == "42") { return 42; }
-    if (s == "true") { return true; }
-    return null;
+module nyjson {
+    fn parse(s) {
+        if (s == "42") { return 42; }
+        if (s == "true") { return true; }
+        return null;
+    }
+    fn stringify(v) { return str(v); }
 }
-fn stringify(v) { return str(v); }
 EOF
 
 cat >"$tmpd/nyhttp.ny" <<EOF
-fn get(url) { return {}; }
-fn ok(res) { return true; }
-fn text(url) { return read(url); }
+module nyhttp {
+    fn get(url) { return {}; }
+    fn ok(res) { return true; }
+    fn text(url) { return read(url); }
+}
 EOF
 
 cat >"$tmpd/v4.ny" <<NYEOF
@@ -152,9 +162,9 @@ print(sum([1, 2, 3, 4]));
 print(all([1, true, 3]));
 print(any([0, false, 7]));
 
-import "nymath";
-import "nyarrays";
-import "nyobjects";
+import "nymath.ny";
+import "nyarrays.ny";
+import "nyobjects.ny";
 
 print(nymath.pow(2, 5));
 print(nyarrays.first([9, 8, 7]));
@@ -176,8 +186,8 @@ switch (2) {
 print(null ?? 99);
 print(5 ?? 99);
 
-import "nyjson";
-import "nyhttp";
+import "nyjson.ny";
+import "nyhttp.ny";
 
 print(nyjson.parse("42"));
 print(nyjson.parse("true"));
