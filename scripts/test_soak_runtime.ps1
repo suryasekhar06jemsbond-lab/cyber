@@ -63,7 +63,7 @@ function Run-ProcessText {
 
 Write-Host "[soak-win] building native runtime..."
 $compiler = Resolve-CCompiler
-$runtimeExe = Join-Path $root ("cy" + $exeExt)
+$runtimeExe = Join-Path $root ("nyx" + $exeExt)
 $nativeSource = Join-Path $root 'native/cy.c'
 Build-C -Compiler $compiler -Output $runtimeExe -Source $nativeSource
 
@@ -71,7 +71,7 @@ $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_soak_" + [guid]::NewGuid
 New-Item -ItemType Directory -Path $tmp | Out-Null
 
 try {
-    $programPath = Join-Path $tmp 'soak.cy'
+    $programPath = Join-Path $tmp 'soak.nx'
 @"
 fn fib(n) {
     if (n < 2) {

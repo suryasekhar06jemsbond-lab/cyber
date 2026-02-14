@@ -144,7 +144,7 @@ function New-Expr {
 
 Write-Host "[vm-consistency] building native runtime..."
 $compiler = Resolve-CCompiler
-$runtimeExe = Join-Path $root ("cy" + $exeExt)
+$runtimeExe = Join-Path $root ("nyx" + $exeExt)
 $nativeSource = Join-Path $root 'native/cy.c'
 Build-C -Compiler $compiler -Output $runtimeExe -Source $nativeSource
 
@@ -156,7 +156,7 @@ try {
     for ($i = 1; $i -le $Cases; $i++) {
         $depth = $script:Rng.Next(1, 5)
         $expr = New-Expr -Depth $depth
-        $path = Join-Path $tmp ("case_{0}.cy" -f $i)
+        $path = Join-Path $tmp ("case_{0}.nx" -f $i)
         Set-Content -NoNewline -LiteralPath $path -Value "$expr;"
 
         $outAst = Run-ProcessText -Exe $runtimeExe -Args @($path)

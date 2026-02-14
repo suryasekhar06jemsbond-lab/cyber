@@ -8,9 +8,9 @@ tmpd=$(mktemp -d)
 trap 'rm -rf "$tmpd"' EXIT
 
 mkdir -p "$tmpd/pkgs/core" "$tmpd/pkgs/util" "$tmpd/pkgs/app"
-printf 'module Core { let v = 1; }\n' > "$tmpd/pkgs/core/core.cy"
-printf 'module Util { let v = 2; }\n' > "$tmpd/pkgs/util/util.cy"
-printf 'module App { let v = 3; }\n' > "$tmpd/pkgs/app/app.cy"
+printf 'module Core { let v = 1; }\n' > "$tmpd/pkgs/core/core.nx"
+printf 'module Util { let v = 2; }\n' > "$tmpd/pkgs/util/util.nx"
+printf 'module App { let v = 3; }\n' > "$tmpd/pkgs/app/app.nx"
 
 cat > "$tmpd/cy.registry" <<REGEOF
 # name|version|source|deps

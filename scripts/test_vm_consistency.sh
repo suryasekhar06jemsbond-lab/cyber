@@ -103,17 +103,17 @@ echo "[vm-consistency] seed=$seed cases=$cases"
 for i in $(seq 1 "$cases"); do
   depth=$((RANDOM % 4 + 1))
   expr="$(gen_expr "$depth")"
-  file="$tmpd/case_$i.cy"
+  file="$tmpd/case_$i.nx"
   printf '%s;\n' "$expr" > "$file"
 
-  if ! out_ast=$(./cy "$file" 2>&1); then
+  if ! out_ast=$(./nyx "$file" 2>&1); then
     echo "FAIL: AST run failed on case $i"
     echo "expr: $expr"
     printf '%s\n' "$out_ast"
     exit 1
   fi
 
-  if ! out_vm=$(./cy --vm "$file" 2>&1); then
+  if ! out_vm=$(./nyx --vm "$file" 2>&1); then
     echo "FAIL: VM run failed on case $i"
     echo "expr: $expr"
     printf '%s\n' "$out_vm"

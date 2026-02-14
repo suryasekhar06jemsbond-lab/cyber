@@ -12,7 +12,7 @@ make >/dev/null
 tmpd=$(mktemp -d)
 trap 'rm -rf "$tmpd"' EXIT
 
-cat > "$tmpd/soak.cy" <<'CYEOF'
+cat > "$tmpd/soak.nx" <<'CYEOF'
 fn fib(n) {
     if (n < 2) {
         return n;
@@ -33,8 +33,8 @@ expected='21'
 
 echo "[soak] iterations=$iterations"
 for i in $(seq 1 "$iterations"); do
-  out_ast=$(./cy --max-steps 500000 "$tmpd/soak.cy")
-  out_vm=$(./cy --vm-strict --max-steps 500000 "$tmpd/soak.cy")
+  out_ast=$(./nyx --max-steps 500000 "$tmpd/soak.nx")
+  out_vm=$(./nyx --vm-strict --max-steps 500000 "$tmpd/soak.nx")
 
   if [ "$out_ast" != "$expected" ]; then
     echo "FAIL: AST soak output mismatch at iteration $i"

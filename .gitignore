@@ -3,10 +3,10 @@ __pycache__/
 build/
 dist/
 *.spec
-cy.exe
+nyx.exe
 compiler_stage*.c
 compiler_stage*.exe
 output.c
 output_bin.exe
-input_expr.cy
 input_expr.nx
+editor/vscode/cy-language/node_modules/

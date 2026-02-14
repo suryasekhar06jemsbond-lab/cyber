@@ -8,18 +8,17 @@ echo "[prod] building runtime..."
 make >/dev/null
 
 echo "[prod] release package sanity..."
-./scripts/package_release.sh --target linux-x64 --binary ./build/cyper --out-dir ./dist >/dev/null
-pkg_entries=$(tar -tzf ./dist/cyper-linux-x64.tar.gz)
+./scripts/package_release.sh --target linux-x64 --binary ./build/nyx --out-dir ./dist >/dev/null
+pkg_entries=$(tar -tzf ./dist/nyx-linux-x64.tar.gz)
 for required in \
-  "./cyper" \
-  "./cy" \
+  "./nyx" \
   "./scripts/cypm.sh" \
   "./scripts/cyfmt.sh" \
   "./scripts/cylint.sh" \
   "./scripts/cydbg.sh" \
-  "./stdlib/types.cy" \
-  "./compiler/bootstrap.cy" \
-  "./examples/fibonacci.cy"; do
+  "./stdlib/types.nx" \
+  "./compiler/bootstrap.nx" \
+  "./examples/fibonacci.nx"; do
   echo "$pkg_entries" | grep -Fx "$required" >/dev/null || {
     echo "[prod] FAIL: missing release payload file $required" >&2
     exit 1
@@ -70,10 +69,10 @@ if pwsh_bin="$(resolve_pwsh)"; then
   tmpd=$(mktemp -d)
   trap 'rm -rf "$tmpd"' EXIT
 
-  printf 'let x = 1;\nprint(x);\n' > "$tmpd/min.cy"
-  "$pwsh_bin" -NoLogo -NoProfile -File ./scripts/cyfmt.ps1 "$tmpd/min.cy" >/dev/null
-  "$pwsh_bin" -NoLogo -NoProfile -File ./scripts/cyfmt.ps1 -Check "$tmpd/min.cy" >/dev/null
-  "$pwsh_bin" -NoLogo -NoProfile -File ./scripts/cydbg.ps1 "$tmpd/min.cy" >/dev/null 2>&1
+  printf 'let x = 1;\nprint(x);\n' > "$tmpd/min.nx"
+  "$pwsh_bin" -NoLogo -NoProfile -File ./scripts/cyfmt.ps1 "$tmpd/min.nx" >/dev/null
+  "$pwsh_bin" -NoLogo -NoProfile -File ./scripts/cyfmt.ps1 -Check "$tmpd/min.nx" >/dev/null
+  "$pwsh_bin" -NoLogo -NoProfile -File ./scripts/cydbg.ps1 "$tmpd/min.nx" >/dev/null 2>&1
 
   (
     cd "$tmpd"

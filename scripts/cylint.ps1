@@ -19,7 +19,7 @@ switch ($Target.ToLowerInvariant()) {
 
 function Show-Usage {
 @"
-Usage: cylint [--strict] [target(.nx|.cy)]
+Usage: cylint [--strict] [target(.nx)]
 "@
 }
 
@@ -83,26 +83,17 @@ if ($null -ne (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue)) {
 }
 
 function Resolve-RuntimePath {
-    if ($env:CYPER_RUNTIME -and (Test-Path -LiteralPath $env:CYPER_RUNTIME)) {
-        return $env:CYPER_RUNTIME
-    }
-    if ($env:CY_RUNTIME -and (Test-Path -LiteralPath $env:CY_RUNTIME)) {
-        return $env:CY_RUNTIME
+    if ($env:NYX_RUNTIME -and (Test-Path -LiteralPath $env:NYX_RUNTIME)) {
+        return $env:NYX_RUNTIME
     }
 
     $candidates = @(
-        (Join-Path $PSScriptRoot 'cyper.exe'),
-        (Join-Path $PSScriptRoot 'cyper'),
-        (Join-Path $PSScriptRoot 'cy.exe'),
-        (Join-Path $PSScriptRoot 'cy'),
-        '.\cyper.exe',
-        './cyper.exe',
-        '.\cyper',
-        './cyper',
-        '.\cy.exe',
-        './cy.exe',
-        '.\cy',
-        './cy'
+        (Join-Path $PSScriptRoot 'nyx.exe'),
+        (Join-Path $PSScriptRoot 'nyx'),
+        '.\nyx.exe',
+        './nyx.exe',
+        '.\nyx',
+        './nyx'
     )
     foreach ($p in $candidates) {
         if (Test-Path -LiteralPath $p) {
@@ -110,14 +101,9 @@ function Resolve-RuntimePath {
         }
     }
 
-    $cmdCyper = Get-Command cyper -ErrorAction SilentlyContinue
-    if ($cmdCyper) { return $cmdCyper.Source }
-    $cmdCyperExe = Get-Command cyper.exe -ErrorAction SilentlyContinue
-    if ($cmdCyperExe) { return $cmdCyperExe.Source }
-
-    $cmd = Get-Command cy -ErrorAction SilentlyContinue
+    $cmd = Get-Command nyx -ErrorAction SilentlyContinue
     if ($cmd) { return $cmd.Source }
-    $cmdExe = Get-Command cy.exe -ErrorAction SilentlyContinue
+    $cmdExe = Get-Command nyx.exe -ErrorAction SilentlyContinue
     if ($cmdExe) { return $cmdExe.Source }
 
     return $null
@@ -125,7 +111,7 @@ function Resolve-RuntimePath {
 
 $runtime = Resolve-RuntimePath
 if (-not $runtime) {
-    throw 'cyper runtime not found (set CYPER_RUNTIME/CY_RUNTIME or add cyper to PATH)'
+    throw 'nyx runtime not found (set NYX_RUNTIME or add nyx to PATH)'
 }
 
 function Lint-CyFile {
@@ -146,7 +132,7 @@ function Lint-CyFile {
 if (Test-Path $Target -PathType Leaf) {
     Lint-CyFile -Path $Target
 } else {
-    Get-ChildItem -Path $Target -Recurse -File | Where-Object { $_.Extension -in @('.nx', '.cy') } | ForEach-Object {
+    Get-ChildItem -Path $Target -Recurse -File | Where-Object { $_.Extension -eq '.nx' } | ForEach-Object {
         Lint-CyFile -Path $_.FullName
     }
 }

@@ -1,10 +1,10 @@
 param(
     [string]$Repo = 'suryasekhar06jemsbond-lab/cyber',
     [string]$Version = 'latest',
-    [string]$InstallRoot = "$HOME\\AppData\\Local\\Programs\\cyper",
+    [string]$InstallRoot = "$HOME\\AppData\\Local\\Programs\\nyx",
     [string]$InstallDir,
     [string]$Asset,
-    [string]$BinaryName = 'cyper.exe',
+    [string]$BinaryName = 'nyx.exe',
     [switch]$Force
 )
 
@@ -45,7 +45,7 @@ function Get-Arch {
 
 if ([string]::IsNullOrWhiteSpace($Asset)) {
     $arch = Get-Arch
-    $Asset = "cyper-windows-$arch.zip"
+    $Asset = "nyx-windows-$arch.zip"
 }
 
 if ($Version -eq 'latest') {
@@ -107,7 +107,7 @@ function Resolve-ReleaseAssetUrl {
     try {
         $params = @{
             Uri     = $api
-            Headers = @{ 'User-Agent' = 'cyper-installer' }
+            Headers = @{ 'User-Agent' = 'nyx-installer' }
         }
         if ($PSVersionTable.PSVersion.Major -lt 6) {
             $params.UseBasicParsing = $true
@@ -203,7 +203,7 @@ try {
     $installedAsset = Get-InstalledValue -Key 'asset'
 
     if (-not $Force -and $Version -ne 'latest' -and (Test-Path -LiteralPath $destPath) -and $installedVersion -eq $Version -and $installedAsset -eq $Asset) {
-        Write-Host ("Cyper {0} is already installed at {1}" -f $Version, $destPath)
+        Write-Host ("Nyx {0} is already installed at {1}" -f $Version, $destPath)
         & $destPath --version
         exit 0
     }
@@ -223,7 +223,7 @@ try {
     }
 
     if (-not $Force -and $remoteHash -and (Test-Path -LiteralPath $destPath) -and ($remoteHash -eq $installedHash)) {
-        Write-Host ("Cyper is already up to date at {0} (sha256={1})" -f $destPath, $remoteHash)
+        Write-Host ("Nyx is already up to date at {0} (sha256={1})" -f $destPath, $remoteHash)
         & $destPath --version
         exit 0
     }
@@ -236,28 +236,6 @@ try {
         if (-not [string]::IsNullOrWhiteSpace($resolvedUrl)) {
             Write-Host ("Retrying via release API URL: {0}" -f $resolvedUrl)
             $downloaded = Invoke-WebDownload -Uri $resolvedUrl -OutFile $zipPath -Retries 2 -Quiet
-        }
-    }
-
-    if (-not $downloaded -and $Asset.StartsWith('cyper-')) {
-        $legacyAsset = ('cy-' + $Asset.Substring('cyper-'.Length))
-        $legacyUrl = if ($Version -eq 'latest') {
-            "https://github.com/$Repo/releases/latest/download/$legacyAsset"
-        } else {
-            "https://github.com/$Repo/releases/download/$Version/$legacyAsset"
-        }
-        Write-Host ("Primary asset unavailable, retrying legacy asset: {0}" -f $legacyUrl)
-        $downloaded = Invoke-WebDownload -Uri $legacyUrl -OutFile $zipPath -Retries 2 -Quiet
-        if (-not $downloaded -and $Version -ne 'latest') {
-            $legacyResolvedUrl = Resolve-ReleaseAssetUrl -RepoName $Repo -TagName $Version -AssetName $legacyAsset
-            if (-not [string]::IsNullOrWhiteSpace($legacyResolvedUrl)) {
-                Write-Host ("Retrying legacy asset via release API URL: {0}" -f $legacyResolvedUrl)
-                $downloaded = Invoke-WebDownload -Uri $legacyResolvedUrl -OutFile $zipPath -Retries 2 -Quiet
-            }
-        }
-        if ($downloaded) {
-            $Asset = $legacyAsset
-            $url = $legacyUrl
         }
     }
 
@@ -285,13 +263,6 @@ try {
         }
     }
 
-    if (-not (Test-Path -LiteralPath $binaryPath) -and $BinaryName -ieq 'cyper.exe') {
-        $legacyFound = Get-ChildItem -Path $unpackPath -Recurse -File -Filter 'cy.exe' | Select-Object -First 1
-        if ($legacyFound) {
-            $binaryPath = $legacyFound.FullName
-        }
-    }
-
     if (-not (Test-Path -LiteralPath $binaryPath)) {
         throw "Binary '$BinaryName' not found in downloaded archive"
     }
@@ -302,19 +273,6 @@ try {
     $supportBinary = Join-Path $supportRoot $BinaryName
     Copy-Item -Force -LiteralPath $binaryPath -Destination $supportBinary
     Copy-Item -Force -LiteralPath $supportBinary -Destination $destPath
-
-    $aliasBinaryName = $null
-    if ($BinaryName -ieq 'cyper.exe') {
-        $aliasBinaryName = 'cy.exe'
-    } elseif ($BinaryName -ieq 'cy.exe') {
-        $aliasBinaryName = 'cyper.exe'
-    }
-    if ($aliasBinaryName) {
-        $aliasSupport = Join-Path $supportRoot $aliasBinaryName
-        $aliasDest = Join-Path $InstallDir $aliasBinaryName
-        Copy-Item -Force -LiteralPath $supportBinary -Destination $aliasSupport
-        Copy-Item -Force -LiteralPath $supportBinary -Destination $aliasDest
-    }
 
     Copy-DirReplace -Source (Join-Path $unpackPath 'scripts') -Destination (Join-Path $supportRoot 'scripts')
     Copy-DirReplace -Source (Join-Path $unpackPath 'stdlib') -Destination (Join-Path $supportRoot 'stdlib')

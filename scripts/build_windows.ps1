@@ -1,5 +1,5 @@
 param(
-    [string]$Output = 'cyper.exe',
+    [string]$Output = 'nyx.exe',
     [switch]$SmokeTest,
     [switch]$NoIcon,
     [string]$LangVersion = $env:CY_LANG_VERSION
@@ -128,21 +128,7 @@ function Write-CompatAlias {
     param([string]$PrimaryPath)
 
     $name = [System.IO.Path]::GetFileName($PrimaryPath).ToLowerInvariant()
-    $dir = Split-Path -Parent $PrimaryPath
-    if ([string]::IsNullOrWhiteSpace($dir)) { return }
-
-    $alias = $null
-    if ($name -eq 'cyper.exe') {
-        $alias = Join-Path $dir 'cy.exe'
-    } elseif ($name -eq 'cy.exe') {
-        $alias = Join-Path $dir 'cyper.exe'
-    } else {
-        return
-    }
-
-    if ($alias -ieq $PrimaryPath) { return }
-    Copy-Item -Force -LiteralPath $PrimaryPath -Destination $alias
-    Write-Host ("[build-win] wrote compatibility alias: {0}" -f $alias)
+    if ($name -ne 'nyx.exe') { return }
 }
 
 function Normalize-Text {
@@ -155,7 +141,7 @@ $compiler = Resolve-CCompiler
 Write-Host ("[build-win] compiler: {0} ({1})" -f $compiler.Kind, $compiler.Exe)
 
 if ([string]::IsNullOrWhiteSpace($LangVersion)) {
-    $LangVersion = '0.6.7'
+    $LangVersion = '0.6.13'
 }
 Write-Host ("[build-win] language version: {0}" -f $LangVersion)
 
@@ -201,9 +187,6 @@ try {
 
     if ($SmokeTest) {
         $mainPath = Join-Path $root 'main.nx'
-        if (-not (Test-Path -LiteralPath $mainPath)) {
-            $mainPath = Join-Path $root 'main.cy'
-        }
         $raw = (& $outputPath $mainPath | Out-String)
         if ($null -ne $LASTEXITCODE -and $LASTEXITCODE -ne 0) {
             throw "Smoke test failed while running: $outputPath $mainPath"

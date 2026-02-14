@@ -9,7 +9,7 @@ from src.parser import Parser
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: cy <file.nx>")
+        print("Usage: nyx <file.nx>")
         return 1
 
     filepath = sys.argv[1]

@@ -10,14 +10,14 @@ make >/dev/null
 tmpd=$(mktemp -d)
 trap 'rm -rf "$tmpd"' EXIT
 
-cat >"$tmpd/step_limit.cy" <<'CYEOF'
+cat >"$tmpd/step_limit.nx" <<'CYEOF'
 let i = 0;
 while (true) {
     i = i + 1;
 }
 CYEOF
 
-if ./cy --max-steps 120 "$tmpd/step_limit.cy" >/dev/null 2>"$tmpd/step.err"; then
+if ./nyx --max-steps 120 "$tmpd/step_limit.nx" >/dev/null 2>"$tmpd/step.err"; then
   echo "FAIL: --max-steps should fail on infinite loop"
   exit 1
 fi
@@ -27,7 +27,7 @@ grep -q "max step count exceeded" "$tmpd/step.err" || {
   exit 1
 }
 
-cat >"$tmpd/call_limit.cy" <<'CYEOF'
+cat >"$tmpd/call_limit.nx" <<'CYEOF'
 fn dive(n) {
     return dive(n + 1);
 }
@@ -35,7 +35,7 @@ fn dive(n) {
 dive(0);
 CYEOF
 
-if ./cy --max-call-depth 64 "$tmpd/call_limit.cy" >/dev/null 2>"$tmpd/call.err"; then
+if ./nyx --max-call-depth 64 "$tmpd/call_limit.nx" >/dev/null 2>"$tmpd/call.err"; then
   echo "FAIL: --max-call-depth should fail on unbounded recursion"
   exit 1
 fi
@@ -45,7 +45,7 @@ grep -q "max call depth exceeded" "$tmpd/call.err" || {
   exit 1
 }
 
-cat >"$tmpd/ok.cy" <<'CYEOF'
+cat >"$tmpd/ok.nx" <<'CYEOF'
 fn add(a, b) {
     return a + b;
 }
@@ -53,7 +53,7 @@ fn add(a, b) {
 print(add(40, 2));
 CYEOF
 
-out=$(./cy --max-steps 200 --max-call-depth 64 "$tmpd/ok.cy")
+out=$(./nyx --max-steps 200 --max-call-depth 64 "$tmpd/ok.nx")
 [ "$out" = "42" ] || {
   echo "FAIL: limited runtime produced unexpected output"
   echo "Got: $out"

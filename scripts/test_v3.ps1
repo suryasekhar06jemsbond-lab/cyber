@@ -80,7 +80,7 @@ $Compiler = Resolve-CCompiler
 Write-Host ("[v3-win] using compiler: {0} ({1})" -f $Compiler.Kind, $Compiler.Exe)
 
 Write-Host "[v3-win] building native runtime..."
-$runtimeExe = Join-Path $root ("cy" + $exeExt)
+$runtimeExe = Join-Path $root ("nyx" + $exeExt)
 $nativeSource = Join-Path $root 'native/cy.c'
 Build-C -Compiler $Compiler -Output $runtimeExe -Source $nativeSource
 
@@ -88,7 +88,7 @@ $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_v3_" + [guid]::NewGuid()
 New-Item -ItemType Directory -Path $tmp | Out-Null
 
 try {
-    $libPath = Join-Path $tmp 'lib.cy'
+    $libPath = Join-Path $tmp 'lib.nx'
     $libPathCy = $libPath.Replace('\', '/')
 @"
 fn add(a, b) {
@@ -106,7 +106,7 @@ fn point_ctor(self, x, y) {
 }
 "@ | Set-Content -NoNewline $libPath
 
-    $programPath = Join-Path $tmp 'program.cy'
+    $programPath = Join-Path $tmp 'program.nx'
 @"
 import "$libPathCy";
 
@@ -237,7 +237,7 @@ try {
     $stage2C = Join-Path $tmp 'compiler_stage2.c'
     $stage2Exe = Join-Path $tmp ("compiler_stage2" + $exeExt)
     $stage3C = Join-Path $tmp 'compiler_stage3.c'
-    $seedPath = Join-Path $root 'compiler/v3_seed.cy'
+    $seedPath = Join-Path $root 'compiler/v3_seed.nx'
     $seedPathCy = $seedPath -replace '\\', '/'
 
     Write-Host "[v3-win] compiling compiler source with output path..."

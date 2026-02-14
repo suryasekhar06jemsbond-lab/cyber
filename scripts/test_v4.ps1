@@ -70,7 +70,7 @@ function Run-ProcessText {
 
 $Compiler = Resolve-CCompiler
 Write-Host "[v4-win] building native runtime..."
-$runtimeExe = Join-Path $root ("cy" + $exeExt)
+$runtimeExe = Join-Path $root ("nyx" + $exeExt)
 $nativeSource = Join-Path $root 'native/cy.c'
 Build-C -Compiler $Compiler -Output $runtimeExe -Source $nativeSource
 
@@ -78,7 +78,7 @@ $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_v4_" + [guid]::NewGuid()
 New-Item -ItemType Directory -Path $tmp | Out-Null
 
 try {
-    $programPath = Join-Path $tmp 'v4.cy'
+    $programPath = Join-Path $tmp 'v4.nx'
     $payloadPath = Join-Path $tmp 'http_payload.txt'
     $payloadPathCy = $payloadPath -replace '\\', '/'
 @"

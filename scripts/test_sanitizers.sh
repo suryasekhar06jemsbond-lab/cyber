@@ -48,7 +48,7 @@ fi
 echo "[san] building sanitized runtime..."
 "$cc_bin" $SAN_FLAGS -o "$tmpd/cy_san" native/cy.c
 
-cat >"$tmpd/smoke.cy" <<'CYEOF'
+cat >"$tmpd/smoke.nx" <<'CYEOF'
 fn add(a, b) {
     return a + b;
 }
@@ -73,7 +73,7 @@ let xs = [n + 1 for n in [1, 2, 3, 4] if n > 1];
 print(add(M.id(b.get()), xs[0]));
 CYEOF
 
-cat >"$tmpd/limits.cy" <<'CYEOF'
+cat >"$tmpd/limits.nx" <<'CYEOF'
 let i = 0;
 while (true) {
     i = i + 1;
@@ -83,8 +83,8 @@ CYEOF
 export ASAN_OPTIONS="${ASAN_OPTIONS:-detect_leaks=1:abort_on_error=1}"
 export UBSAN_OPTIONS="${UBSAN_OPTIONS:-print_stacktrace=1:halt_on_error=1}"
 
-out_ast=$("$tmpd/cy_san" "$tmpd/smoke.cy")
-out_vm=$("$tmpd/cy_san" --vm-strict "$tmpd/smoke.cy")
+out_ast=$("$tmpd/cy_san" "$tmpd/smoke.nx")
+out_vm=$("$tmpd/cy_san" --vm-strict "$tmpd/smoke.nx")
 [ "$out_ast" = "$out_vm" ] || {
   echo "FAIL: sanitized AST/VM mismatch"
   echo "AST: $out_ast"
@@ -92,7 +92,7 @@ out_vm=$("$tmpd/cy_san" --vm-strict "$tmpd/smoke.cy")
   exit 1
 }
 
-if "$tmpd/cy_san" --max-steps 120 "$tmpd/limits.cy" >/dev/null 2>"$tmpd/limit.err"; then
+if "$tmpd/cy_san" --max-steps 120 "$tmpd/limits.nx" >/dev/null 2>"$tmpd/limit.err"; then
   echo "FAIL: sanitized max-steps limit expected failure"
   exit 1
 fi

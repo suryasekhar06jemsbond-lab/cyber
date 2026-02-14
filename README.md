@@ -1,6 +1,6 @@
 # Nyx Programming Language
 
-Nyx runs as a native executable (`cyper`) with no Python runtime dependency. A `cy` compatibility alias is still shipped.
+Nyx runs as a native executable (`nyx`) with no Python runtime dependency.
 
 ![Nyx Logo](assets/cy-logo.png)
 
@@ -14,7 +14,7 @@ Requirements:
 make
 ```
 
-Windows (build `cyper.exe` with embedded logo icon from `assets/cy-logo.ico`):
+Windows (build `nyx.exe` with embedded logo icon from `assets/cy-logo.ico`):
 
 ```powershell
 .\scripts\build_windows.ps1 -SmokeTest
@@ -37,26 +37,26 @@ irm https://raw.githubusercontent.com/suryasekhar06jemsbond-lab/cyber/main/scrip
 Important:
 - For unauthenticated one-line install, the GitHub repo must be `public`.
 - Installers are checksum-aware and skip re-download when the same release is already installed.
-- Installers place `cyper` (plus `cy` compatibility alias) and support files (`cypm`, `cyfmt`, `cylint`, `cydbg`, `stdlib`, compiler seed/examples) in the local install root.
+- Installers place `nyx` and support files (`cypm`, `cyfmt`, `cylint`, `cydbg`, `stdlib`, compiler seed/examples) in the local install root.
 
 Manual install from a specific tag:
 - Linux/macOS: set `CY_VERSION=vX.Y.Z` before running `install.sh`.
 - Windows: run `install.ps1 -Version vX.Y.Z` (use `-Force` to reinstall).
 
 Runtime binary output:
-- `build/cyper`
+- `build/nyx`
 
 Launcher:
-- `./cyper` (compatibility alias: `./cy`)
+- `./nyx`
 
 ## Run
 
 ```bash
-./cyper main.nx
-./cyper examples/fibonacci.nx
+./nyx main.nx
+./nyx examples/fibonacci.nx
 ```
 
-If no file is passed and `main.nx` exists in the current directory, `cyper` runs `main.nx` automatically. Legacy `main.cy` is still supported.
+If no file is passed and `main.nx` exists in the current directory, `nyx` runs `main.nx` automatically.
 
 ## VS Code
 
@@ -85,16 +85,14 @@ Extension source lives in `editor/vscode/cy-language`.
 - `git tag -a vX.Y.Z -m "Release vX.Y.Z"`
 - `git push origin vX.Y.Z`
 3. GitHub Actions workflow `.github/workflows/release.yml` builds and attaches:
-- `cy-linux-x64.tar.gz`
-- `cyper-linux-x64.tar.gz`
-- `cy-windows-x64.zip` (compatibility asset)
-- `cyper-windows-x64.zip`
+- `nyx-linux-x64.tar.gz`
+- `nyx-windows-x64.zip`
 - `cy-language.vsix`
 
 Executable script style:
 
 ```nyx
-#!/usr/bin/env cyper
+#!/usr/bin/env nyx
 1 + 2;
 ```
 
@@ -133,7 +131,7 @@ Current direct-codegen source subset:
 Generate compiler C and build compiler binary:
 
 ```bash
-./cyper compiler/v3_seed.nx compiler/v3_seed.nx compiler_stage1.c
+./nyx compiler/v3_seed.nx compiler/v3_seed.nx compiler_stage1.c
 cc -O2 -std=c99 -Wall -Wextra -Werror -o compiler_stage1 compiler_stage1.c
 ```
 
@@ -151,13 +149,13 @@ Current scope: compiles a restricted `.nx` input containing a single arithmetic 
 Do not type angle brackets (`< >`); they are placeholders in docs and break in PowerShell.
 
 ```bash
-./cyper compiler/bootstrap.nx input_expr.nx output.c
+./nyx compiler/bootstrap.nx input_expr.nx output.c
 cc -O2 -std=c99 -Wall -Wextra -Werror -o output_bin output.c
 ./output_bin
 ```
 
 ```powershell
-.\cyper compiler\bootstrap.nx input_expr.nx output.c
+.\nyx compiler\bootstrap.nx input_expr.nx output.c
 clang -O2 -std=c99 -Wall -Wextra -Werror -o output_bin.exe output.c
 .\output_bin.exe
 ```
@@ -180,7 +178,7 @@ Package manager:
 
 ```bash
 ./scripts/cypm.sh init my_project
-./scripts/cypm.sh registry set ./cy.registry
+./scripts/cypm.sh registry set ./nyx.registry
 ./scripts/cypm.sh publish stdlib 1.2.0 ./stdlib
 ./scripts/cypm.sh search stdlib
 ./scripts/cypm.sh add-remote stdlib ^1.0.0
@@ -210,7 +208,7 @@ Linter (syntax check):
 ```bash
 ./scripts/cylint.sh .
 ./scripts/cylint.sh --strict .
-./cyper --parse-only program.nx
+./nyx --parse-only program.nx
 ```
 
 Debugger (trace + breakpoints + stepper):
@@ -225,16 +223,16 @@ Debugger (trace + breakpoints + stepper):
 Native runtime debug flags (no wrapper):
 
 ```bash
-./cyper --debug --break 12,20 program.nx
-./cyper --debug --step program.nx
-./cyper --debug --step-count 10 program.nx
-./cyper --vm program.nx
-./cyper --vm-strict program.nx
-./cyper --max-alloc 1000000 program.nx
-./cyper --max-steps 100000 program.nx
-./cyper --max-call-depth 2048 program.nx
-./cyper --parse-only program.nx
-./cyper --version
+./nyx --debug --break 12,20 program.nx
+./nyx --debug --step program.nx
+./nyx --debug --step-count 10 program.nx
+./nyx --vm program.nx
+./nyx --vm-strict program.nx
+./nyx --max-alloc 1000000 program.nx
+./nyx --max-steps 100000 program.nx
+./nyx --max-call-depth 2048 program.nx
+./nyx --parse-only program.nx
+./nyx --version
 ```
 
 PowerShell equivalents:
@@ -306,14 +304,14 @@ If `pwsh` is installed outside `PATH`, run shell production gate as `PWSH_BIN=/f
 ## v3 Self-Hosting Check
 
 ```bash
-./cyper compiler/v3_seed.nx compiler/v3_seed.nx compiler_stage1.c
+./nyx compiler/v3_seed.nx compiler/v3_seed.nx compiler_stage1.c
 cc -O2 -std=c99 -Wall -Wextra -Werror -o compiler_stage1 compiler_stage1.c
 ./compiler_stage1 compiler/v3_seed.nx compiler_stage2.c --emit-self
 cmp compiler_stage1.c compiler_stage2.c
 ```
 
 ```powershell
-.\cyper.exe compiler\v3_seed.nx compiler\v3_seed.nx compiler_stage1.c
+.\nyx.exe compiler\v3_seed.nx compiler\v3_seed.nx compiler_stage1.c
 clang -O2 -std=c99 -Wall -Wextra -Werror -o compiler_stage1.exe compiler_stage1.c
 .\compiler_stage1.exe compiler\v3_seed.nx compiler_stage2.c --emit-self
 cmd /c fc /b compiler_stage1.c compiler_stage2.c

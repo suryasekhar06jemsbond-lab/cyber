@@ -1,18 +1,15 @@
 CC ?= cc
 CFLAGS ?= -O2 -std=c99 -Wall -Wextra -Werror
-CY_LANG_VERSION ?= 0.6.7
+CY_LANG_VERSION ?= 0.6.13
 VERSION_DEFINE := -DCY_LANG_VERSION=\"$(CY_LANG_VERSION)\"
 
 .PHONY: all clean
 
-all: build/cyper
+all: build/nyx
 
-build/cyper: native/cy.c
+build/nyx: native/cy.c
 	mkdir -p build
-	$(CC) $(CFLAGS) $(VERSION_DEFINE) -o build/cyper native/cy.c
-
-build/cy: build/cyper
-	cp build/cyper build/cy
+	$(CC) $(CFLAGS) $(VERSION_DEFINE) -o build/nyx native/cy.c
 
 clean:
-	rm -f build/cy build/cyper cy.exe cyper.exe
+	rm -f build/nyx nyx.exe

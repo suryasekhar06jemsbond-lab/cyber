@@ -17,7 +17,7 @@ fn compile_expr_to_c(input_path, output_path) {
 }
 
 if (argc() < 3) {
-    print("Usage: cy compiler/bootstrap.nx <input_expr.nx> <output.c>");
+    print("Usage: nyx compiler/bootstrap.nx <input_expr.nx> <output.c>");
 } else {
     let input_path = argv(1);
     let output_path = argv(2);

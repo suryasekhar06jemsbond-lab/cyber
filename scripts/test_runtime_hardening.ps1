@@ -59,7 +59,7 @@ function Run-ProcessText {
 
 Write-Host "[hardening-win] building native runtime..."
 $compiler = Resolve-CCompiler
-$runtimeExe = Join-Path $root ("cy" + $exeExt)
+$runtimeExe = Join-Path $root ("nyx" + $exeExt)
 $nativeSource = Join-Path $root 'native/cy.c'
 Build-C -Compiler $compiler -Output $runtimeExe -Source $nativeSource
 
@@ -67,7 +67,7 @@ $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_hard_" + [guid]::NewGuid
 New-Item -ItemType Directory -Path $tmp | Out-Null
 
 try {
-    $stepPath = Join-Path $tmp 'step_limit.cy'
+    $stepPath = Join-Path $tmp 'step_limit.nx'
 @"
 let i = 0;
 while (true) {
@@ -84,7 +84,7 @@ while (true) {
         throw "missing max step count error"
     }
 
-    $callPath = Join-Path $tmp 'call_limit.cy'
+    $callPath = Join-Path $tmp 'call_limit.nx'
 @"
 fn dive(n) {
     return dive(n + 1);
@@ -102,7 +102,7 @@ dive(0);
         throw "missing max call depth error"
     }
 
-    $okPath = Join-Path $tmp 'ok.cy'
+    $okPath = Join-Path $tmp 'ok.nx'
 @"
 fn add(a, b) {
     return a + b;

@@ -11,9 +11,9 @@ try {
     New-Item -ItemType Directory -Force -Path (Join-Path $tmp 'pkgs/util') | Out-Null
     New-Item -ItemType Directory -Force -Path (Join-Path $tmp 'pkgs/app') | Out-Null
 
-    'module Core { let v = 1; }' | Set-Content -NoNewline -LiteralPath (Join-Path $tmp 'pkgs/core/core.cy')
-    'module Util { let v = 2; }' | Set-Content -NoNewline -LiteralPath (Join-Path $tmp 'pkgs/util/util.cy')
-    'module App { let v = 3; }' | Set-Content -NoNewline -LiteralPath (Join-Path $tmp 'pkgs/app/app.cy')
+    'module Core { let v = 1; }' | Set-Content -NoNewline -LiteralPath (Join-Path $tmp 'pkgs/core/core.nx')
+    'module Util { let v = 2; }' | Set-Content -NoNewline -LiteralPath (Join-Path $tmp 'pkgs/util/util.nx')
+    'module App { let v = 3; }' | Set-Content -NoNewline -LiteralPath (Join-Path $tmp 'pkgs/app/app.nx')
 
     $registryPath = Join-Path $tmp 'cy.registry'
 @"

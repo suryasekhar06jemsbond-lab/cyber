@@ -4,7 +4,7 @@ Version: `0.6-draft` (`v4 runtime`)
 
 ## File Extension
 
-- Source files use `.nx` (legacy `.cy` remains supported).
+- Source files use `.nx` (only `.nx` is supported).
 
 ## Lexical Rules
 
@@ -49,7 +49,7 @@ Direct-codegen note:
 4. Return statement: `return expr;`
 5. Conditional statement:
 
-```cy
+```nyx
 if (cond) {
     ...
 } else if (other_cond) {
@@ -61,7 +61,7 @@ if (cond) {
 
 6. Function declaration:
 
-```cy
+```nyx
 fn add(a, b) {
     return a + b;
 }
@@ -69,13 +69,13 @@ fn add(a, b) {
 
 7. Import statement:
 
-```cy
+```nyx
 import "lib.nx";
 ```
 
 8. Exception handling:
 
-```cy
+```nyx
 try {
     throw "boom";
 } catch (err) {
@@ -85,7 +85,7 @@ try {
 
 9. While loop:
 
-```cy
+```nyx
 while (cond) {
     ...
 }
@@ -93,13 +93,13 @@ while (cond) {
 
 10. For-each loop:
 
-```cy
+```nyx
 for (item in iterable) {
     ...
 }
 ```
 
-```cy
+```nyx
 for (k, v in iterable) {
     ...
 }
@@ -107,14 +107,14 @@ for (k, v in iterable) {
 
 11. Loop control:
 
-```cy
+```nyx
 break;
 continue;
 ```
 
 12. Class declaration:
 
-```cy
+```nyx
 class Point {
     fn init(self, x, y) {
         object_set(self, "x", x);
@@ -125,7 +125,7 @@ class Point {
 
 13. Module declaration:
 
-```cy
+```nyx
 module Math {
     fn add(a, b) {
         return a + b;
@@ -135,7 +135,7 @@ module Math {
 
 14. Switch statement:
 
-```cy
+```nyx
 switch (value) {
     case 1: { print("one"); }
     case 2: { print("two"); }
@@ -145,12 +145,12 @@ switch (value) {
 
 15. Type alias declaration:
 
-```cy
+```nyx
 typealias NumberType = "int";
 ```
 
 Import behavior:
-1. Runtime interpreter (`cyper`) resolves imports at runtime.
+1. Runtime interpreter (`nyx`) resolves imports at runtime.
 2. `v3` compiler resolves and de-duplicates imports at compile time.
 
 ## Builtins

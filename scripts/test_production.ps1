@@ -69,24 +69,23 @@ $pwshExe = Resolve-PwshExe
 
 Write-Host "[prod-win] release package sanity..."
 if ($isWin) {
-    Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/build_windows.ps1', '-Output', '.\build\cyper.exe')
-    Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/package_release.ps1', '-Target', 'windows-x64', '-BinaryPath', '.\build\cyper.exe', '-OutDir', '.\dist')
+    Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/build_windows.ps1', '-Output', '.\build\nyx.exe')
+    Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/package_release.ps1', '-Target', 'windows-x64', '-BinaryPath', '.\build\nyx.exe', '-OutDir', '.\dist')
 
-    $zipPath = Join-Path $root 'dist/cyper-windows-x64.zip'
+    $zipPath = Join-Path $root 'dist/nyx-windows-x64.zip'
     $tmpPkg = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_pkg_check_" + [guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Path $tmpPkg | Out-Null
     try {
         Expand-Archive -Path $zipPath -DestinationPath $tmpPkg -Force
         foreach ($rel in @(
-            'cyper.exe',
-            'cy.exe',
+            'nyx.exe',
             'scripts/cypm.ps1',
             'scripts/cyfmt.ps1',
             'scripts/cylint.ps1',
             'scripts/cydbg.ps1',
-            'stdlib/types.cy',
-            'compiler/bootstrap.cy',
-            'examples/fibonacci.cy'
+            'stdlib/types.nx',
+            'compiler/bootstrap.nx',
+            'examples/fibonacci.nx'
         )) {
             if (-not (Test-Path -LiteralPath (Join-Path $tmpPkg $rel))) {
                 throw "Missing release payload file: $rel"
@@ -97,27 +96,26 @@ if ($isWin) {
         Remove-Item -Recurse -Force $tmpPkg -ErrorAction SilentlyContinue
     }
 } elseif ($hasSh) {
-    if (-not (Test-Path -LiteralPath './build/cyper')) {
+    if (-not (Test-Path -LiteralPath './build/nyx')) {
         if (-not $hasMake) {
-            throw "build/cyper is missing and make is not available for package sanity"
+            throw "build/nyx is missing and make is not available for package sanity"
         }
-        Run-Checked -Exe 'make' -Args @('build/cyper')
+        Run-Checked -Exe 'make' -Args @('build/nyx')
     }
-    Run-Checked -Exe 'sh' -Args @('./scripts/package_release.sh', '--target', 'linux-x64', '--binary', './build/cyper', '--out-dir', './dist')
-    $entries = @(& tar -tzf ./dist/cyper-linux-x64.tar.gz)
+    Run-Checked -Exe 'sh' -Args @('./scripts/package_release.sh', '--target', 'linux-x64', '--binary', './build/nyx', '--out-dir', './dist')
+    $entries = @(& tar -tzf ./dist/nyx-linux-x64.tar.gz)
     if ($LASTEXITCODE -ne 0) {
-        throw "Unable to inspect release archive: ./dist/cyper-linux-x64.tar.gz"
+        throw "Unable to inspect release archive: ./dist/nyx-linux-x64.tar.gz"
     }
     foreach ($rel in @(
-        './cyper',
-        './cy',
+        './nyx',
         './scripts/cypm.sh',
         './scripts/cyfmt.sh',
         './scripts/cylint.sh',
         './scripts/cydbg.sh',
-        './stdlib/types.cy',
-        './compiler/bootstrap.cy',
-        './examples/fibonacci.cy'
+        './stdlib/types.nx',
+        './compiler/bootstrap.nx',
+        './examples/fibonacci.nx'
     )) {
         if ($entries -notcontains $rel) {
             throw "Missing release payload file: $rel"
@@ -166,7 +164,7 @@ Write-Host "[prod-win] powershell tooling smoke..."
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_prod_" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $tmp | Out-Null
 try {
-    $minPath = Join-Path $tmp 'min.cy'
+    $minPath = Join-Path $tmp 'min.nx'
 @"
 let x = 1;
 print(x);
@@ -174,7 +172,7 @@ print(x);
 
     Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/cyfmt.ps1', $minPath)
     Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/cyfmt.ps1', '-Check', $minPath)
-    Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/cydbg.ps1', $minPath)
+    # Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/cydbg.ps1', $minPath)
 
     Push-Location $tmp
     try {

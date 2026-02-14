@@ -12,13 +12,13 @@ trap 'rm -rf "$tmpd"' EXIT
 
 # 1) Compile compiler source with compiler output path.
 echo "[v3] compiling compiler source with output path..."
-./cy compiler/v3_seed.cy compiler/v3_seed.cy "$tmpd/compiler_stage1.c" >/dev/null
+./nyx compiler/v3_seed.nx compiler/v3_seed.nx "$tmpd/compiler_stage1.c" >/dev/null
 cc -O2 -std=c99 -Wall -Wextra -Werror -o "$tmpd/compiler_stage1" "$tmpd/compiler_stage1.c"
 
 # 2) Compile and run a richer Cy program:
 # import, fn/return, arrays/index, calls, if, while/for, class/module/typealias,
 # member/index assignment, and v4 compatibility builtins.
-cat > "$tmpd/lib.cy" <<'CYEOF'
+cat > "$tmpd/lib.nx" <<'CYEOF'
 fn add(a, b) {
     return a + b;
 }
@@ -34,8 +34,8 @@ fn point_ctor(self, x, y) {
 }
 CYEOF
 
-cat > "$tmpd/program.cy" <<CYEOF
-import "$tmpd/lib.cy";
+cat > "$tmpd/program.nx" <<CYEOF
+import "$tmpd/lib.nx";
 
 require_version(lang_version());
 typealias IntType = "int";
@@ -160,7 +160,7 @@ try {
 CYEOF
 
 echo "[v3] compiling rich program with rebuilt compiler..."
-"$tmpd/compiler_stage1" "$tmpd/program.cy" "$tmpd/program.c" >/dev/null
+"$tmpd/compiler_stage1" "$tmpd/program.nx" "$tmpd/program.c" >/dev/null
 cc -O2 -std=c99 -Wall -Wextra -Werror -o "$tmpd/program_bin" "$tmpd/program.c"
 out_prog=$("$tmpd/program_bin")
 expected_prog='int
@@ -215,7 +215,7 @@ fi
 
 # 3) Rebuild-and-compare deterministic loop.
 # stage1 binary compiles compiler source -> stage2.c (self mode)
-"$tmpd/compiler_stage1" compiler/v3_seed.cy "$tmpd/compiler_stage2.c" --emit-self >/dev/null
+"$tmpd/compiler_stage1" compiler/v3_seed.nx "$tmpd/compiler_stage2.c" --emit-self >/dev/null
 
 if ! cmp -s "$tmpd/compiler_stage1.c" "$tmpd/compiler_stage2.c"; then
   echo "FAIL: stage1.c and stage2.c differ"
@@ -229,7 +229,7 @@ fi
 cc -O2 -std=c99 -Wall -Wextra -Werror -o "$tmpd/compiler_stage2" "$tmpd/compiler_stage2.c"
 
 # stage2 binary compiles compiler source -> stage3.c (self mode)
-"$tmpd/compiler_stage2" compiler/v3_seed.cy "$tmpd/compiler_stage3.c" --emit-self >/dev/null
+"$tmpd/compiler_stage2" compiler/v3_seed.nx "$tmpd/compiler_stage3.c" --emit-self >/dev/null
 
 if ! cmp -s "$tmpd/compiler_stage2.c" "$tmpd/compiler_stage3.c"; then
   echo "FAIL: stage2.c and stage3.c differ"
@@ -241,7 +241,7 @@ if ! cmp -s "$tmpd/compiler_stage2.c" "$tmpd/compiler_stage3.c"; then
 fi
 
 # Sanity check: rebuilt compiler still compiles rich source correctly.
-"$tmpd/compiler_stage2" "$tmpd/program.cy" "$tmpd/program_from_stage2.c" >/dev/null
+"$tmpd/compiler_stage2" "$tmpd/program.nx" "$tmpd/program_from_stage2.c" >/dev/null
 cc -O2 -std=c99 -Wall -Wextra -Werror -o "$tmpd/program_from_stage2_bin" "$tmpd/program_from_stage2.c"
 out_prog_stage2=$("$tmpd/program_from_stage2_bin")
 if [ "$out_prog_stage2" != "$expected_prog" ]; then

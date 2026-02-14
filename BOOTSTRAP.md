@@ -7,8 +7,8 @@ Goal: make `cy` independent of Python at runtime, then move toward self-hosting.
 A new language cannot appear from nothing. You need one initial implementation step:
 
 1. Use an existing toolchain (C/Rust/Python/etc.) to build the first `cy` compiler/runtime.
-2. Then rewrite compiler/runtime in `.cy`.
-3. Compile that `.cy` compiler using the older compiler.
+2. Then rewrite compiler/runtime in `.nx`.
+3. Compile that `.nx` compiler using the older compiler.
 4. Continue until the newest compiler builds itself.
 
 This is how real languages become self-hosted.
@@ -25,7 +25,7 @@ Build:
 
 ```bash
 make
-./cy main.cy
+./nyx main.nx
 ./scripts/test_v0.sh
 ```
 
@@ -34,7 +34,7 @@ make
 Status: `completed`
 
 Objective:
-- Expand `native/cy.c` until it supports core language features needed to write a compiler in `.cy`.
+- Expand `native/cy.c` until it supports core language features needed to write a compiler in `.nx`.
 
 Minimum feature checklist:
 1. Variables and assignment
@@ -45,7 +45,7 @@ Minimum feature checklist:
 6. Module/import support
 
 Deliverable:
-- `cy` can run non-trivial `.cy` programs.
+- `cy` can run non-trivial `.nx` programs.
 - Verification: `./scripts/test_v1.sh`
 
 ## Stage 2
@@ -53,7 +53,7 @@ Deliverable:
 Status: `completed`
 
 Objective:
-- Write first compiler in `.cy` (for example `compiler/bootstrap.cy`).
+- Write first compiler in `.nx` (for example `compiler/bootstrap.nx`).
 
 Strategy:
 1. Keep parser simple.
@@ -61,7 +61,7 @@ Strategy:
 3. Use Stage-1 `cy` to run this compiler.
 
 Deliverable:
-- First `.cy` compiler prototype (`compiler/bootstrap.cy`) that compiles a restricted `.cy` subset (single arithmetic expression statement) into C.
+- First `.nx` compiler prototype (`compiler/bootstrap.nx`) that compiles a restricted `.nx` subset (single arithmetic expression statement) into C.
 - Verification: `./scripts/test_v2.sh`
 
 ## Stage 3 (Self-Hosting)
@@ -69,7 +69,7 @@ Deliverable:
 Status: `completed`
 
 Objective:
-- Build compiler v2 (written in `.cy`) using compiler v1.
+- Build compiler v2 (written in `.nx`) using compiler v1.
 - Rebuild v2 using itself.
 - Compare outputs to validate deterministic self-hosting.
 
@@ -91,5 +91,5 @@ Deliverable:
 4. Tag milestones:
    - `v0`: native runtime
    - `v1`: enough language to write compiler
-   - `v2`: first `.cy` compiler
+   - `v2`: first `.nx` compiler
    - `v3`: self-hosting

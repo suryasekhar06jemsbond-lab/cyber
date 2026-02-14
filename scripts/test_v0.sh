@@ -7,36 +7,34 @@ cd "$ROOT_DIR"
 echo "[v0] building native runtime..."
 make >/dev/null
 
-if [ -x ./cyper ]; then
-  runtime=./cyper
-elif [ -x ./cy ]; then
-  runtime=./cy
-elif [ -x ./cy.exe ]; then
-  runtime=./cy.exe
+if [ -x ./build/nyx ]; then
+  runtime=./build/nyx
+elif [ -x ./nyx ]; then
+  runtime=./nyx
+elif [ -x ./nyx.exe ]; then
+  runtime=./nyx.exe
 else
-  echo "FAIL: runtime not found (expected ./cyper, ./cy, or ./cy.exe)" >&2
+  echo "FAIL: runtime not found (expected ./build/nyx, ./nyx, or ./nyx.exe)" >&2
   exit 1
 fi
 
 echo "[v0] test: main script via launcher"
-out1=$("$runtime" main.cy)
+out1=$("$runtime" main.nx)
 [ "$out1" = "3" ] || {
   echo "FAIL: expected '3', got '$out1'"
   exit 1
 }
 
-echo "[v0] test: direct executable .cy"
-chmod +x ./main.cy
+echo "[v0] test: direct executable .nx"
+chmod +x ./main.nx
 shim_dir=$(mktemp -d)
 trap 'rm -rf "$shim_dir"' EXIT
-cat >"$shim_dir/cyper" <<EOF
+cat >"$shim_dir/nyx" <<EOF
 #!/usr/bin/env sh
 exec "$ROOT_DIR/$runtime" "\$@"
 EOF
-chmod +x "$shim_dir/cyper"
-cp "$shim_dir/cyper" "$shim_dir/cy"
-chmod +x "$shim_dir/cy"
-out2=$(PATH="$shim_dir:$ROOT_DIR:$PATH" ./main.cy)
+chmod +x "$shim_dir/nyx"
+out2=$(PATH="$shim_dir:$ROOT_DIR:$PATH" ./main.nx)
 [ "$out2" = "3" ] || {
   echo "FAIL: expected '3', got '$out2'"
   exit 1

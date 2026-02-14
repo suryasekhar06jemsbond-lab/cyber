@@ -19,7 +19,6 @@
   "keywords": [
     "nyx",
     "nx",
-    "cy",
     "language",
     "compiler",
     "runtime"
@@ -35,13 +34,10 @@
         "id": "nyx",
         "aliases": [
           "Nyx",
-          "nyx",
-          "Cy",
-          "cy"
+          "nyx"
         ],
         "extensions": [
-          ".nx",
-          ".cy"
+          ".nx"
         ],
         "configuration": "./language-configuration.json",
         "icon": {

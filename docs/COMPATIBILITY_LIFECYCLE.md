@@ -10,7 +10,7 @@ Version: `2026-02-13`
 
 ## Versioning Rules
 
-1. `cyper --version` and `lang_version()` must match.
+1. `nyx --version` and `lang_version()` must match.
 2. Breaking language/runtime changes require a new version string.
 3. Non-breaking additions may be released under the same major line.
 

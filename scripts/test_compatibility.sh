@@ -10,24 +10,24 @@ make >/dev/null
 tmpd=$(mktemp -d)
 trap 'rm -rf "$tmpd"' EXIT
 
-version=$(./cy --version)
+version=$(./nyx --version)
 [ -n "$version" ] || {
   echo "FAIL: --version returned empty output"
   exit 1
 }
 
-cat > "$tmpd/ok.cy" <<'CYEOF'
+cat > "$tmpd/ok.nx" <<'CYEOF'
 print(lang_version());
 require_version(lang_version());
 print("ok");
 CYEOF
 
-cat > "$tmpd/bad.cy" <<'CYEOF'
+cat > "$tmpd/bad.nx" <<'CYEOF'
 require_version("999.0.0");
 print("unreachable");
 CYEOF
 
-out_ok=$(./cy "$tmpd/ok.cy")
+out_ok=$(./nyx "$tmpd/ok.nx")
 expected_ok="$version
 ok"
 if [ "$out_ok" != "$expected_ok" ]; then
@@ -39,7 +39,7 @@ if [ "$out_ok" != "$expected_ok" ]; then
   exit 1
 fi
 
-if ./cy "$tmpd/bad.cy" >/dev/null 2>"$tmpd/bad_runtime.log"; then
+if ./nyx "$tmpd/bad.nx" >/dev/null 2>"$tmpd/bad_runtime.log"; then
   echo "FAIL: require_version mismatch should fail in runtime"
   exit 1
 fi
@@ -50,10 +50,10 @@ grep -q "language version mismatch" "$tmpd/bad_runtime.log" || {
 }
 
 echo "[compat] verifying compiled runtime compatibility..."
-./cy compiler/v3_seed.cy compiler/v3_seed.cy "$tmpd/compiler_stage1.c" >/dev/null
+./nyx compiler/v3_seed.nx compiler/v3_seed.nx "$tmpd/compiler_stage1.c" >/dev/null
 cc -O2 -std=c99 -Wall -Wextra -Werror -o "$tmpd/compiler_stage1" "$tmpd/compiler_stage1.c"
 
-"$tmpd/compiler_stage1" "$tmpd/ok.cy" "$tmpd/ok.c" >/dev/null
+"$tmpd/compiler_stage1" "$tmpd/ok.nx" "$tmpd/ok.c" >/dev/null
 cc -O2 -std=c99 -Wall -Wextra -Werror -o "$tmpd/ok_bin" "$tmpd/ok.c"
 out_compiled_ok=$("$tmpd/ok_bin")
 if [ "$out_compiled_ok" != "$expected_ok" ]; then
@@ -65,7 +65,7 @@ if [ "$out_compiled_ok" != "$expected_ok" ]; then
   exit 1
 fi
 
-"$tmpd/compiler_stage1" "$tmpd/bad.cy" "$tmpd/bad.c" >/dev/null
+"$tmpd/compiler_stage1" "$tmpd/bad.nx" "$tmpd/bad.c" >/dev/null
 cc -O2 -std=c99 -Wall -Wextra -Werror -o "$tmpd/bad_bin" "$tmpd/bad.c"
 if "$tmpd/bad_bin" >/dev/null 2>"$tmpd/bad_compiled.log"; then
   echo "FAIL: require_version mismatch should fail in compiled runtime"

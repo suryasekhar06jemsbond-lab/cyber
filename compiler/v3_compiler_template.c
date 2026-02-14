@@ -11,7 +11,7 @@
 
 #define MAX_TOKEN_TEXT 1024
 #ifndef CY_LANG_VERSION
-#define CY_LANG_VERSION "0.6.7"
+#define CY_LANG_VERSION "0.6.13"
 #endif
 
 typedef enum {

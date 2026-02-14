@@ -4,8 +4,8 @@ set -eu
 CY_REPO="${CY_REPO:-suryasekhar06jemsbond-lab/cyber}"
 CY_VERSION="${CY_VERSION:-latest}"
 CY_INSTALL_DIR="${CY_INSTALL_DIR:-$HOME/.local/bin}"
-CY_HOME="${CY_HOME:-$HOME/.local/share/cyper}"
-CY_BINARY_NAME="${CY_BINARY_NAME:-cyper}"
+CY_HOME="${CY_HOME:-$HOME/.local/share/nyx}"
+CY_BINARY_NAME="${CY_BINARY_NAME:-nyx}"
 CY_ASSET="${CY_ASSET:-}"
 CY_FORCE="${CY_FORCE:-0}"
 
@@ -38,7 +38,7 @@ if [ -z "$CY_ASSET" ]; then
       ;;
   esac
 
-  CY_ASSET="cyper-${os}-${arch}.tar.gz"
+  CY_ASSET="nyx-${os}-${arch}.tar.gz"
 fi
 
 if [ "$CY_VERSION" = "latest" ]; then
@@ -132,7 +132,7 @@ fi
 
 if [ "$CY_FORCE" != "1" ] && [ "$CY_VERSION" != "latest" ] && [ "$installed_version" = "$CY_VERSION" ] && \
    [ "$installed_asset" = "$CY_ASSET" ] && [ -x "$dest_binary" ]; then
-  printf 'Cyper %s is already installed at %s\n' "$CY_VERSION" "$dest_binary"
+  printf 'Nyx %s is already installed at %s\n' "$CY_VERSION" "$dest_binary"
   "$dest_binary" --version || true
   exit 0
 fi
@@ -145,26 +145,14 @@ if [ "$CY_FORCE" != "1" ]; then
 fi
 
 if [ "$CY_FORCE" != "1" ] && [ -n "$remote_hash" ] && [ "$remote_hash" = "$installed_hash" ] && [ -x "$dest_binary" ]; then
-  printf 'Cyper is already up to date at %s (sha256=%s)\n' "$dest_binary" "$remote_hash"
+  printf 'Nyx is already up to date at %s (sha256=%s)\n' "$dest_binary" "$remote_hash"
   "$dest_binary" --version || true
   exit 0
 fi
 
 printf 'Downloading %s\n' "$download_url"
 if ! download_file "$download_url" "$archive_path"; then
-  if [ "$CY_ASSET" != "${CY_ASSET#cyper-}" ]; then
-    legacy_asset=$(printf '%s' "$CY_ASSET" | sed 's/^cyper-/cy-/')
-    if [ "$CY_VERSION" = "latest" ]; then
-      legacy_url="https://github.com/${CY_REPO}/releases/latest/download/${legacy_asset}"
-    else
-      legacy_url="https://github.com/${CY_REPO}/releases/download/${CY_VERSION}/${legacy_asset}"
-    fi
-    printf 'Primary asset unavailable, retrying legacy asset %s\n' "$legacy_url"
-    CY_ASSET="$legacy_asset"
-    download_file "$legacy_url" "$archive_path"
-  else
-    exit 1
-  fi
+  exit 1
 fi
 
 mkdir -p "$tmp_dir/unpack"
@@ -175,15 +163,6 @@ if [ ! -f "$binary_path" ]; then
   found=$(find "$tmp_dir/unpack" -type f -name "$CY_BINARY_NAME" | head -n 1 || true)
   if [ -n "$found" ]; then
     binary_path="$found"
-  fi
-fi
-
-if [ ! -f "$binary_path" ]; then
-  if [ "$CY_BINARY_NAME" = "cyper" ]; then
-    found=$(find "$tmp_dir/unpack" -type f -name "cy" | head -n 1 || true)
-    if [ -n "$found" ]; then
-      binary_path="$found"
-    fi
   fi
 fi
 
@@ -199,12 +178,6 @@ support_binary="$CY_HOME/$CY_BINARY_NAME"
 cp "$binary_path" "$support_binary"
 chmod +x "$support_binary"
 install -m 755 "$support_binary" "$dest_binary"
-
-if [ "$CY_BINARY_NAME" = "cyper" ]; then
-  install -m 755 "$support_binary" "$CY_INSTALL_DIR/cy"
-elif [ "$CY_BINARY_NAME" = "cy" ]; then
-  install -m 755 "$support_binary" "$CY_INSTALL_DIR/cyper"
-fi
 
 copy_dir_replace "$tmp_dir/unpack/scripts" "$CY_HOME/scripts"
 copy_dir_replace "$tmp_dir/unpack/stdlib" "$CY_HOME/stdlib"

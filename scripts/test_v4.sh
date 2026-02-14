@@ -11,7 +11,7 @@ tmpd=$(mktemp -d)
 trap 'rm -rf "$tmpd"' EXIT
 payload_path="$tmpd/http_payload.txt"
 
-cat >"$tmpd/v4.cy" <<CYEOF
+cat >"$tmpd/v4.nx" <<CYEOF
 require_version(lang_version());
 
 typealias IntType = "int";
@@ -186,7 +186,7 @@ true
 hello-http'
 
 echo "[v4] running interpreter path..."
-out_ast=$(./cy "$tmpd/v4.cy")
+out_ast=$(./nyx "$tmpd/v4.nx")
 [ "$out_ast" = "$expected" ] || {
   echo "FAIL: v4 interpreter output mismatch"
   echo "Expected:"
@@ -197,7 +197,7 @@ out_ast=$(./cy "$tmpd/v4.cy")
 }
 
 echo "[v4] running vm path..."
-out_vm=$(./cy --vm "$tmpd/v4.cy")
+out_vm=$(./nyx --vm "$tmpd/v4.nx")
 [ "$out_vm" = "$expected" ] || {
   echo "FAIL: v4 vm output mismatch"
   echo "Expected:"
@@ -208,7 +208,7 @@ out_vm=$(./cy --vm "$tmpd/v4.cy")
 }
 
 echo "[v4] running vm strict path..."
-out_vm_strict=$(./cy --vm-strict "$tmpd/v4.cy")
+out_vm_strict=$(./nyx --vm-strict "$tmpd/v4.nx")
 [ "$out_vm_strict" = "$expected" ] || {
   echo "FAIL: v4 vm-strict output mismatch"
   echo "Expected:"
@@ -219,6 +219,6 @@ out_vm_strict=$(./cy --vm-strict "$tmpd/v4.cy")
 }
 
 echo "[v4] lint check..."
-./scripts/cylint.sh --strict "$tmpd/v4.cy" >/dev/null
+./scripts/cylint.sh --strict "$tmpd/v4.nx" >/dev/null
 
 echo "[v4] PASS"

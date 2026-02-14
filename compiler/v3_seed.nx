@@ -15,7 +15,7 @@ fn compile_to_c_compiler(input_path, output_path) {
 }
 
 if (argc() < 3) {
-    print("Usage: cy compiler/v3_seed.nx <input.nx> <output_compiler.c>");
+    print("Usage: nyx compiler/v3_seed.nx <input.nx> <output_compiler.c>");
 } else {
     let input_path = argv(1);
     let output_path = argv(2);

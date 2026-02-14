@@ -23,7 +23,7 @@ for i in $(seq 1 "$cases"); do
   threshold=$((RANDOM % 3 + 1))
   factor=$((RANDOM % 4 + 1))
 
-  file="$tmpd/case_$i.cy"
+  file="$tmpd/case_$i.nx"
   cat >"$file" <<CYEOF
 fn mul(a, b) {
     return a * b;
@@ -72,14 +72,14 @@ let b = new(Box, acc);
 print(mul(Math.inc(b.get()), $factor) + sum + len(arr));
 CYEOF
 
-  if ! out_ast=$(./cy "$file" 2>&1); then
+  if ! out_ast=$(./nyx "$file" 2>&1); then
     echo "FAIL: AST run failed on case $i"
     cat "$file"
     printf '%s\n' "$out_ast"
     exit 1
   fi
 
-  if ! out_vm=$(./cy --vm-strict "$file" 2>&1); then
+  if ! out_vm=$(./nyx --vm-strict "$file" 2>&1); then
     echo "FAIL: VM strict run failed on case $i"
     cat "$file"
     printf '%s\n' "$out_vm"

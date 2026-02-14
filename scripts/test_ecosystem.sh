@@ -10,9 +10,9 @@ make >/dev/null
 tmpd=$(mktemp -d)
 trap 'rm -rf "$tmpd"' EXIT
 
-cat > "$tmpd/ecosystem.cy" <<EOCY
-import "$ROOT_DIR/stdlib/types.cy";
-import "$ROOT_DIR/stdlib/class.cy";
+cat > "$tmpd/ecosystem.nx" <<EOCY
+import "$ROOT_DIR/stdlib/types.nx";
+import "$ROOT_DIR/stdlib/class.nx";
 
 let arr = [];
 arr = push(arr, 10);
@@ -35,7 +35,7 @@ print(object_get(p, "x"));
 print(object_get(p, "y"));
 EOCY
 
-out=$(./cy "$tmpd/ecosystem.cy")
+out=$(./nyx "$tmpd/ecosystem.nx")
 expected='2
 20
 1
@@ -53,11 +53,11 @@ if [ "$out" != "$expected" ]; then
   exit 1
 fi
 
-cat > "$tmpd/min.cy" <<'EOCY'
+cat > "$tmpd/min.nx" <<'EOCY'
 1 + 2;
 EOCY
 
-trace=$(./scripts/cydbg.sh --break 1 --step-count 1 "$tmpd/min.cy" 2>&1)
+trace=$(./scripts/cydbg.sh --break 1 --step-count 1 "$tmpd/min.nx" 2>&1)
 echo "$trace" | grep -F "[break]" >/dev/null || {
   echo "FAIL: cydbg breakpoint output missing"
   echo "$trace"
@@ -138,23 +138,23 @@ app'
   }
 )
 
-cat > "$tmpd/fmt.cy" <<'EOCY'
+cat > "$tmpd/fmt.nx" <<'EOCY'
 let x = 1;    
 	print(x); 
 EOCY
 
-./scripts/cyfmt.sh "$tmpd/fmt.cy" >/dev/null
-./scripts/cyfmt.sh --check "$tmpd/fmt.cy" >/dev/null
-if grep -n $'\t' "$tmpd/fmt.cy" >/dev/null; then
+./scripts/cyfmt.sh "$tmpd/fmt.nx" >/dev/null
+./scripts/cyfmt.sh --check "$tmpd/fmt.nx" >/dev/null
+if grep -n $'\t' "$tmpd/fmt.nx" >/dev/null; then
   echo "FAIL: formatter did not replace tabs"
   exit 1
 fi
-if grep -nE '[[:space:]]+$' "$tmpd/fmt.cy" >/dev/null; then
+if grep -nE '[[:space:]]+$' "$tmpd/fmt.nx" >/dev/null; then
   echo "FAIL: formatter left trailing whitespace"
   exit 1
 fi
 
-./scripts/cylint.sh "$tmpd/ecosystem.cy" >/dev/null || {
+./scripts/cylint.sh "$tmpd/ecosystem.nx" >/dev/null || {
   echo "FAIL: linter failed on ecosystem script"
   exit 1
 }
