@@ -3,6 +3,7 @@
 Provides language support for `.cy` files:
 
 - syntax highlighting
+- file icon for `.cy`
 - comments/bracket auto-pairs
 - common Cy snippets
 

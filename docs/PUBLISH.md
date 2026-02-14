@@ -61,6 +61,12 @@ Option A: release asset (`cy-language.vsix`)
 2. Run `Extensions: Install from VSIX...`.
 3. Select `cy-language.vsix`.
 
+Windows one-command install from release:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install_vscode.ps1 -Version vX.Y.Z
+```
+
 Option B: publish to VS Code Marketplace
 
 1. Create publisher (`suryasekhar06jemsbond-lab`).

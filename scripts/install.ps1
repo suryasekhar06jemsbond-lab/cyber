@@ -240,8 +240,16 @@ try {
     }
 
     if (-not $downloaded) {
-        throw ("Failed to download release asset '{0}' for version '{1}' from repo '{2}'. " +
-               "Expected URL: {3}" -f $Asset, $Version, $Repo, $url)
+        $releaseUrl = if ($Version -eq 'latest') {
+            "https://github.com/$Repo/releases/latest"
+        } else {
+            "https://github.com/$Repo/releases/tag/$Version"
+        }
+        throw ((
+            "Failed to download release asset '{0}' for version '{1}' from repo '{2}'. " +
+            "Expected URL: {3}. " +
+            "If this is a fresh tag, wait for the Release workflow to finish and confirm assets on {4}, then retry."
+        ) -f $Asset, $Version, $Repo, $url, $releaseUrl)
     }
 
     New-Item -ItemType Directory -Path $unpackPath | Out-Null
