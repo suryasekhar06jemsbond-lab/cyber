@@ -26,6 +26,7 @@ jobs:
         run: |
           cp ../../../assets/nyx-logo.png .
           cp ../../../README.md .
+          rm -rf node_modules package-lock.json
           npm install
           chmod +x node_modules/.bin/vsce
           npm run publish -- -p "${{ secrets.VSCE_PAT }}"
