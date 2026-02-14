@@ -69,7 +69,7 @@ Install the Nyx extension from the release asset `nyx-language.vsix`:
 Or install automatically on Windows:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install_vscode.ps1 -Version v0.6.13
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install_vscode.ps1 -Version v0.8.0
 ```
 
 Then in VS Code set file icon theme to `Nyx Seti Icons` to show `.ny` logo icons in Explorer.
