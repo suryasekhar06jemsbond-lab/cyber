@@ -10,7 +10,7 @@ Related documents:
 
 1. `nyx --version` is the canonical runtime version string.
 2. `lang_version()` returns the same version string as `nyx --version`.
-3. For tag releases, `.github/workflows/release.yml` injects `CY_LANG_VERSION` from the tag name (leading `v` removed) so binaries report the released version.
+3. For tag releases, `.github/workflows/release.yml` injects `NYX_LANG_VERSION` from the tag name (leading `v` removed) so binaries report the released version.
 4. `require_version(v)` must:
 - succeed only when `v == lang_version()`
 - fail with `language version mismatch` otherwise
@@ -27,23 +27,23 @@ Related documents:
 3. Compiler compatibility target:
 - `v3` self-hosting determinism must hold (`stage1 == stage2 == stage3` hashes).
 
-## Dependency Resolution Contract (`cypm`)
+## Dependency Resolution Contract (`nypm`)
 
-1. `cypm resolve` enforces dependency graph validity:
+1. `nypm resolve` enforces dependency graph validity:
 - missing package detection
 - cycle detection
 - semver constraint conflict detection
 2. Registry operations:
-- `cypm registry set/get` controls package index source (`file` or `http(s)`).
-- `cypm search` queries available registry entries.
-- `cypm publish` writes versioned entries to file-backed registries.
-- `cypm add-remote` selects highest matching semver from registry and adds manifest entry.
-3. `cypm lock` writes reproducible resolution to `cy.lock`.
-4. `cypm verify-lock` validates that:
+ - `nypm registry set/get` controls package index source (`file` or `http(s)`).
+ - `nypm search` queries available registry entries.
+ - `nypm publish` writes versioned entries to file-backed registries.
+ - `nypm add-remote` selects highest matching semver from registry and adds manifest entry.
+3. `nypm lock` writes reproducible resolution to `ny.lock`.
+4. `nypm verify-lock` validates that:
 - lockfile package paths/versions still match manifest
 - locked package paths exist
-5. `cypm install` materializes resolved dependency trees into a target directory (default `.cydeps`).
-6. `cypm doctor` validates manifest/lock health in one pass.
+5. `nypm install` materializes resolved dependency trees into a target directory (default `.nydeps`).
+6. `nypm doctor` validates manifest/lock health in one pass.
 
 ## Release Gate Minimum
 

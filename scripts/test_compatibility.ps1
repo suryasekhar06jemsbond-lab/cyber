@@ -71,7 +71,7 @@ function Run-ProcessText {
 Write-Host "[compat-win] building native runtime..."
 $compiler = Resolve-CCompiler
 $runtimeExe = Join-Path $root ("nyx" + $exeExt)
-$nativeSource = Join-Path $root 'native/cy.c'
+$nativeSource = Join-Path $root 'native/nyx.c'
 Build-C -Compiler $compiler -Output $runtimeExe -Source $nativeSource
 
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_compat_" + [guid]::NewGuid().ToString('N'))
@@ -83,14 +83,14 @@ try {
         throw "--version returned empty output"
     }
 
-    $okPath = Join-Path $tmp 'ok.nx'
+    $okPath = Join-Path $tmp 'ok.ny'
 @"
 print(lang_version());
 require_version(lang_version());
 print("ok");
 "@ | Set-Content -NoNewline -LiteralPath $okPath
 
-    $badPath = Join-Path $tmp 'bad.nx'
+    $badPath = Join-Path $tmp 'bad.ny'
 @"
 require_version("999.0.0");
 print("unreachable");
@@ -112,7 +112,7 @@ print("unreachable");
     }
 
     Write-Host "[compat-win] verifying compiled runtime compatibility..."
-    $seedPath = Join-Path $root 'compiler/v3_seed.nx'
+    $seedPath = Join-Path $root 'compiler/v3_seed.ny'
     $seedPathCy = $seedPath -replace '\\', '/'
     $stage1C = Join-Path $tmp 'compiler_stage1.c'
     $stage1Exe = Join-Path $tmp ("compiler_stage1" + $exeExt)

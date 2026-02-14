@@ -1,13 +1,13 @@
 #!/usr/bin/env sh
 set -eu
 
-manifest="cy.pkg"
-lockfile="cy.lock"
-registry_config="cypm.config"
+manifest="ny.pkg"
+lockfile="ny.lock"
+registry_config="nypm.config"
 
 usage() {
   cat <<'USAGE'
-Usage: cypm <command> [args]
+Usage: nypm <command> [args]
 Commands:
   init [project]
   add <name> <path> [version] [deps_csv]
@@ -37,7 +37,7 @@ USAGE
 
 ensure_manifest() {
   if [ ! -f "$manifest" ]; then
-    echo "Error: $manifest not found. Run: cypm init" >&2
+    echo "Error: $manifest not found. Run: nypm init" >&2
     exit 1
   fi
 }
@@ -99,7 +99,7 @@ write_manifest() {
   trap 'rm -f "$tmp"' EXIT
 
   {
-    echo "# cy package manifest"
+    echo "# ny package manifest"
     echo "project=$project"
     list_package_names | while IFS= read -r name; do
       [ -n "$name" ] || continue
@@ -120,7 +120,7 @@ write_manifest() {
 
 project_name() {
   project=$(grep '^project=' "$manifest" 2>/dev/null | head -n1 | sed 's/^project=//' || true)
-  [ -n "$project" ] || project="cy-project"
+  [ -n "$project" ] || project="ny-project"
   printf '%s\n' "$project"
 }
 
@@ -130,13 +130,13 @@ registry_get_source() {
     printf '%s\n' "${line#registry=}"
     return 0
   fi
-  printf 'cy.registry\n'
+  printf 'ny.registry\n'
 }
 
 registry_set_source() {
   src=$1
   {
-    echo "# cypm configuration"
+    echo "# nypm configuration"
     echo "registry=$src"
   } > "$registry_config"
 }
@@ -319,13 +319,13 @@ constraint_ok_sh() {
 cmd=${1:-}
 case "$cmd" in
   init)
-    project=${2:-cy-project}
+    project=${2:-ny-project}
     if [ -f "$manifest" ]; then
       echo "$manifest already exists"
       exit 0
     fi
     {
-      echo "# cy package manifest"
+      echo "# ny package manifest"
       echo "project=$project"
     } > "$manifest"
     echo "Created $manifest"
@@ -840,7 +840,7 @@ case "$cmd" in
     resolved=$("$0" resolve "$roots")
 
     {
-      echo "# cy lockfile v1"
+      echo "# ny lockfile v1"
       if [ -n "$roots" ]; then
         echo "roots=$roots"
       else
@@ -863,7 +863,7 @@ case "$cmd" in
   verify-lock)
     ensure_manifest
     if [ ! -f "$lockfile" ]; then
-      echo "Error: $lockfile not found. Run: cypm lock" >&2
+      echo "Error: $lockfile not found. Run: nypm lock" >&2
       exit 1
     fi
 
@@ -911,7 +911,7 @@ case "$cmd" in
   install)
     ensure_manifest
     roots=$(normalize_csv "${2:-}")
-    target=${3:-.cydeps}
+    target=${3:-.nydeps}
     resolved=$("$0" resolve "$roots")
 
     mkdir -p "$target"

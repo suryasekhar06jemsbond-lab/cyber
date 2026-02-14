@@ -73,19 +73,19 @@ if ($isWin) {
     Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/package_release.ps1', '-Target', 'windows-x64', '-BinaryPath', '.\build\nyx.exe', '-OutDir', '.\dist')
 
     $zipPath = Join-Path $root 'dist/nyx-windows-x64.zip'
-    $tmpPkg = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_pkg_check_" + [guid]::NewGuid().ToString('N'))
+    $tmpPkg = Join-Path ([System.IO.Path]::GetTempPath()) ("ny_pkg_check_" + [guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Path $tmpPkg | Out-Null
     try {
         Expand-Archive -Path $zipPath -DestinationPath $tmpPkg -Force
         foreach ($rel in @(
             'nyx.exe',
-            'scripts/cypm.ps1',
-            'scripts/cyfmt.ps1',
-            'scripts/cylint.ps1',
-            'scripts/cydbg.ps1',
-            'stdlib/types.nx',
-            'compiler/bootstrap.nx',
-            'examples/fibonacci.nx'
+            'scripts/nypm.ps1',
+            'scripts/nyfmt.ps1',
+            'scripts/nylint.ps1',
+            'scripts/nydbg.ps1',
+            'stdlib/types.ny',
+            'compiler/bootstrap.ny',
+            'examples/fibonacci.ny'
         )) {
             if (-not (Test-Path -LiteralPath (Join-Path $tmpPkg $rel))) {
                 throw "Missing release payload file: $rel"
@@ -109,13 +109,13 @@ if ($isWin) {
     }
     foreach ($rel in @(
         './nyx',
-        './scripts/cypm.sh',
-        './scripts/cyfmt.sh',
-        './scripts/cylint.sh',
-        './scripts/cydbg.sh',
-        './stdlib/types.nx',
-        './compiler/bootstrap.nx',
-        './examples/fibonacci.nx'
+        './scripts/nypm.sh',
+        './scripts/nyfmt.sh',
+        './scripts/nylint.sh',
+        './scripts/nydbg.sh',
+        './stdlib/types.ny',
+        './compiler/bootstrap.ny',
+        './examples/fibonacci.ny'
     )) {
         if ($entries -notcontains $rel) {
             throw "Missing release payload file: $rel"
@@ -161,32 +161,32 @@ Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/t
 Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/test_soak_runtime.ps1', '-Iterations', '40')
 
 Write-Host "[prod-win] powershell tooling smoke..."
-$tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_prod_" + [guid]::NewGuid().ToString('N'))
+$tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("ny_prod_" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $tmp | Out-Null
 try {
-    $minPath = Join-Path $tmp 'min.nx'
+    $minPath = Join-Path $tmp 'min.ny'
 @"
 let x = 1;
 print(x);
 "@ | Set-Content -NoNewline -LiteralPath $minPath
 
-    Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/cyfmt.ps1', $minPath)
-    Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/cyfmt.ps1', '-Check', $minPath)
-    # Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/cydbg.ps1', $minPath)
+    Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/nyfmt.ps1', $minPath)
+    Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/nyfmt.ps1', '-Check', $minPath)
+    # Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/nydbg.ps1', $minPath)
 
     Push-Location $tmp
     try {
         New-Item -ItemType Directory -Force -Path './core' | Out-Null
         New-Item -ItemType Directory -Force -Path './app' | Out-Null
-        $cypm = Join-Path $root 'scripts/cypm.ps1'
-        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'init', 'demo')
-        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'add', 'core', './core', '1.2.3')
-        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'add', 'app', './app', '0.1.0', 'core@^1.0.0')
-        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'resolve', 'app')
-        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'lock', 'app')
-        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'verify-lock')
-        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'install', 'app', './.cydeps')
-        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $cypm, 'doctor')
+        $nypm = Join-Path $root 'scripts/nypm.ps1'
+        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $nypm, 'init', 'demo')
+        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $nypm, 'add', 'core', './core', '1.2.3')
+        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $nypm, 'add', 'app', './app', '0.1.0', 'core@^1.0.0')
+        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $nypm, 'resolve', 'app')
+        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $nypm, 'lock', 'app')
+        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $nypm, 'verify-lock')
+        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $nypm, 'install', 'app', './.nydeps')
+        Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', $nypm, 'doctor')
     }
     finally {
         Pop-Location

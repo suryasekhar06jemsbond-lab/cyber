@@ -1,0 +1,15 @@
+#!/bin/sh
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+NYX="$SCRIPT_DIR/nyx"
+
+if [ ! -f "$NYX" ]; then
+    echo "Error: nyx not found at $NYX"
+    exit 1
+fi
+
+if [ $# -eq 0 ]; then
+    echo "Usage: cyber --vm <file.cy>"
+    exit 1
+fi
+
+exec "$NYX" --vm "$@"

@@ -4,7 +4,7 @@ Version: `0.6-draft` (`v4 runtime`)
 
 ## File Extension
 
-- Source files use `.nx` (only `.nx` is supported).
+- Source files use `.ny` (only `.ny` is supported).
 
 ## Lexical Rules
 
@@ -70,7 +70,7 @@ fn add(a, b) {
 7. Import statement:
 
 ```nyx
-import "lib.nx";
+import "lib.ny";
 ```
 
 8. Exception handling:
@@ -194,15 +194,15 @@ Import behavior:
 
 ## Standard Library Modules
 
-1. `stdlib/types.nx`
-2. `stdlib/class.nx`
+1. `stdlib/types.ny`
+2. `stdlib/class.ny`
 
 ## Builtin Packages
 
-Imports with `cy:` are built in to the runtime/compiler and do not require files on disk:
+Imports with `ny` prefix are built in to the runtime/compiler and do not require files on disk:
 
-1. `import "cy:math";` exposes `Math` module helpers (`abs`, `min`, `max`, `clamp`, `pow`, `sum`)
-2. `import "cy:arrays";` exposes `Arrays` module helpers (`first`, `last`, `sum`, `enumerate`)
-3. `import "cy:objects";` exposes `Objects` module helpers (`merge`, `get_or`)
-4. `import "cy:json";` exposes `JSON.parse`/`JSON.stringify` (primitive-focused JSON helpers)
-5. `import "cy:http";` exposes `HTTP.get`/`HTTP.text`/`HTTP.ok` (file-path fetch helper module)
+1. `import "nymath";` exposes `nymath` module helpers (`abs`, `min`, `max`, `clamp`, `pow`, `sum`)
+2. `import "nyarrays";` exposes `nyarrays` module helpers (`first`, `last`, `sum`, `enumerate`)
+3. `import "nyobjects";` exposes `nyobjects` module helpers (`merge`, `get_or`)
+4. `import "nyjson";` exposes `nyjson.parse`/`nyjson.stringify` (primitive-focused JSON helpers)
+5. `import "nyhttp";` exposes `nyhttp.get`/`nyhttp.text`/`nyhttp.ok` (file-path fetch helper module)

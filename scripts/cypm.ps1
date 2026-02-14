@@ -7,13 +7,13 @@ $ErrorActionPreference = 'Stop'
 
 if ($null -eq $CliArgs) { $CliArgs = @() }
 
-$manifest = 'cy.pkg'
-$lockfile = 'cy.lock'
-$registryConfig = 'cypm.config'
+$manifest = 'ny.pkg'
+$lockfile = 'ny.lock'
+$registryConfig = 'nypm.config'
 
 function Show-Usage {
 @"
-Usage: cypm <command> [args]
+Usage: nypm <command> [args]
 Commands:
   init [project]
   add <name> <path> [version] [deps_csv]
@@ -43,7 +43,7 @@ Note:
 
 function Ensure-Manifest {
     if (-not (Test-Path $manifest)) {
-        throw "Manifest '$manifest' not found. Run: cypm init"
+        throw "Manifest '$manifest' not found. Run: nypm init"
     }
 }
 
@@ -150,12 +150,12 @@ function Get-RegistrySource {
             }
         }
     }
-    return 'cy.registry'
+    return 'ny.registry'
 }
 
 function Set-RegistrySource([string]$src) {
     @(
-        '# cypm configuration'
+        '# nypm configuration'
         "registry=$src"
     ) | Set-Content -LiteralPath $registryConfig
 }
@@ -231,7 +231,7 @@ function Read-Manifest {
     Ensure-Manifest
 
     $data = @{
-        Project = 'cy-project'
+        Project = 'ny-project'
         Packages = @{}
         Versions = @{}
         Deps = @{}
@@ -292,7 +292,7 @@ function Read-Manifest {
 
 function Write-Manifest($data) {
     $lines = @()
-    $lines += '# cy package manifest'
+    $lines += '# ny package manifest'
     $lines += ("project={0}" -f $data.Project)
 
     foreach ($name in ($data.Packages.Keys | Sort-Object)) {
@@ -386,7 +386,7 @@ function Resolve-Order($data, [string]$rootsCsv) {
 
 function Verify-LockfileData($data) {
     if (-not (Test-Path -LiteralPath $lockfile)) {
-        throw "Lockfile '$lockfile' not found. Run: cypm lock"
+        throw "Lockfile '$lockfile' not found. Run: nypm lock"
     }
 
     foreach ($lineRaw in Get-Content -LiteralPath $lockfile) {
@@ -428,14 +428,14 @@ $cmd = if ($CliArgs.Count -gt 0) { $CliArgs[0] } else { '' }
 
 switch ($cmd) {
     'init' {
-        $project = if ($CliArgs.Count -gt 1) { $CliArgs[1] } else { 'cy-project' }
+        $project = if ($CliArgs.Count -gt 1) { $CliArgs[1] } else { 'ny-project' }
         if (Test-Path $manifest) {
             Write-Host "$manifest already exists"
             exit 0
         }
 
         @(
-            '# cy package manifest'
+            '# ny package manifest'
             "project=$project"
         ) | Set-Content $manifest
 
@@ -699,7 +699,7 @@ switch ($cmd) {
         $order = Resolve-Order $data $roots
 
         $lines = @()
-        $lines += '# cy lockfile v1'
+        $lines += '# ny lockfile v1'
         if ($roots -ne '') {
             $lines += ("roots={0}" -f $roots)
         } else {
@@ -728,7 +728,7 @@ switch ($cmd) {
     'install' {
         Ensure-Manifest
         $roots = if ($CliArgs.Count -gt 1) { Normalize-Csv $CliArgs[1] } else { '' }
-        $target = if ($CliArgs.Count -gt 2) { $CliArgs[2] } else { '.cydeps' }
+        $target = if ($CliArgs.Count -gt 2) { $CliArgs[2] } else { '.nydeps' }
         $data = Read-Manifest
         $order = Resolve-Order $data $roots
 

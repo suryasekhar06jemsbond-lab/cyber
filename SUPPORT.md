@@ -5,14 +5,14 @@
 Use issues for:
 1. Bug reports
 2. Language/runtime behavior questions
-3. Tooling problems (`cypm`, `cyfmt`, `cydbg`)
+3. Tooling problems (`nypm`, `nyfmt`, `nydbg`)
 
 Include:
 1. OS and shell
 2. compiler (`clang/gcc/cl`) and version
 3. exact command run
 4. full error output
-5. minimal `.nx` reproduction
+5. minimal `.ny` reproduction
 
 ## Response Expectations
 

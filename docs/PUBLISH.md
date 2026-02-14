@@ -26,7 +26,7 @@ Published assets:
 
 - `nyx-linux-x64.tar.gz`
 - `nyx-windows-x64.zip`
-- `cy-language.vsix`
+- `nyx-language.vsix`
 - `*.sha256` checksum files
 
 ## 3. Install From Releases
@@ -46,20 +46,20 @@ irm https://raw.githubusercontent.com/suryasekhar06jemsbond-lab/cyber/main/scrip
 Notes:
 - One-line unauthenticated install requires the repo to be public.
 - Install scripts are idempotent: if the installed checksum matches the release checksum, download is skipped.
-- Support files (`cypm`, `cyfmt`, `cylint`, `cydbg`, stdlib/compiler/examples) are installed with the runtime.
+- Support files (`nypm`, `nyfmt`, `nylint`, `nydbg`, stdlib/compiler/examples) are installed with the runtime.
 
 Pin a specific version:
 
-- Linux/macOS: `CY_VERSION=vX.Y.Z`
+- Linux/macOS: `NYX_VERSION=vX.Y.Z`
 - Windows: `-Version vX.Y.Z`
 
 ## 4. VS Code Distribution
 
-Option A: release asset (`cy-language.vsix`)
+Option A: release asset (`nyx-language.vsix`)
 
 1. Open VS Code command palette.
 2. Run `Extensions: Install from VSIX...`.
-3. Select `cy-language.vsix`.
+3. Select `nyx-language.vsix`.
 
 Windows one-command install from release:
 
@@ -70,7 +70,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install_vscode.ps1
 Option B: publish to VS Code Marketplace
 
 1. Create publisher (`suryasekhar06jemsbond-lab`).
-2. From `editor/vscode/cy-language`:
+2. From `editor/vscode/nyx-language`:
 
 ```bash
 npm install

@@ -103,7 +103,7 @@ echo "[vm-consistency] seed=$seed cases=$cases"
 for i in $(seq 1 "$cases"); do
   depth=$((RANDOM % 4 + 1))
   expr="$(gen_expr "$depth")"
-  file="$tmpd/case_$i.nx"
+  file="$tmpd/case_$i.ny"
   printf '%s;\n' "$expr" > "$file"
 
   if ! out_ast=$(./nyx "$file" 2>&1); then

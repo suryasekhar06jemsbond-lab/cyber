@@ -2,7 +2,7 @@
 
 Nyx runs as a native executable (`nyx`) with no Python runtime dependency.
 
-![Nyx Logo](assets/cy-logo.png)
+![Nyx Logo](assets/nyx-logo.png)
 
 ## Build
 
@@ -37,10 +37,10 @@ irm https://raw.githubusercontent.com/suryasekhar06jemsbond-lab/cyber/main/scrip
 Important:
 - For unauthenticated one-line install, the GitHub repo must be `public`.
 - Installers are checksum-aware and skip re-download when the same release is already installed.
-- Installers place `nyx` and support files (`cypm`, `cyfmt`, `cylint`, `cydbg`, `stdlib`, compiler seed/examples) in the local install root.
+- Installers place `nyx` and support files (`nypm`, `nyfmt`, `nylint`, `nydbg`, `stdlib`, compiler seed/examples) in the local install root.
 
 Manual install from a specific tag:
-- Linux/macOS: set `CY_VERSION=vX.Y.Z` before running `install.sh`.
+- Linux/macOS: set `NYX_VERSION=vX.Y.Z` before running `install.sh`.
 - Windows: run `install.ps1 -Version vX.Y.Z` (use `-Force` to reinstall).
 
 Runtime binary output:
@@ -52,19 +52,19 @@ Launcher:
 ## Run
 
 ```bash
-./nyx main.nx
-./nyx examples/fibonacci.nx
+./nyx main.ny
+./nyx examples/fibonacci.ny
 ```
 
-If no file is passed and `main.nx` exists in the current directory, `nyx` runs `main.nx` automatically.
+If no file is passed and `main.ny` exists in the current directory, `nyx` runs `main.ny` automatically.
 
 ## VS Code
 
-Install the Nyx extension from the release asset `cy-language.vsix`:
+Install the Nyx extension from the release asset `nyx-language.vsix`:
 
 1. Open VS Code command palette.
 2. Run `Extensions: Install from VSIX...`.
-3. Select `cy-language.vsix`.
+3. Select `nyx-language.vsix`.
 
 Or install automatically on Windows:
 
@@ -72,9 +72,9 @@ Or install automatically on Windows:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install_vscode.ps1 -Version v0.6.13
 ```
 
-Then in VS Code set file icon theme to `Nyx Seti Icons` to show `.nx` logo icons in Explorer.
+Then in VS Code set file icon theme to `Nyx Seti Icons` to show `.ny` logo icons in Explorer.
 
-Extension source lives in `editor/vscode/cy-language`.
+Extension source lives in `editor/vscode/nyx-language`.
 
 ## Formal Publish Flow
 
@@ -87,7 +87,7 @@ Extension source lives in `editor/vscode/cy-language`.
 3. GitHub Actions workflow `.github/workflows/release.yml` builds and attaches:
 - `nyx-linux-x64.tar.gz`
 - `nyx-windows-x64.zip`
-- `cy-language.vsix`
+- `nyx-language.vsix`
 
 Executable script style:
 
@@ -97,16 +97,16 @@ Executable script style:
 ```
 
 ```bash
-chmod +x main.nx
-./main.nx
+chmod +x main.ny
+./main.ny
 ```
 
 ## Milestones
 
 - `V0.md`: native runtime baseline
 - `V1.md`: compiler-capable runtime features
-- `V2.md`: first `.nx` compiler (`compiler/bootstrap.nx`)
-- `V3.md`: self-hosting compiler (`compiler/v3_seed.nx`)
+- `V2.md`: first `.ny` compiler (`compiler/bootstrap.ny`)
+- `V3.md`: self-hosting compiler (`compiler/v3_seed.ny`)
 - `V4.md`: runtime expansion (loops/comprehensions/class-module-typealias + lint + VM cache)
 - `BOOTSTRAP.md`: roadmap to self-hosting (`v2` and `v3`)
 - `docs/LANGUAGE_SPEC.md`: language spec draft
@@ -126,12 +126,12 @@ Current direct-codegen source subset:
 - statements: `let`, assignment (identifier/member/index), expression statements, `if/else if/else`, `switch/case/default`, `while`, `for (x in y)` / `for (k, v in y)`, `break`, `continue`, `try/catch`, `throw`, `fn`, `return`, `import`, `class`, `module`, `typealias`
 - compile-time import expansion (module dedup in compiler)
 - compiled-in language builtins (numeric helpers `abs/min/max/clamp/sum`, boolean helpers `all/any`, predicates, range/conversion helpers, object/class/version helpers; no stdlib dependency required)
-- builtin package imports (`cy:math`, `cy:arrays`, `cy:objects`, `cy:json`, `cy:http`) resolved without filesystem dependencies
+- builtin package imports (`nymath`, `nyarrays`, `nyobjects`, `nyjson`, `nyhttp`) resolved without filesystem dependencies
 
 Generate compiler C and build compiler binary:
 
 ```bash
-./nyx compiler/v3_seed.nx compiler/v3_seed.nx compiler_stage1.c
+./nyx compiler/v3_seed.ny compiler/v3_seed.ny compiler_stage1.c
 cc -O2 -std=c99 -Wall -Wextra -Werror -o compiler_stage1 compiler_stage1.c
 ```
 
@@ -177,21 +177,21 @@ cl /nologo /W4 /WX output.c /Fe:output_bin.exe
 Package manager:
 
 ```bash
-./scripts/cypm.sh init my_project
-./scripts/cypm.sh registry set ./nyx.registry
-./scripts/cypm.sh publish stdlib 1.2.0 ./stdlib
-./scripts/cypm.sh search stdlib
-./scripts/cypm.sh add-remote stdlib ^1.0.0
-./scripts/cypm.sh add stdlib ./stdlib 1.2.0
-./scripts/cypm.sh add app ./app 0.1.0 stdlib@^1.0.0
-./scripts/cypm.sh dep app "stdlib@^1.0.0,net@>=2.1.0"
-./scripts/cypm.sh version app 0.2.0
-./scripts/cypm.sh list
-./scripts/cypm.sh resolve app
-./scripts/cypm.sh lock app
-./scripts/cypm.sh verify-lock
-./scripts/cypm.sh install app ./.cydeps
-./scripts/cypm.sh doctor
+./scripts/nypm.sh init my_project
+./scripts/nypm.sh registry set ./ny.registry
+./scripts/nypm.sh publish stdlib 1.2.0 ./stdlib
+./scripts/nypm.sh search stdlib
+./scripts/nypm.sh add-remote stdlib ^1.0.0
+./scripts/nypm.sh add stdlib ./stdlib 1.2.0
+./scripts/nypm.sh add app ./app 0.1.0 stdlib@^1.0.0
+./scripts/nypm.sh dep app "stdlib@^1.0.0,net@>=2.1.0"
+./scripts/nypm.sh version app 0.2.0
+./scripts/nypm.sh list
+./scripts/nypm.sh resolve app
+./scripts/nypm.sh lock app
+./scripts/nypm.sh verify-lock
+./scripts/nypm.sh install app ./.nydeps
+./scripts/nypm.sh doctor
 ```
 
 When constraints include `>` or `<` in shell, quote the argument (for example `"util@>=2.1.0"`).

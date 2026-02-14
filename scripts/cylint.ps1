@@ -19,7 +19,7 @@ switch ($Target.ToLowerInvariant()) {
 
 function Show-Usage {
 @"
-Usage: cylint [--strict] [target(.nx)]
+Usage: nylint [--strict] [target(.ny)]
 "@
 }
 
@@ -114,14 +114,14 @@ if (-not $runtime) {
     throw 'nyx runtime not found (set NYX_RUNTIME or add nyx to PATH)'
 }
 
-function Lint-CyFile {
+function Lint-NyFile {
     param([string]$Path)
     & $runtime --parse-only $Path | Out-Null
     if ($LASTEXITCODE -ne 0) {
         throw "Lint failed for $Path"
     }
     if ($Strict) {
-        $fmtScript = Join-Path $PSScriptRoot 'cyfmt.ps1'
+        $fmtScript = Join-Path $PSScriptRoot 'nyfmt.ps1'
         & $fmtScript -Check $Path | Out-Null
         if ($LASTEXITCODE -ne 0) {
             throw "Formatting check failed for $Path"
@@ -130,10 +130,10 @@ function Lint-CyFile {
 }
 
 if (Test-Path $Target -PathType Leaf) {
-    Lint-CyFile -Path $Target
+    Lint-NyFile -Path $Target
 } else {
-    Get-ChildItem -Path $Target -Recurse -File | Where-Object { $_.Extension -eq '.nx' } | ForEach-Object {
-        Lint-CyFile -Path $_.FullName
+    Get-ChildItem -Path $Target -Recurse -File | Where-Object { $_.Extension -eq '.ny' } | ForEach-Object {
+        Lint-NyFile -Path $_.FullName
     }
 }
 

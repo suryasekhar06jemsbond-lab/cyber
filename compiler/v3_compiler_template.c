@@ -10,8 +10,8 @@
 #include <string.h>
 
 #define MAX_TOKEN_TEXT 1024
-#ifndef CY_LANG_VERSION
-#define CY_LANG_VERSION "0.6.13"
+#ifndef NYX_LANG_VERSION
+#define NYX_LANG_VERSION "0.6.13"
 #endif
 
 typedef enum {
@@ -455,25 +455,25 @@ static char *resolve_import_path(const char *current_file, const char *import_pa
 }
 
 static const char *g_builtin_math_module =
-    "module Math {\n"
-    "    fn __cy_math_abs(x) {\n"
+    "module nymath {\n"
+    "    fn __ny_math_abs(x) {\n"
     "        if (x < 0) { return -x; }\n"
     "        return x;\n"
     "    }\n"
-    "    fn __cy_math_min(a, b) {\n"
+    "    fn __ny_math_min(a, b) {\n"
     "        if (a < b) { return a; }\n"
     "        return b;\n"
     "    }\n"
-    "    fn __cy_math_max(a, b) {\n"
+    "    fn __ny_math_max(a, b) {\n"
     "        if (a > b) { return a; }\n"
     "        return b;\n"
     "    }\n"
-    "    fn __cy_math_clamp(x, lo, hi) {\n"
+    "    fn __ny_math_clamp(x, lo, hi) {\n"
     "        if (x < lo) { return lo; }\n"
     "        if (x > hi) { return hi; }\n"
     "        return x;\n"
     "    }\n"
-    "    fn __cy_math_pow(base, exp) {\n"
+    "    fn __ny_math_pow(base, exp) {\n"
     "        if (exp < 0) { return 0; }\n"
     "        let acc = 1;\n"
     "        let i = 0;\n"
@@ -483,62 +483,62 @@ static const char *g_builtin_math_module =
     "        }\n"
     "        return acc;\n"
     "    }\n"
-    "    fn __cy_math_sum(xs) {\n"
+    "    fn __ny_math_sum(xs) {\n"
     "        let acc = 0;\n"
     "        for (x in xs) { acc = acc + x; }\n"
     "        return acc;\n"
     "    }\n"
-    "    let abs = __cy_math_abs;\n"
-    "    let min = __cy_math_min;\n"
-    "    let max = __cy_math_max;\n"
-    "    let clamp = __cy_math_clamp;\n"
-    "    let pow = __cy_math_pow;\n"
-    "    let sum = __cy_math_sum;\n"
+    "    let abs = __ny_math_abs;\n"
+    "    let min = __ny_math_min;\n"
+    "    let max = __ny_math_max;\n"
+    "    let clamp = __ny_math_clamp;\n"
+    "    let pow = __ny_math_pow;\n"
+    "    let sum = __ny_math_sum;\n"
     "}\n";
 
 static const char *g_builtin_arrays_module =
-    "module Arrays {\n"
-    "    fn __cy_arrays_first(xs) {\n"
+    "module nyarrays {\n"
+    "    fn __ny_arrays_first(xs) {\n"
     "        if (len(xs) == 0) { return null; }\n"
     "        return xs[0];\n"
     "    }\n"
-    "    fn __cy_arrays_last(xs) {\n"
+    "    fn __ny_arrays_last(xs) {\n"
     "        if (len(xs) == 0) { return null; }\n"
     "        return xs[len(xs) - 1];\n"
     "    }\n"
-    "    fn __cy_arrays_sum(xs) {\n"
+    "    fn __ny_arrays_sum(xs) {\n"
     "        let acc = 0;\n"
     "        for (x in xs) { acc = acc + x; }\n"
     "        return acc;\n"
     "    }\n"
-    "    fn __cy_arrays_enumerate(xs) {\n"
+    "    fn __ny_arrays_enumerate(xs) {\n"
     "        return [[i, x] for i, x in xs];\n"
     "    }\n"
-    "    let first = __cy_arrays_first;\n"
-    "    let last = __cy_arrays_last;\n"
-    "    let sum = __cy_arrays_sum;\n"
-    "    let enumerate = __cy_arrays_enumerate;\n"
+    "    let first = __ny_arrays_first;\n"
+    "    let last = __ny_arrays_last;\n"
+    "    let sum = __ny_arrays_sum;\n"
+    "    let enumerate = __ny_arrays_enumerate;\n"
     "}\n";
 
 static const char *g_builtin_objects_module =
-    "module Objects {\n"
-    "    fn __cy_objects_merge(a, b) {\n"
+    "module nyobjects {\n"
+    "    fn __ny_objects_merge(a, b) {\n"
     "        let out = object_new();\n"
     "        for (k, v in a) { object_set(out, k, v); }\n"
     "        for (k, v in b) { object_set(out, k, v); }\n"
     "        return out;\n"
     "    }\n"
-    "    fn __cy_objects_get_or(obj, key, fallback) {\n"
+    "    fn __ny_objects_get_or(obj, key, fallback) {\n"
     "        if (has(obj, key)) { return object_get(obj, key); }\n"
     "        return fallback;\n"
     "    }\n"
-    "    let merge = __cy_objects_merge;\n"
-    "    let get_or = __cy_objects_get_or;\n"
+    "    let merge = __ny_objects_merge;\n"
+    "    let get_or = __ny_objects_get_or;\n"
     "}\n";
 
 static const char *g_builtin_json_module =
-    "module JSON {\n"
-    "    fn __cy_json_parse(text) {\n"
+    "module nyjson {\n"
+    "    fn __ny_json_parse(text) {\n"
     "        if (text == \"true\") { return true; }\n"
     "        if (text == \"false\") { return false; }\n"
     "        if (text == \"null\") { return null; }\n"
@@ -548,41 +548,41 @@ static const char *g_builtin_json_module =
     "            return text;\n"
     "        }\n"
     "    }\n"
-    "    fn __cy_json_stringify(value) {\n"
+    "    fn __ny_json_stringify(value) {\n"
     "        return str(value);\n"
     "    }\n"
-    "    let parse = __cy_json_parse;\n"
-    "    let stringify = __cy_json_stringify;\n"
+    "    let parse = __ny_json_parse;\n"
+    "    let stringify = __ny_json_stringify;\n"
     "}\n";
 
 static const char *g_builtin_http_module =
-    "module HTTP {\n"
-    "    fn __cy_http_get(path) {\n"
+    "module nyhttp {\n"
+    "    fn __ny_http_get(path) {\n"
     "        let body = read(path);\n"
     "        return {ok: true, status: 200, body: body, path: path};\n"
     "    }\n"
-    "    fn __cy_http_text(path) {\n"
-    "        let resp = __cy_http_get(path);\n"
+    "    fn __ny_http_text(path) {\n"
+    "        let resp = __ny_http_get(path);\n"
     "        return object_get(resp, \"body\");\n"
     "    }\n"
-    "    fn __cy_http_ok(resp) {\n"
+    "    fn __ny_http_ok(resp) {\n"
     "        return object_get(resp, \"ok\");\n"
     "    }\n"
-    "    let get = __cy_http_get;\n"
-    "    let text = __cy_http_text;\n"
-    "    let ok = __cy_http_ok;\n"
+    "    let get = __ny_http_get;\n"
+    "    let text = __ny_http_text;\n"
+    "    let ok = __ny_http_ok;\n"
     "}\n";
 
 static int is_builtin_module_path(const char *path) {
-    return path != NULL && strncmp(path, "cy:", 3) == 0;
+    return path != NULL && strncmp(path, "ny", 2) == 0;
 }
 
 static const char *builtin_module_source(const char *path) {
-    if (strcmp(path, "cy:math") == 0) return g_builtin_math_module;
-    if (strcmp(path, "cy:arrays") == 0) return g_builtin_arrays_module;
-    if (strcmp(path, "cy:objects") == 0) return g_builtin_objects_module;
-    if (strcmp(path, "cy:json") == 0) return g_builtin_json_module;
-    if (strcmp(path, "cy:http") == 0) return g_builtin_http_module;
+    if (strcmp(path, "nymath") == 0) return g_builtin_math_module;
+    if (strcmp(path, "nyarrays") == 0) return g_builtin_arrays_module;
+    if (strcmp(path, "nyobjects") == 0) return g_builtin_objects_module;
+    if (strcmp(path, "nyjson") == 0) return g_builtin_json_module;
+    if (strcmp(path, "nyhttp") == 0) return g_builtin_http_module;
     return NULL;
 }
 
@@ -3037,7 +3037,7 @@ static void emit_generated_runtime(FILE *out) {
     fputs("#include <stdio.h>\n", out);
     fputs("#include <stdlib.h>\n", out);
     fputs("#include <string.h>\n\n", out);
-    fprintf(out, "#define CY_LANG_VERSION \"%s\"\n\n", CY_LANG_VERSION);
+    fprintf(out, "#define NYX_LANG_VERSION \"%s\"\n\n", NYX_LANG_VERSION);
 
     fputs("typedef enum { CY_NULL = 0, CY_INT, CY_BOOL, CY_STRING, CY_ARRAY, CY_OBJECT, CY_FNREF, CY_BOUND_FN } CyType;\n", out);
     fputs("typedef enum { CY_OBJ_PLAIN = 0, CY_OBJ_MODULE, CY_OBJ_CLASS, CY_OBJ_INSTANCE } CyObjectKind;\n", out);
@@ -3769,13 +3769,13 @@ static void emit_generated_runtime(FILE *out) {
     fputs("static CyValue cy_builtin_lang_version(int argc, CyValue *args) {\n", out);
     fputs("    (void)args;\n", out);
     fputs("    if (argc != 0) cy_runtime_error(\"lang_version() expects 0 arguments\");\n", out);
-    fputs("    return cy_string(CY_LANG_VERSION);\n", out);
+    fputs("    return cy_string(NYX_LANG_VERSION);\n", out);
     fputs("}\n\n", out);
 
     fputs("static CyValue cy_builtin_require_version(int argc, CyValue *args) {\n", out);
     fputs("    if (argc != 1) cy_runtime_error(\"require_version() expects 1 argument\");\n", out);
     fputs("    const char *v = cy_expect_string(args[0], \"require_version\");\n", out);
-    fputs("    if (strcmp(v, CY_LANG_VERSION) != 0) cy_runtime_error(\"language version mismatch\");\n", out);
+    fputs("    if (strcmp(v, NYX_LANG_VERSION) != 0) cy_runtime_error(\"language version mismatch\");\n", out);
     fputs("    return cy_null();\n", out);
     fputs("}\n\n", out);
 
@@ -4186,7 +4186,7 @@ static int compile_file(const char *input_path, const char *output_path) {
 
 int main(int argc, char **argv) {
     if (argc < 3) {
-        fprintf(stderr, "Usage: v3_compiler <input.nx> <output.c> [--emit-self]\n");
+        fprintf(stderr, "Usage: v3_compiler <input.ny> <output.c> [--emit-self]\n");
         return 1;
     }
 

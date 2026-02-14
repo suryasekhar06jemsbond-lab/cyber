@@ -10,9 +10,9 @@ make >/dev/null
 tmpd=$(mktemp -d)
 trap 'rm -rf "$tmpd"' EXIT
 
-cat > "$tmpd/ecosystem.nx" <<EOCY
-import "$ROOT_DIR/stdlib/types.nx";
-import "$ROOT_DIR/stdlib/class.nx";
+cat > "$tmpd/ecosystem.ny" <<EOCY
+import "$ROOT_DIR/stdlib/types.ny";
+import "$ROOT_DIR/stdlib/class.ny";
 
 let arr = [];
 arr = push(arr, 10);
@@ -35,7 +35,7 @@ print(object_get(p, "x"));
 print(object_get(p, "y"));
 EOCY
 
-out=$(./nyx "$tmpd/ecosystem.nx")
+out=$(./nyx "$tmpd/ecosystem.ny")
 expected='2
 20
 1
@@ -53,18 +53,18 @@ if [ "$out" != "$expected" ]; then
   exit 1
 fi
 
-cat > "$tmpd/min.nx" <<'EOCY'
+cat > "$tmpd/min.ny" <<'EOCY'
 1 + 2;
 EOCY
 
-trace=$(./scripts/cydbg.sh --break 1 --step-count 1 "$tmpd/min.nx" 2>&1)
+trace=$(./scripts/nydbg.sh --break 1 --step-count 1 "$tmpd/min.ny" 2>&1)
 echo "$trace" | grep -F "[break]" >/dev/null || {
-  echo "FAIL: cydbg breakpoint output missing"
+  echo "FAIL: nydbg breakpoint output missing"
   echo "$trace"
   exit 1
 }
 echo "$trace" | grep -F "[step 1]" >/dev/null || {
-  echo "FAIL: cydbg step output missing"
+  echo "FAIL: nydbg step output missing"
   echo "$trace"
   exit 1
 }
@@ -72,26 +72,26 @@ echo "$trace" | grep -F "[step 1]" >/dev/null || {
 (
   cd "$tmpd"
   mkdir -p "$tmpd/app"
-  "$ROOT_DIR/scripts/cypm.sh" init demo >/dev/null
-  "$ROOT_DIR/scripts/cypm.sh" add stdlib "$ROOT_DIR/stdlib" 1.2.0 >/dev/null
-  "$ROOT_DIR/scripts/cypm.sh" add app "$tmpd/app" 0.1.0 stdlib@^1.0.0 >/dev/null
-  list_out=$("$ROOT_DIR/scripts/cypm.sh" list)
+  "$ROOT_DIR/scripts/nypm.sh" init demo >/dev/null
+  "$ROOT_DIR/scripts/nypm.sh" add stdlib "$ROOT_DIR/stdlib" 1.2.0 >/dev/null
+  "$ROOT_DIR/scripts/nypm.sh" add app "$tmpd/app" 0.1.0 stdlib@^1.0.0 >/dev/null
+  list_out=$("$ROOT_DIR/scripts/nypm.sh" list)
   echo "$list_out" | grep -F "stdlib=$ROOT_DIR/stdlib version=1.2.0" >/dev/null || {
-    echo "FAIL: cypm list missing stdlib mapping"
+    echo "FAIL: nypm list missing stdlib mapping"
     echo "$list_out"
     exit 1
   }
   echo "$list_out" | grep -F "app=$tmpd/app version=0.1.0 deps=stdlib@^1.0.0" >/dev/null || {
-    echo "FAIL: cypm list missing app dependency mapping"
+    echo "FAIL: nypm list missing app dependency mapping"
     echo "$list_out"
     exit 1
   }
 
-  resolved=$("$ROOT_DIR/scripts/cypm.sh" resolve app)
+  resolved=$("$ROOT_DIR/scripts/nypm.sh" resolve app)
   resolved_expected='stdlib
 app'
   if [ "$resolved" != "$resolved_expected" ]; then
-    echo "FAIL: cypm resolve output incorrect"
+    echo "FAIL: nypm resolve output incorrect"
     echo "Expected:"
     printf '%s\n' "$resolved_expected"
     echo "Got:"
@@ -99,62 +99,62 @@ app'
     exit 1
   fi
 
-  "$ROOT_DIR/scripts/cypm.sh" dep app stdlib@^2.0.0 >/dev/null
-  if "$ROOT_DIR/scripts/cypm.sh" resolve app >/dev/null 2>"$tmpd/resolve_err.log"; then
-    echo "FAIL: cypm resolve should fail on semver conflict"
+  "$ROOT_DIR/scripts/nypm.sh" dep app stdlib@^2.0.0 >/dev/null
+  if "$ROOT_DIR/scripts/nypm.sh" resolve app >/dev/null 2>"$tmpd/resolve_err.log"; then
+    echo "FAIL: nypm resolve should fail on semver conflict"
     exit 1
   fi
   grep -q "version conflict" "$tmpd/resolve_err.log" || {
-    echo "FAIL: cypm resolve conflict error missing"
+    echo "FAIL: nypm resolve conflict error missing"
     cat "$tmpd/resolve_err.log"
     exit 1
   }
 
-  "$ROOT_DIR/scripts/cypm.sh" dep app stdlib@^1.0.0 >/dev/null
-  "$ROOT_DIR/scripts/cypm.sh" lock app >/dev/null
-  [ -f "$tmpd/cy.lock" ] || {
-    echo "FAIL: cypm lock did not create cy.lock"
+  "$ROOT_DIR/scripts/nypm.sh" dep app stdlib@^1.0.0 >/dev/null
+  "$ROOT_DIR/scripts/nypm.sh" lock app >/dev/null
+  [ -f "$tmpd/ny.lock" ] || {
+    echo "FAIL: nypm lock did not create ny.lock"
     exit 1
   }
-  "$ROOT_DIR/scripts/cypm.sh" verify-lock >/dev/null || {
-    echo "FAIL: cypm verify-lock failed"
+  "$ROOT_DIR/scripts/nypm.sh" verify-lock >/dev/null || {
+    echo "FAIL: nypm verify-lock failed"
     exit 1
   }
-  "$ROOT_DIR/scripts/cypm.sh" install app ./.cydeps >/dev/null || {
-    echo "FAIL: cypm install failed"
+  "$ROOT_DIR/scripts/nypm.sh" install app ./.nydeps >/dev/null || {
+    echo "FAIL: nypm install failed"
     exit 1
   }
-  [ -d "$tmpd/.cydeps/stdlib" ] || {
-    echo "FAIL: cypm install missing stdlib package directory"
+  [ -d "$tmpd/.nydeps/stdlib" ] || {
+    echo "FAIL: nypm install missing stdlib package directory"
     exit 1
   }
-  [ -d "$tmpd/.cydeps/app" ] || {
-    echo "FAIL: cypm install missing app package directory"
+  [ -d "$tmpd/.nydeps/app" ] || {
+    echo "FAIL: nypm install missing app package directory"
     exit 1
   }
-  "$ROOT_DIR/scripts/cypm.sh" doctor >/dev/null || {
-    echo "FAIL: cypm doctor failed"
+  "$ROOT_DIR/scripts/nypm.sh" doctor >/dev/null || {
+    echo "FAIL: nypm doctor failed"
     exit 1
   }
 )
 
-cat > "$tmpd/fmt.nx" <<'EOCY'
+cat > "$tmpd/fmt.ny" <<'EOCY'
 let x = 1;    
 	print(x); 
 EOCY
 
-./scripts/cyfmt.sh "$tmpd/fmt.nx" >/dev/null
-./scripts/cyfmt.sh --check "$tmpd/fmt.nx" >/dev/null
-if grep -n $'\t' "$tmpd/fmt.nx" >/dev/null; then
+./scripts/nyfmt.sh "$tmpd/fmt.ny" >/dev/null
+./scripts/nyfmt.sh --check "$tmpd/fmt.ny" >/dev/null
+if grep -n $'\t' "$tmpd/fmt.ny" >/dev/null; then
   echo "FAIL: formatter did not replace tabs"
   exit 1
 fi
-if grep -nE '[[:space:]]+$' "$tmpd/fmt.nx" >/dev/null; then
+if grep -nE '[[:space:]]+$' "$tmpd/fmt.ny" >/dev/null; then
   echo "FAIL: formatter left trailing whitespace"
   exit 1
 fi
 
-./scripts/cylint.sh "$tmpd/ecosystem.nx" >/dev/null || {
+./scripts/nylint.sh "$tmpd/ecosystem.ny" >/dev/null || {
   echo "FAIL: linter failed on ecosystem script"
   exit 1
 }

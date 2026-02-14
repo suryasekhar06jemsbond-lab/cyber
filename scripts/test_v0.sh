@@ -19,14 +19,14 @@ else
 fi
 
 echo "[v0] test: main script via launcher"
-out1=$("$runtime" main.nx)
+out1=$("$runtime" main.ny)
 [ "$out1" = "3" ] || {
   echo "FAIL: expected '3', got '$out1'"
   exit 1
 }
 
-echo "[v0] test: direct executable .nx"
-chmod +x ./main.nx
+echo "[v0] test: direct executable .ny"
+chmod +x ./main.ny
 shim_dir=$(mktemp -d)
 trap 'rm -rf "$shim_dir"' EXIT
 cat >"$shim_dir/nyx" <<EOF
@@ -34,7 +34,7 @@ cat >"$shim_dir/nyx" <<EOF
 exec "$ROOT_DIR/$runtime" "\$@"
 EOF
 chmod +x "$shim_dir/nyx"
-out2=$(PATH="$shim_dir:$ROOT_DIR:$PATH" ./main.nx)
+out2=$(PATH="$shim_dir:$ROOT_DIR:$PATH" ./main.ny)
 [ "$out2" = "3" ] || {
   echo "FAIL: expected '3', got '$out2'"
   exit 1

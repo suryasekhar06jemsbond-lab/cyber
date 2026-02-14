@@ -11,7 +11,7 @@ tmpd=$(mktemp -d)
 trap 'rm -rf "$tmpd"' EXIT
 payload_path="$tmpd/http_payload.txt"
 
-cat >"$tmpd/v4.nx" <<CYEOF
+cat >"$tmpd/v4.ny" <<NYEOF
 require_version(lang_version());
 
 typealias IntType = "int";
@@ -104,20 +104,20 @@ print(sum([1, 2, 3, 4]));
 print(all([1, true, 3]));
 print(any([0, false, 7]));
 
-import "cy:math";
-import "cy:arrays";
-import "cy:objects";
+import "nymath";
+import "nyarrays";
+import "nyobjects";
 
-print(Math.pow(2, 5));
-print(Arrays.first([9, 8, 7]));
-print(Arrays.last([9, 8, 7]));
-let em = Arrays.enumerate([4, 5, 6]);
+print(nymath.pow(2, 5));
+print(nyarrays.first([9, 8, 7]));
+print(nyarrays.last([9, 8, 7]));
+let em = nyarrays.enumerate([4, 5, 6]);
 print(em[1][0]);
 print(em[1][1]);
-let merged = Objects.merge({a: 1}, {b: 2});
+let merged = nyobjects.merge({a: 1}, {b: 2});
 print(len(keys(merged)));
-print(Objects.get_or(merged, "a", 0));
-print(Objects.get_or(merged, "z", 9));
+print(nyobjects.get_or(merged, "a", 0));
+print(nyobjects.get_or(merged, "z", 9));
 
 switch (2) {
     case 1: { print("one"); }
@@ -128,18 +128,18 @@ switch (2) {
 print(null ?? 99);
 print(5 ?? 99);
 
-import "cy:json";
-import "cy:http";
+import "nyjson";
+import "nyhttp";
 
-print(JSON.parse("42"));
-print(JSON.parse("true"));
-print(JSON.stringify(7));
+print(nyjson.parse("42"));
+print(nyjson.parse("true"));
+print(nyjson.stringify(7));
 
 write("$payload_path", "hello-http");
-let http_ok = HTTP.get("$payload_path");
-print(HTTP.ok(http_ok));
-print(HTTP.text("$payload_path"));
-CYEOF
+let http_ok = nyhttp.get("$payload_path");
+print(nyhttp.ok(http_ok));
+print(nyhttp.text("$payload_path"));
+NYEOF
 
 expected='int
 42
@@ -186,7 +186,7 @@ true
 hello-http'
 
 echo "[v4] running interpreter path..."
-out_ast=$(./nyx "$tmpd/v4.nx")
+out_ast=$(./nyx "$tmpd/v4.ny")
 [ "$out_ast" = "$expected" ] || {
   echo "FAIL: v4 interpreter output mismatch"
   echo "Expected:"
@@ -197,7 +197,7 @@ out_ast=$(./nyx "$tmpd/v4.nx")
 }
 
 echo "[v4] running vm path..."
-out_vm=$(./nyx --vm "$tmpd/v4.nx")
+out_vm=$(./nyx --vm "$tmpd/v4.ny")
 [ "$out_vm" = "$expected" ] || {
   echo "FAIL: v4 vm output mismatch"
   echo "Expected:"
@@ -208,7 +208,7 @@ out_vm=$(./nyx --vm "$tmpd/v4.nx")
 }
 
 echo "[v4] running vm strict path..."
-out_vm_strict=$(./nyx --vm-strict "$tmpd/v4.nx")
+out_vm_strict=$(./nyx --vm-strict "$tmpd/v4.ny")
 [ "$out_vm_strict" = "$expected" ] || {
   echo "FAIL: v4 vm-strict output mismatch"
   echo "Expected:"
@@ -219,6 +219,6 @@ out_vm_strict=$(./nyx --vm-strict "$tmpd/v4.nx")
 }
 
 echo "[v4] lint check..."
-./scripts/cylint.sh --strict "$tmpd/v4.nx" >/dev/null
+./scripts/nylint.sh --strict "$tmpd/v4.ny" >/dev/null
 
 echo "[v4] PASS"

@@ -65,7 +65,7 @@ function Run-ProcessText {
 Write-Host "[vm-prog-consistency-win] building native runtime..."
 $compiler = Resolve-CCompiler
 $runtimeExe = Join-Path $root ("nyx" + $exeExt)
-$nativeSource = Join-Path $root 'native/cy.c'
+$nativeSource = Join-Path $root 'native/nyx.c'
 Build-C -Compiler $compiler -Output $runtimeExe -Source $nativeSource
 
 $rng = [System.Random]::new($Seed)
@@ -81,7 +81,7 @@ try {
         $threshold = $rng.Next(1, 4)
         $factor = $rng.Next(1, 5)
 
-        $path = Join-Path $tmp ("case_{0}.nx" -f $i)
+        $path = Join-Path $tmp ("case_{0}.ny" -f $i)
 @"
 fn mul(a, b) {
     return a * b;

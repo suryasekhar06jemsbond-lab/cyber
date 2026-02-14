@@ -3,7 +3,7 @@ set -eu
 
 usage() {
   cat <<'USAGE'
-Usage: cylint [--strict] [target(.nx)]
+Usage: nylint [--strict] [target(.ny)]
 USAGE
 }
 
@@ -61,14 +61,14 @@ lint_file() {
   file="$1"
   "$runtime" --parse-only "$file" >/dev/null
   if [ "$strict" -eq 1 ]; then
-    "$SCRIPT_DIR/cyfmt.sh" --check "$file" >/dev/null
+    "$SCRIPT_DIR/nyfmt.sh" --check "$file" >/dev/null
   fi
 }
 
 if [ -f "$target" ]; then
   lint_file "$target"
 else
-  find "$target" -type f -name '*.nx' | while IFS= read -r file; do
+  find "$target" -type f -name '*.ny' | while IFS= read -r file; do
     lint_file "$file"
   done
 fi

@@ -10,12 +10,12 @@ make >/dev/null
 tmpd=$(mktemp -d)
 trap 'rm -rf "$tmpd"' EXIT
 
-cat > "$tmpd/input.nx" << 'CYEOF'
+cat > "$tmpd/input.ny" << 'NYEOF'
 40 + 2;
-CYEOF
+NYEOF
 
-echo "[v2] compiling Cy source with compiler/bootstrap.nx..."
-./nyx compiler/bootstrap.nx "$tmpd/input.nx" "$tmpd/output.c" >/dev/null
+echo "[v2] compiling Nyx source with compiler/bootstrap.ny..."
+./nyx compiler/bootstrap.ny "$tmpd/input.ny" "$tmpd/output.c" >/dev/null
 
 [ -f "$tmpd/output.c" ] || {
   echo "FAIL: compiler did not produce output.c"

@@ -56,7 +56,7 @@ if ($Version -eq 'latest') {
 $url = "$baseUrl/$Asset"
 $hashUrl = "$url.sha256"
 
-$tmpRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_install_" + [guid]::NewGuid().ToString('N'))
+$tmpRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("ny_install_" + [guid]::NewGuid().ToString('N'))
 $zipPath = Join-Path $tmpRoot $Asset
 $hashPath = Join-Path $tmpRoot ($Asset + '.sha256')
 $unpackPath = Join-Path $tmpRoot 'unpack'
@@ -181,16 +181,16 @@ function New-CmdShim {
     $shim = @"
 @echo off
 setlocal
-set "CY_SCRIPT=$scriptEscaped"
-if not exist "%CY_SCRIPT%" (
-  echo Missing support script: %CY_SCRIPT%
+set "NYX_SCRIPT=$scriptEscaped"
+if not exist "%NYX_SCRIPT%" (
+  echo Missing support script: %NYX_SCRIPT%
   exit /b 1
 )
 where pwsh >nul 2>nul
 if %errorlevel%==0 (
-  pwsh -NoProfile -ExecutionPolicy Bypass -File "%CY_SCRIPT%" %*
+  pwsh -NoProfile -ExecutionPolicy Bypass -File "%NYX_SCRIPT%" %*
 ) else (
-  powershell -NoProfile -ExecutionPolicy Bypass -File "%CY_SCRIPT%" %*
+  powershell -NoProfile -ExecutionPolicy Bypass -File "%NYX_SCRIPT%" %*
 )
 exit /b %errorlevel%
 "@
@@ -286,10 +286,10 @@ try {
         Copy-Item -Force -LiteralPath $readmeSrc -Destination $readmeDst
     }
 
-    New-CmdShim -Name 'cypm'
-    New-CmdShim -Name 'cyfmt'
-    New-CmdShim -Name 'cylint'
-    New-CmdShim -Name 'cydbg'
+    New-CmdShim -Name 'nypm'
+    New-CmdShim -Name 'nyfmt'
+    New-CmdShim -Name 'nylint'
+    New-CmdShim -Name 'nydbg'
 
     if (-not $remoteHash) {
         $remoteHash = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()

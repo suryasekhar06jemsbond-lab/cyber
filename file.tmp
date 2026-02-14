@@ -1,0 +1,316 @@
+# Nyx Programming Language
+
+Nyx runs as a native executable (`nyx`) with no Python runtime dependency.
+
+![Nyx Logo](assets/nyx-logo.png)
+
+## Build
+
+Requirements:
+- C compiler (`cc` / `gcc` / `clang`)
+- `make`
+
+```bash
+make
+```
+
+Windows (build `nyx.exe` with embedded logo icon from `assets/cy-logo.ico`):
+
+```powershell
+.\scripts\build_windows.ps1 -SmokeTest
+```
+
+## Install From GitHub Releases
+
+Linux/macOS:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/suryasekhar06jemsbond-lab/cyber/main/scripts/install.sh | sh
+```
+
+Windows (PowerShell):
+
+```powershell
+irm https://raw.githubusercontent.com/suryasekhar06jemsbond-lab/cyber/main/scripts/install.ps1 | iex
+```
+
+Important:
+- For unauthenticated one-line install, the GitHub repo must be `public`.
+- Installers are checksum-aware and skip re-download when the same release is already installed.
+- Installers place `nyx` and support files (`cypm`, `cyfmt`, `cylint`, `cydbg`, `stdlib`, compiler seed/examples) in the local install root.
+
+Manual install from a specific tag:
+- Linux/macOS: set `CY_VERSION=vX.Y.Z` before running `install.sh`.
+- Windows: run `install.ps1 -Version vX.Y.Z` (use `-Force` to reinstall).
+
+Runtime binary output:
+- `build/nyx`
+
+Launcher:
+- `./nyx`
+
+## Run
+
+```bash
+./nyx main.ny
+./nyx examples/fibonacci.ny
+```
+
+If no file is passed and `main.nx` exists in the current directory, `nyx` runs `main.nx` automatically.
+
+## VS Code
+
+Install the Nyx extension from the release asset `cy-language.vsix`:
+
+1. Open VS Code command palette.
+2. Run `Extensions: Install from VSIX...`.
+3. Select `cy-language.vsix`.
+
+Or install automatically on Windows:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install_vscode.ps1 -Version v0.6.13
+```
+
+Then in VS Code set file icon theme to `Nyx Seti Icons` to show `.ny` logo icons in Explorer.
+
+Extension source lives in `editor/vscode/nyx-language`.
+
+## Formal Publish Flow
+
+1. Ensure release gates pass:
+- `./scripts/test_production.sh`
+- `.\scripts\test_production.ps1 -VmCases 300`
+2. Tag a release:
+- `git tag -a vX.Y.Z -m "Release vX.Y.Z"`
+- `git push origin vX.Y.Z`
+3. GitHub Actions workflow `.github/workflows/release.yml` builds and attaches:
+- `nyx-language.vsix`
+
+Executable script style:
+
+```nyx
+#!/usr/bin/env nyx
+1 + 2;
+```
+
+```bash
+chmod +x main.nx
+./main.nx
+```
+
+## Milestones
+
+- `V0.md`: native runtime baseline
+- `V1.md`: compiler-capable runtime features
+- `V2.md`: first `.nx` compiler (`compiler/bootstrap.nx`)
+- `V3.md`: self-hosting compiler (`compiler/v3_seed.nx`)
+- `V4.md`: runtime expansion (loops/comprehensions/class-module-typealias + lint + VM cache)
+- `BOOTSTRAP.md`: roadmap to self-hosting (`v2` and `v3`)
+- `docs/LANGUAGE_SPEC.md`: language spec draft
+- `docs/RELEASE_POLICY.md`: compatibility + release gate contract
+- `docs/PUBLISH.md`: formal release and distribution flow
+- `docs/COMPATIBILITY_LIFECYCLE.md`: deprecation/migration lifecycle
+- `SECURITY.md`: vulnerability reporting and response targets
+- `CONTRIBUTING.md`: contribution and gate expectations
+- `SUPPORT.md`: support workflow
+
+## v3 Compiler (Direct Codegen)
+
+`v3` emits a standalone C compiler source (`compiler/v3_compiler_template.c`) and no longer uses generated runner output for program compilation.
+Current direct-codegen source subset:
+- literals: int, string, bool, `null`, arrays, object literals
+- expressions: arithmetic/comparison/logical/unary (`+ - * / %`, `== != < > <= >=`, `&& ||`, `??`, `!`), calls, indexing, member access (`obj.key`), array comprehensions (`for x in y` and `for i, x in y`)
+- statements: `let`, assignment (identifier/member/index), expression statements, `if/else if/else`, `switch/case/default`, `while`, `for (x in y)` / `for (k, v in y)`, `break`, `continue`, `try/catch`, `throw`, `fn`, `return`, `import`, `class`, `module`, `typealias`
+- compile-time import expansion (module dedup in compiler)
+- compiled-in language builtins (numeric helpers `abs/min/max/clamp/sum`, boolean helpers `all/any`, predicates, range/conversion helpers, object/class/version helpers; no stdlib dependency required)
+- builtin package imports (`cy:math`, `cy:arrays`, `cy:objects`, `cy:json`, `cy:http`) resolved without filesystem dependencies
+
+Generate compiler C and build compiler binary:
+
+```bash
+./nyx compiler/v3_seed.nx compiler/v3_seed.nx compiler_stage1.c
+cc -O2 -std=c99 -Wall -Wextra -Werror -o compiler_stage1 compiler_stage1.c
+```
+
+Use compiler binary:
+
+```bash
+./compiler_stage1 program.nx program.c
+cc -O2 -std=c99 -Wall -Wextra -Werror -o program program.c
+./program
+```
+
+## v2 Compiler
+
+Current scope: compiles a restricted `.nx` input containing a single arithmetic expression statement.
+Do not type angle brackets (`< >`); they are placeholders in docs and break in PowerShell.
+
+```bash
+./nyx compiler/bootstrap.nx input_expr.nx output.c
+cc -O2 -std=c99 -Wall -Wextra -Werror -o output_bin output.c
+./output_bin
+```
+
+```powershell
+.\nyx compiler\bootstrap.nx input_expr.nx output.c
+clang -O2 -std=c99 -Wall -Wextra -Werror -o output_bin.exe output.c
+.\output_bin.exe
+```
+
+If `clang` is not installed, use one of:
+
+```powershell
+gcc -O2 -std=c99 -Wall -Wextra -Werror -o output_bin.exe output.c
+```
+
+or (Visual Studio Build Tools `cl`):
+
+```powershell
+cl /nologo /W4 /WX output.c /Fe:output_bin.exe
+```
+
+## Tooling
+
+Package manager:
+
+```bash
+./scripts/nypm.sh init my_project
+./scripts/nypm.sh registry set ./ny.registry
+./scripts/nypm.sh publish stdlib 1.2.0 ./stdlib
+./scripts/nypm.sh search stdlib
+./scripts/nypm.sh add-remote stdlib ^1.0.0
+./scripts/nypm.sh add stdlib ./stdlib 1.2.0
+./scripts/nypm.sh add app ./app 0.1.0 stdlib@^1.0.0
+./scripts/nypm.sh dep app "stdlib@^1.0.0,net@>=2.1.0"
+./scripts/nypm.sh version app 0.2.0
+./scripts/nypm.sh list
+./scripts/nypm.sh resolve app
+./scripts/nypm.sh lock app
+./scripts/nypm.sh verify-lock
+./scripts/nypm.sh install app ./.nydeps
+./scripts/nypm.sh doctor
+```
+
+When constraints include `>` or `<` in shell, quote the argument (for example `"util@>=2.1.0"`).
+
+Formatter:
+
+```bash
+./scripts/cyfmt.sh .
+./scripts/cyfmt.sh --check .
+```
+
+Linter (syntax check):
+
+```bash
+./scripts/cylint.sh .
+./scripts/cylint.sh --strict .
+./nyx --parse-only program.nx
+```
+
+Debugger (trace + breakpoints + stepper):
+
+```bash
+./scripts/cydbg.sh program.nx
+./scripts/cydbg.sh --break 12,20 examples/fibonacci.nx
+./scripts/cydbg.sh --step-count 5 examples/fibonacci.nx
+./scripts/cydbg.sh --step examples/fibonacci.nx
+```
+
+Native runtime debug flags (no wrapper):
+
+```bash
+./nyx --debug --break 12,20 program.nx
+./nyx --debug --step program.nx
+./nyx --debug --step-count 10 program.nx
+./nyx --vm program.nx
+./nyx --vm-strict program.nx
+./nyx --max-alloc 1000000 program.nx
+./nyx --max-steps 100000 program.nx
+./nyx --max-call-depth 2048 program.nx
+./nyx --parse-only program.nx
+./nyx --version
+```
+
+PowerShell equivalents:
+
+```powershell
+.\scripts\cypm.ps1 init my_project
+.\scripts\cypm.ps1 registry set .\cy.registry
+.\scripts\cypm.ps1 publish stdlib 1.2.0 .\stdlib
+.\scripts\cypm.ps1 search stdlib
+.\scripts\cypm.ps1 add-remote stdlib ^1.0.0
+.\scripts\cypm.ps1 add stdlib .\stdlib 1.2.0
+.\scripts\cypm.ps1 add app .\app 0.1.0 stdlib@^1.0.0
+.\scripts\cypm.ps1 version app 0.2.0
+.\scripts\cypm.ps1 resolve app
+.\scripts\cypm.ps1 lock app
+.\scripts\cypm.ps1 verify-lock
+.\scripts\cypm.ps1 install app .\.cydeps
+.\scripts\cypm.ps1 doctor
+.\scripts\cyfmt.ps1 .
+.\scripts\cyfmt.ps1 -Check .
+.\scripts\cylint.ps1 .
+.\scripts\cylint.ps1 -Strict .
+.\scripts\cydbg.ps1 --break 12,20 examples\fibonacci.nx
+```
+
+## Stdlib
+
+- `stdlib/types.nx`: compatibility helpers (predicates now also available in compiled builtins)
+- `stdlib/class.nx`: compatibility helpers (class/object helpers now also available in compiled builtins)
+
+## Test
+
+```bash
+./scripts/test_v0.sh
+./scripts/test_v1.sh
+./scripts/test_v2.sh
+./scripts/test_v3_start.sh
+./scripts/test_ecosystem.sh
+./scripts/test_v4.sh
+./scripts/test_compatibility.sh
+./scripts/test_registry.sh
+./scripts/test_runtime_hardening.sh
+./scripts/test_sanitizers.sh
+./scripts/test_vm_consistency.sh 1337 300
+./scripts/test_vm_program_consistency.sh 5150 120
+./scripts/test_fuzz_vm.sh 4242 800
+./scripts/test_soak_runtime.sh 60
+./scripts/test_production.sh
+```
+
+```powershell
+.\scripts\test_vm_consistency.ps1 -Seed 1337 -Cases 300
+.\scripts\test_vm_program_consistency.ps1 -Seed 5150 -Cases 120
+.\scripts\test_fuzz_vm.ps1 -Seed 4242 -Cases 800
+.\scripts\test_runtime_hardening.ps1
+.\scripts\test_sanitizers.ps1
+.\scripts\test_soak_runtime.ps1 -Iterations 60
+.\scripts\test_v3.ps1
+.\scripts\test_v4.ps1
+.\scripts\test_compatibility.ps1
+.\scripts\test_registry.ps1
+.\scripts\test_production.ps1 -VmCases 300
+```
+
+`test_v3.ps1` auto-detects `clang` (including `C:\Program Files\LLVM\bin\clang.exe`), then falls back to `gcc` or `cl`.
+`test_production.sh` and `test_production.ps1` are the release gates and include deterministic self-hosting, runtime hardening checks, VM fuzz/soak consistency checks, and tooling smoke tests.
+If `pwsh` is installed outside `PATH`, run shell production gate as `PWSH_BIN=/full/path/to/pwsh ./scripts/test_production.sh`.
+
+## v3 Self-Hosting Check
+
+```bash
+./nyx compiler/v3_seed.nx compiler/v3_seed.nx compiler_stage1.c
+cc -O2 -std=c99 -Wall -Wextra -Werror -o compiler_stage1 compiler_stage1.c
+./compiler_stage1 compiler/v3_seed.nx compiler_stage2.c --emit-self
+cmp compiler_stage1.c compiler_stage2.c
+```
+
+```powershell
+.\nyx.exe compiler\v3_seed.nx compiler\v3_seed.nx compiler_stage1.c
+clang -O2 -std=c99 -Wall -Wextra -Werror -o compiler_stage1.exe compiler_stage1.c
+.\compiler_stage1.exe compiler\v3_seed.nx compiler_stage2.c --emit-self
+cmd /c fc /b compiler_stage1.c compiler_stage2.c
+```

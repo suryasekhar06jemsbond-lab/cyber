@@ -35,8 +35,8 @@ jobs:
           else
             ver="0.6.13"
           fi
-          echo "CY_LANG_VERSION=$ver" >> "$GITHUB_ENV"
-          echo "[release] CY_LANG_VERSION=$ver"
+          echo "NYX_LANG_VERSION=$ver" >> "$GITHUB_ENV"
+          echo "[release] NYX_LANG_VERSION=$ver"
 
       - name: Resolve language version (Windows)
         if: runner.os == 'Windows'
@@ -48,8 +48,8 @@ jobs:
           } else {
             $ver = '0.6.13'
           }
-          "CY_LANG_VERSION=$ver" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          Write-Host ("[release] CY_LANG_VERSION={0}" -f $ver)
+          "NYX_LANG_VERSION=$ver" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host ("[release] NYX_LANG_VERSION={0}" -f $ver)
 
       - name: Ensure executable bits (Unix)
         if: runner.os != 'Windows'
@@ -72,22 +72,22 @@ jobs:
         shell: bash
         run: |
           make clean
-          make build/nyx CY_LANG_VERSION="$CY_LANG_VERSION"
+          make build/nyx NYX_LANG_VERSION="$NYX_LANG_VERSION"
           actual="$(./build/nyx --version)"
-          if [ "$actual" != "$CY_LANG_VERSION" ]; then
-            echo "version mismatch: expected $CY_LANG_VERSION got $actual" >&2
+          if [ "$actual" != "$NYX_LANG_VERSION" ]; then
+            echo "version mismatch: expected $NYX_LANG_VERSION got $actual" >&2
             exit 1
           fi
-          ./build/nyx main.nx
+          ./build/nyx main.ny
 
       - name: Build runtime (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          ./scripts/build_windows.ps1 -Output .\build\nyx.exe -SmokeTest -LangVersion $env:CY_LANG_VERSION
+          ./scripts/build_windows.ps1 -Output .\build\nyx.exe -SmokeTest -LangVersion $env:NYX_LANG_VERSION
           $actual = (& .\build\nyx.exe --version | Out-String).Trim()
-          if ($actual -ne $env:CY_LANG_VERSION) {
-            throw "version mismatch: expected $($env:CY_LANG_VERSION) got $actual"
+          if ($actual -ne $env:NYX_LANG_VERSION) {
+            throw "version mismatch: expected $($env:NYX_LANG_VERSION) got $actual"
           }
 
       - name: Package release artifact (Unix)
@@ -121,17 +121,17 @@ jobs:
 
       - name: Package VS Code extension
         shell: bash
-        working-directory: editor/vscode/cy-language
+        working-directory: editor/vscode/nyx-language
         run: |
           npm install
           mkdir -p ../../../dist
-          npx @vscode/vsce package -o ../../../dist/cy-language.vsix
+          npx @vscode/vsce package -o ../../../dist/nyx-language.vsix
 
       - name: Upload VS Code extension
         uses: actions/upload-artifact@v4
         with:
           name: release-vscode
-          path: dist/cy-language.vsix
+          path: dist/nyx-language.vsix
 
   create-release:
     if: startsWith(github.ref, 'refs/tags/')

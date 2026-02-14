@@ -10,16 +10,16 @@ make >/dev/null
 tmpd=$(mktemp -d)
 trap 'rm -rf "$tmpd"' EXIT
 
-cat > "$tmpd/lib.nx" << 'CYEOF'
+cat > "$tmpd/lib.ny" << 'NYEOF'
 fn add(a, b) {
     return a + b;
 }
 
 let base = 10;
-CYEOF
+NYEOF
 
-cat > "$tmpd/main.nx" << 'CYEOF'
-import "lib.nx";
+cat > "$tmpd/main.ny" << 'NYEOF'
+import "lib.ny";
 
 let x = add(base, 5);
 if (x > 10) {
@@ -35,10 +35,10 @@ print("hi" + "!");
 write("out.txt", "hello");
 print(read("out.txt"));
 1 + 2;
-CYEOF
+NYEOF
 
 echo "[v1] running scenario..."
-out=$(./nyx "$tmpd/main.nx")
+out=$(./nyx "$tmpd/main.ny")
 expected='ok
 3
 2

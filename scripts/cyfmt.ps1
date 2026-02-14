@@ -19,7 +19,7 @@ switch ($Target.ToLowerInvariant()) {
 
 function Show-Usage {
 @"
-Usage: cyfmt [--check] [target(.nx)]
+Usage: nyfmt [--check] [target(.ny)]
 "@
 }
 
@@ -75,7 +75,7 @@ if ($Help) {
     exit 0
 }
 
-function Get-FormattedCyText {
+function Get-FormattedNyText {
     param([string]$Path)
 
     $text = Get-Content -Raw -LiteralPath $Path
@@ -96,14 +96,14 @@ if (Test-Path -LiteralPath $Target -PathType Leaf) {
 } else {
     $files = @(
         Get-ChildItem -LiteralPath $Target -Recurse -File |
-            Where-Object { $_.Extension -eq '.nx' } |
+            Where-Object { $_.Extension -eq '.ny' } |
             ForEach-Object { $_.FullName }
     )
 }
 
 $checkFailed = $false
 foreach ($file in $files) {
-    $formatted = Get-FormattedCyText -Path $file
+    $formatted = Get-FormattedNyText -Path $file
     if ($Check) {
         $current = Get-Content -Raw -LiteralPath $file
         $current = $current -replace "`r", ''

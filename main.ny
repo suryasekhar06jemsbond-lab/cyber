@@ -1,0 +1,3 @@
+#!/usr/bin/env nyx
+
+1 + 2;

@@ -1,90 +1,60 @@
 param(
-    [Parameter(Mandatory = $true)]
     [string]$Target,
-    [string]$BinaryPath = '.\\build\\nyx.exe',
-    [string]$OutDir = '.\\dist'
+    [string]$BinaryPath,
+    [string]$OutDir
 )
 
 $ErrorActionPreference = 'Stop'
 
-$root = Split-Path -Parent $PSScriptRoot
-Set-Location $root
-
-$binaryAbs = if ([System.IO.Path]::IsPathRooted($BinaryPath)) { $BinaryPath } else { Join-Path $root $BinaryPath }
-$outDirAbs = if ([System.IO.Path]::IsPathRooted($OutDir)) { $OutDir } else { Join-Path $root $OutDir }
-
-if (-not (Test-Path -LiteralPath $binaryAbs)) {
-    throw "Binary not found: $binaryAbs"
+if (-not (Test-Path $OutDir)) {
+    New-Item -ItemType Directory -Path $OutDir | Out-Null
 }
 
-New-Item -ItemType Directory -Force -Path $outDirAbs | Out-Null
+$zipName = "nyx-$Target.zip"
+$zipPath = Join-Path $OutDir $zipName
+$tmpDir = Join-Path ([System.IO.Path]::GetTempPath()) ("ny_pkg_" + [guid]::NewGuid().ToString('N'))
 
-$archiveName = "nyx-$Target.zip"
-$archivePath = Join-Path $outDirAbs $archiveName
-$hashPath = "$archivePath.sha256"
-
-$tmpDir = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_pkg_" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $tmpDir | Out-Null
 
 try {
-    $stageBinary = Join-Path $tmpDir 'nyx.exe'
-    Copy-Item -Force -LiteralPath $binaryAbs -Destination $stageBinary
+    # Copy binary
+    Copy-Item -LiteralPath $BinaryPath -Destination (Join-Path $tmpDir 'nyx.exe')
 
-    $stageScripts = Join-Path $tmpDir 'scripts'
-    $stageCompiler = Join-Path $tmpDir 'compiler'
-    New-Item -ItemType Directory -Force -Path $stageScripts, $stageCompiler | Out-Null
+    # Copy scripts
+    $scriptsDir = Join-Path $tmpDir 'scripts'
+    New-Item -ItemType Directory -Path $scriptsDir | Out-Null
+    Copy-Item -LiteralPath 'scripts/nypm.ps1' -Destination $scriptsDir
+    Copy-Item -LiteralPath 'scripts/nyfmt.ps1' -Destination $scriptsDir
+    Copy-Item -LiteralPath 'scripts/nylint.ps1' -Destination $scriptsDir
+    Copy-Item -LiteralPath 'scripts/nydbg.ps1' -Destination $scriptsDir
+    
+    # Copy stdlib
+    $stdlibDir = Join-Path $tmpDir 'stdlib'
+    New-Item -ItemType Directory -Path $stdlibDir | Out-Null
+    Copy-Item -LiteralPath 'stdlib/types.ny' -Destination $stdlibDir
+    Copy-Item -LiteralPath 'stdlib/class.ny' -Destination $stdlibDir
 
-    $scriptFiles = @(
-        'cydbg.sh', 'cyfmt.sh', 'cylint.sh', 'cypm.sh',
-        'cydbg.ps1', 'cyfmt.ps1', 'cylint.ps1', 'cypm.ps1'
-    )
-    foreach ($name in $scriptFiles) {
-        $src = Join-Path $root ("scripts/" + $name)
-        if (Test-Path -LiteralPath $src) {
-            Copy-Item -Force -LiteralPath $src -Destination (Join-Path $stageScripts $name)
-        }
-    }
+    # Copy compiler
+    $compilerDir = Join-Path $tmpDir 'compiler'
+    New-Item -ItemType Directory -Path $compilerDir | Out-Null
+    Copy-Item -LiteralPath 'compiler/bootstrap.ny' -Destination $compilerDir
+    
+    # Copy examples
+    $examplesDir = Join-Path $tmpDir 'examples'
+    New-Item -ItemType Directory -Path $examplesDir | Out-Null
+    Copy-Item -LiteralPath 'examples/fibonacci.ny' -Destination $examplesDir
 
-    $compilerFiles = @('bootstrap.nx', 'v3_seed.nx')
-    foreach ($name in $compilerFiles) {
-        $src = Join-Path $root ("compiler/" + $name)
-        if (Test-Path -LiteralPath $src) {
-            Copy-Item -Force -LiteralPath $src -Destination (Join-Path $stageCompiler $name)
-        }
-    }
+    # Copy README
+    Copy-Item -LiteralPath 'README.md' -Destination $tmpDir
 
-    $copyDirs = @('stdlib', 'examples')
-    foreach ($dirName in $copyDirs) {
-        $src = Join-Path $root $dirName
-        $dst = Join-Path $tmpDir $dirName
-        if (Test-Path -LiteralPath $src) {
-            Copy-Item -Recurse -Force -LiteralPath $src -Destination $dst
-        }
-    }
-
-    $copyFiles = @('README.md', 'docs/LANGUAGE_SPEC.md')
-    foreach ($relPath in $copyFiles) {
-        $src = Join-Path $root $relPath
-        if (Test-Path -LiteralPath $src) {
-            $dst = Join-Path $tmpDir $relPath
-            $dstDir = Split-Path -Parent $dst
-            if ($dstDir -and -not (Test-Path -LiteralPath $dstDir)) {
-                New-Item -ItemType Directory -Force -Path $dstDir | Out-Null
-            }
-            Copy-Item -Force -LiteralPath $src -Destination $dst
-        }
-    }
-
-    if (Test-Path -LiteralPath $archivePath) {
-        Remove-Item -Force -LiteralPath $archivePath
-    }
-    Compress-Archive -Path (Join-Path $tmpDir '*') -DestinationPath $archivePath -Force
-
-    $hash = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
-    Set-Content -NoNewline -LiteralPath $hashPath -Value ("{0}  {1}" -f $hash, $archiveName)
-
-    Write-Host ("Created {0}" -f $archivePath)
-    Write-Host ("Created {0}" -f $hashPath)
+    if (Test-Path $zipPath) { Remove-Item $zipPath }
+    Compress-Archive -Path "$tmpDir\*" -DestinationPath $zipPath
+    
+    $hash = (Get-FileHash $zipPath -Algorithm SHA256).Hash.ToLower()
+    Set-Content -Path "$zipPath.sha256" -Value "$hash  $zipName"
+    
+    Write-Host "Created $zipPath"
+    Write-Host "Created $zipPath.sha256"
 }
 finally {
     Remove-Item -Recurse -Force $tmpDir -ErrorAction SilentlyContinue

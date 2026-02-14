@@ -71,14 +71,14 @@ function Run-ProcessText {
 $Compiler = Resolve-CCompiler
 Write-Host "[v4-win] building native runtime..."
 $runtimeExe = Join-Path $root ("nyx" + $exeExt)
-$nativeSource = Join-Path $root 'native/cy.c'
+$nativeSource = Join-Path $root 'native/nyx.c'
 Build-C -Compiler $Compiler -Output $runtimeExe -Source $nativeSource
 
-$tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_v4_" + [guid]::NewGuid().ToString('N'))
+$tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("ny_v4_" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $tmp | Out-Null
 
 try {
-    $programPath = Join-Path $tmp 'v4.nx'
+    $programPath = Join-Path $tmp 'v4.ny'
     $payloadPath = Join-Path $tmp 'http_payload.txt'
     $payloadPathCy = $payloadPath -replace '\\', '/'
 @"
@@ -174,20 +174,20 @@ print(sum([1, 2, 3, 4]));
 print(all([1, true, 3]));
 print(any([0, false, 7]));
 
-import "cy:math";
-import "cy:arrays";
-import "cy:objects";
+import "nymath";
+import "nyarrays";
+import "nyobjects";
 
-print(Math.pow(2, 5));
-print(Arrays.first([9, 8, 7]));
-print(Arrays.last([9, 8, 7]));
-let em = Arrays.enumerate([4, 5, 6]);
+print(nymath.pow(2, 5));
+print(nyarrays.first([9, 8, 7]));
+print(nyarrays.last([9, 8, 7]));
+let em = nyarrays.enumerate([4, 5, 6]);
 print(em[1][0]);
 print(em[1][1]);
-let merged = Objects.merge({a: 1}, {b: 2});
+let merged = nyobjects.merge({a: 1}, {b: 2});
 print(len(keys(merged)));
-print(Objects.get_or(merged, "a", 0));
-print(Objects.get_or(merged, "z", 9));
+print(nyobjects.get_or(merged, "a", 0));
+print(nyobjects.get_or(merged, "z", 9));
 
 switch (2) {
     case 1: { print("one"); }
@@ -198,17 +198,17 @@ switch (2) {
 print(null ?? 99);
 print(5 ?? 99);
 
-import "cy:json";
-import "cy:http";
+import "nyjson";
+import "nyhttp";
 
-print(JSON.parse("42"));
-print(JSON.parse("true"));
-print(JSON.stringify(7));
+print(nyjson.parse("42"));
+print(nyjson.parse("true"));
+print(nyjson.stringify(7));
 
 write("$payloadPathCy", "hello-http");
-let http_ok = HTTP.get("$payloadPathCy");
-print(HTTP.ok(http_ok));
-print(HTTP.text("$payloadPathCy"));
+let http_ok = nyhttp.get("$payloadPathCy");
+print(nyhttp.ok(http_ok));
+print(nyhttp.text("$payloadPathCy"));
 "@ | Set-Content -NoNewline $programPath
 
     $expected = "int`n42`n7`n12`n6`nelif`n63`n9`n5`n3`n42`n99`ntrue`n2`n2`n2`n6`n2`n1`n11`n5`n8`n10`n10`ntrue`ntrue`n32`n9`n7`n1`n5`n2`n1`n9`ntwo`n99`n5`n42`ntrue`n7`n10`ntrue`nhello-http"
@@ -232,7 +232,7 @@ print(HTTP.text("$payloadPathCy"));
     }
 
     Write-Host "[v4-win] lint check..."
-    $lintScript = Join-Path $root 'scripts/cylint.ps1'
+    $lintScript = Join-Path $root 'scripts/nylint.ps1'
     Invoke-Checked -Exe $lintScript -Args @('-Strict', $programPath)
 
     Write-Host "[v4-win] PASS"

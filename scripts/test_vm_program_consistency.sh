@@ -23,7 +23,7 @@ for i in $(seq 1 "$cases"); do
   threshold=$((RANDOM % 3 + 1))
   factor=$((RANDOM % 4 + 1))
 
-  file="$tmpd/case_$i.nx"
+  file="$tmpd/case_$i.ny"
   cat >"$file" <<CYEOF
 fn mul(a, b) {
     return a * b;

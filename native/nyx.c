@@ -17,8 +17,8 @@
 #endif
 
 #define MAX_TOKEN_TEXT 1024
-#ifndef CY_LANG_VERSION
-#define CY_LANG_VERSION "0.6.13"
+#ifndef NYX_LANG_VERSION
+#define NYX_LANG_VERSION "0.6.13"
 #endif
 
 typedef enum {
@@ -1882,25 +1882,25 @@ static char *resolve_path(const char *current_file, const char *raw_path) {
 }
 
 static const char *g_builtin_math_module =
-    "module Math {\n"
-    "    fn __cy_math_abs(x) {\n"
+    "module nymath {\n"
+    "    fn __ny_math_abs(x) {\n"
     "        if (x < 0) { return -x; }\n"
     "        return x;\n"
     "    }\n"
-    "    fn __cy_math_min(a, b) {\n"
+    "    fn __ny_math_min(a, b) {\n"
     "        if (a < b) { return a; }\n"
     "        return b;\n"
     "    }\n"
-    "    fn __cy_math_max(a, b) {\n"
+    "    fn __ny_math_max(a, b) {\n"
     "        if (a > b) { return a; }\n"
     "        return b;\n"
     "    }\n"
-    "    fn __cy_math_clamp(x, lo, hi) {\n"
+    "    fn __ny_math_clamp(x, lo, hi) {\n"
     "        if (x < lo) { return lo; }\n"
     "        if (x > hi) { return hi; }\n"
     "        return x;\n"
     "    }\n"
-    "    fn __cy_math_pow(base, exp) {\n"
+    "    fn __ny_math_pow(base, exp) {\n"
     "        if (exp < 0) { return 0; }\n"
     "        let acc = 1;\n"
     "        let i = 0;\n"
@@ -1910,62 +1910,62 @@ static const char *g_builtin_math_module =
     "        }\n"
     "        return acc;\n"
     "    }\n"
-    "    fn __cy_math_sum(xs) {\n"
+    "    fn __ny_math_sum(xs) {\n"
     "        let acc = 0;\n"
     "        for (x in xs) { acc = acc + x; }\n"
     "        return acc;\n"
     "    }\n"
-    "    let abs = __cy_math_abs;\n"
-    "    let min = __cy_math_min;\n"
-    "    let max = __cy_math_max;\n"
-    "    let clamp = __cy_math_clamp;\n"
-    "    let pow = __cy_math_pow;\n"
-    "    let sum = __cy_math_sum;\n"
+    "    let abs = __ny_math_abs;\n"
+    "    let min = __ny_math_min;\n"
+    "    let max = __ny_math_max;\n"
+    "    let clamp = __ny_math_clamp;\n"
+    "    let pow = __ny_math_pow;\n"
+    "    let sum = __ny_math_sum;\n"
     "}\n";
 
 static const char *g_builtin_arrays_module =
-    "module Arrays {\n"
-    "    fn __cy_arrays_first(xs) {\n"
+    "module nyarrays {\n"
+    "    fn __ny_arrays_first(xs) {\n"
     "        if (len(xs) == 0) { return null; }\n"
     "        return xs[0];\n"
     "    }\n"
-    "    fn __cy_arrays_last(xs) {\n"
+    "    fn __ny_arrays_last(xs) {\n"
     "        if (len(xs) == 0) { return null; }\n"
     "        return xs[len(xs) - 1];\n"
     "    }\n"
-    "    fn __cy_arrays_sum(xs) {\n"
+    "    fn __ny_arrays_sum(xs) {\n"
     "        let acc = 0;\n"
     "        for (x in xs) { acc = acc + x; }\n"
     "        return acc;\n"
     "    }\n"
-    "    fn __cy_arrays_enumerate(xs) {\n"
+    "    fn __ny_arrays_enumerate(xs) {\n"
     "        return [[i, x] for i, x in xs];\n"
     "    }\n"
-    "    let first = __cy_arrays_first;\n"
-    "    let last = __cy_arrays_last;\n"
-    "    let sum = __cy_arrays_sum;\n"
-    "    let enumerate = __cy_arrays_enumerate;\n"
+    "    let first = __ny_arrays_first;\n"
+    "    let last = __ny_arrays_last;\n"
+    "    let sum = __ny_arrays_sum;\n"
+    "    let enumerate = __ny_arrays_enumerate;\n"
     "}\n";
 
 static const char *g_builtin_objects_module =
-    "module Objects {\n"
-    "    fn __cy_objects_merge(a, b) {\n"
+    "module nyobjects {\n"
+    "    fn __ny_objects_merge(a, b) {\n"
     "        let out = object_new();\n"
     "        for (k, v in a) { object_set(out, k, v); }\n"
     "        for (k, v in b) { object_set(out, k, v); }\n"
     "        return out;\n"
     "    }\n"
-    "    fn __cy_objects_get_or(obj, key, fallback) {\n"
+    "    fn __ny_objects_get_or(obj, key, fallback) {\n"
     "        if (has(obj, key)) { return object_get(obj, key); }\n"
     "        return fallback;\n"
     "    }\n"
-    "    let merge = __cy_objects_merge;\n"
-    "    let get_or = __cy_objects_get_or;\n"
+    "    let merge = __ny_objects_merge;\n"
+    "    let get_or = __ny_objects_get_or;\n"
     "}\n";
 
 static const char *g_builtin_json_module =
-    "module JSON {\n"
-    "    fn __cy_json_parse(text) {\n"
+    "module nyjson {\n"
+    "    fn __ny_json_parse(text) {\n"
     "        if (text == \"true\") { return true; }\n"
     "        if (text == \"false\") { return false; }\n"
     "        if (text == \"null\") { return null; }\n"
@@ -1975,41 +1975,41 @@ static const char *g_builtin_json_module =
     "            return text;\n"
     "        }\n"
     "    }\n"
-    "    fn __cy_json_stringify(value) {\n"
+    "    fn __ny_json_stringify(value) {\n"
     "        return str(value);\n"
     "    }\n"
-    "    let parse = __cy_json_parse;\n"
-    "    let stringify = __cy_json_stringify;\n"
+    "    let parse = __ny_json_parse;\n"
+    "    let stringify = __ny_json_stringify;\n"
     "}\n";
 
 static const char *g_builtin_http_module =
-    "module HTTP {\n"
-    "    fn __cy_http_get(path) {\n"
+    "module nyhttp {\n"
+    "    fn __ny_http_get(path) {\n"
     "        let body = read(path);\n"
     "        return {ok: true, status: 200, body: body, path: path};\n"
     "    }\n"
-    "    fn __cy_http_text(path) {\n"
-    "        let resp = __cy_http_get(path);\n"
+    "    fn __ny_http_text(path) {\n"
+    "        let resp = __ny_http_get(path);\n"
     "        return object_get(resp, \"body\");\n"
     "    }\n"
-    "    fn __cy_http_ok(resp) {\n"
+    "    fn __ny_http_ok(resp) {\n"
     "        return object_get(resp, \"ok\");\n"
     "    }\n"
-    "    let get = __cy_http_get;\n"
-    "    let text = __cy_http_text;\n"
-    "    let ok = __cy_http_ok;\n"
+    "    let get = __ny_http_get;\n"
+    "    let text = __ny_http_text;\n"
+    "    let ok = __ny_http_ok;\n"
     "}\n";
 
 static int is_builtin_module_path(const char *path) {
-    return path != NULL && strncmp(path, "cy:", 3) == 0;
+    return path != NULL && strncmp(path, "ny", 2) == 0;
 }
 
 static const char *builtin_module_source(const char *path) {
-    if (strcmp(path, "cy:math") == 0) return g_builtin_math_module;
-    if (strcmp(path, "cy:arrays") == 0) return g_builtin_arrays_module;
-    if (strcmp(path, "cy:objects") == 0) return g_builtin_objects_module;
-    if (strcmp(path, "cy:json") == 0) return g_builtin_json_module;
-    if (strcmp(path, "cy:http") == 0) return g_builtin_http_module;
+    if (strcmp(path, "nymath") == 0) return g_builtin_math_module;
+    if (strcmp(path, "nyarrays") == 0) return g_builtin_arrays_module;
+    if (strcmp(path, "nyobjects") == 0) return g_builtin_objects_module;
+    if (strcmp(path, "nyjson") == 0) return g_builtin_json_module;
+    if (strcmp(path, "nyhttp") == 0) return g_builtin_http_module;
     return NULL;
 }
 
@@ -2577,14 +2577,14 @@ static Value builtin_lang_version(Value *args, int argc, int line, int col, cons
     (void)args;
     (void)current_file;
     if (argc != 0) runtime_error(line, col, "lang_version() expects 0 arguments");
-    return value_string(CY_LANG_VERSION);
+    return value_string(NYX_LANG_VERSION);
 }
 
 static Value builtin_require_version(Value *args, int argc, int line, int col, const char *current_file) {
     (void)current_file;
     if (argc != 1) runtime_error(line, col, "require_version() expects 1 argument");
     if (args[0].type != VAL_STRING) runtime_error(line, col, "require_version() expects string argument");
-    if (strcmp(args[0].as.str_val, CY_LANG_VERSION) != 0) {
+    if (strcmp(args[0].as.str_val, NYX_LANG_VERSION) != 0) {
         runtime_error(line, col, "language version mismatch");
     }
     return value_null();
@@ -4141,7 +4141,7 @@ int main(int argc, char **argv) {
             continue;
         }
         if (strcmp(arg, "--version") == 0) {
-            printf("%s\n", CY_LANG_VERSION);
+            printf("%s\n", NYX_LANG_VERSION);
             return 0;
         }
         if (strcmp(arg, "--max-alloc") == 0) {
@@ -4255,14 +4255,14 @@ int main(int argc, char **argv) {
     char *source = NULL;
 
     if (argc <= script_arg_index) {
-        script_path = "main.nx";
+        script_path = "main.ny";
         source = read_file(script_path);
         if (!source) {
             fprintf(stderr,
                     "Usage: nyx [--trace] [--parse-only|--lint] [--vm|--vm-strict] [--max-alloc N] [--max-steps N] [--max-call-depth N] [--debug] [--break lines] [--step] [--step-count N] "
                     "[--debug-no-prompt] [--version] "
-                    "<file.nx> [args...]\n");
-            fprintf(stderr, "Hint: run from a directory that contains main.nx or pass a file path explicitly.\n");
+                    "<file.ny> [args...]\n");
+            fprintf(stderr, "Hint: run from a directory that contains main.ny or pass a file path explicitly.\n");
             return 1;
         }
         fallback_script_argv[0] = (char *)script_path;

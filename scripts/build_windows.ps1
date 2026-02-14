@@ -2,7 +2,7 @@ param(
     [string]$Output = 'nyx.exe',
     [switch]$SmokeTest,
     [switch]$NoIcon,
-    [string]$LangVersion = $env:CY_LANG_VERSION
+    [string]$LangVersion = $env:NYX_LANG_VERSION
 )
 
 $ErrorActionPreference = 'Stop'
@@ -95,10 +95,10 @@ function Build-Runtime {
         Remove-Item -Force -LiteralPath $OutputPath
     }
 
-    $versionHeader = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_lang_version_" + [guid]::NewGuid().ToString('N') + '.h')
+    $versionHeader = Join-Path ([System.IO.Path]::GetTempPath()) ("ny_lang_version_" + [guid]::NewGuid().ToString('N') + '.h')
     @(
-        '#ifndef CY_LANG_VERSION'
-        ('#define CY_LANG_VERSION "{0}"' -f $LangVersion)
+        '#ifndef NYX_LANG_VERSION'
+        ('#define NYX_LANG_VERSION "{0}"' -f $LangVersion)
         '#endif'
     ) | Set-Content -Encoding ascii -LiteralPath $versionHeader
 
@@ -155,8 +155,8 @@ if ($outputDir -and -not (Test-Path -LiteralPath $outputDir)) {
     New-Item -ItemType Directory -Path $outputDir | Out-Null
 }
 
-$sourcePath = Join-Path $root 'native/cy.c'
-$rcPath = Join-Path $root 'native/cy.rc'
+$sourcePath = Join-Path $root 'native/nyx.c'
+$rcPath = Join-Path $root 'native/nyx.rc'
 $resPath = $null
 
 try {
@@ -167,7 +167,7 @@ try {
             if (-not (Test-Path -LiteralPath $buildDir)) {
                 New-Item -ItemType Directory -Path $buildDir | Out-Null
             }
-            $resPath = Join-Path $buildDir 'cy_icon.res'
+            $resPath = Join-Path $buildDir 'nyx_icon.res'
             Write-Host ("[build-win] embedding icon using {0} ({1})" -f $resCompiler.Kind, $resCompiler.Exe)
             try {
                 Compile-Resource -Tool $resCompiler -RcPath $rcPath -ResPath $resPath
@@ -186,7 +186,7 @@ try {
     Write-CompatAlias -PrimaryPath $outputPath
 
     if ($SmokeTest) {
-        $mainPath = Join-Path $root 'main.nx'
+        $mainPath = Join-Path $root 'main.ny'
         $raw = (& $outputPath $mainPath | Out-String)
         if ($null -ne $LASTEXITCODE -and $LASTEXITCODE -ne 0) {
             throw "Smoke test failed while running: $outputPath $mainPath"
