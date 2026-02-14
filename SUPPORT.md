@@ -12,7 +12,7 @@ Include:
 2. compiler (`clang/gcc/cl`) and version
 3. exact command run
 4. full error output
-5. minimal `.cy` reproduction
+5. minimal `.nx` reproduction
 
 ## Response Expectations
 

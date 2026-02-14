@@ -19,7 +19,7 @@ switch ($Target.ToLowerInvariant()) {
 
 function Show-Usage {
 @"
-Usage: cyfmt [--check] [target]
+Usage: cyfmt [--check] [target(.nx|.cy)]
 "@
 }
 
@@ -94,7 +94,11 @@ $files = @()
 if (Test-Path -LiteralPath $Target -PathType Leaf) {
     $files = @($Target)
 } else {
-    $files = @(Get-ChildItem -LiteralPath $Target -Recurse -Filter '*.cy' -File | ForEach-Object { $_.FullName })
+    $files = @(
+        Get-ChildItem -LiteralPath $Target -Recurse -File |
+            Where-Object { $_.Extension -in @('.nx', '.cy') } |
+            ForEach-Object { $_.FullName }
+    )
 }
 
 $checkFailed = $false

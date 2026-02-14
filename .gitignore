@@ -9,3 +9,4 @@ compiler_stage*.exe
 output.c
 output_bin.exe
 input_expr.cy
+input_expr.nx

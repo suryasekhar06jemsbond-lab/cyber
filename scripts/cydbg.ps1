@@ -15,7 +15,7 @@ if ($null -ne (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue)) {
 }
 
 function Show-Usage {
-    [Console]::Out.WriteLine('Usage: cydbg [--break line1,line2] [--step] [--step-count N] <file.cy> [args...]')
+    [Console]::Out.WriteLine('Usage: cydbg [--break line1,line2] [--step] [--step-count N] <file.nx> [args...]')
 }
 
 if ($CliArgs.Count -lt 1) {

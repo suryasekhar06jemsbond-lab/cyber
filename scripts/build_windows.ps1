@@ -200,7 +200,10 @@ try {
     Write-CompatAlias -PrimaryPath $outputPath
 
     if ($SmokeTest) {
-        $mainPath = Join-Path $root 'main.cy'
+        $mainPath = Join-Path $root 'main.nx'
+        if (-not (Test-Path -LiteralPath $mainPath)) {
+            $mainPath = Join-Path $root 'main.cy'
+        }
         $raw = (& $outputPath $mainPath | Out-String)
         if ($null -ne $LASTEXITCODE -and $LASTEXITCODE -ne 0) {
             throw "Smoke test failed while running: $outputPath $mainPath"

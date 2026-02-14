@@ -1,13 +1,13 @@
-# Cyper Language Support (VS Code)
+# Nyx Language Support (VS Code)
 
-Provides language support for `.cy` files:
+Provides language support for `.nx` files:
 
 - syntax highlighting
-- file icon for `.cy`
+- file icon for `.nx`
 - comments/bracket auto-pairs
-- common Cyper snippets
+- common Nyx snippets
 
-For `.cy` file icons in Explorer, set icon theme to `Cyper Seti Icons`.
+The extension auto-applies `Nyx Seti Icons` so `.nx` icons appear immediately.
 
 ## Install From `.vsix`
 

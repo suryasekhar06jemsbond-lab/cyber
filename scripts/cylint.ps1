@@ -19,7 +19,7 @@ switch ($Target.ToLowerInvariant()) {
 
 function Show-Usage {
 @"
-Usage: cylint [--strict] [target]
+Usage: cylint [--strict] [target(.nx|.cy)]
 "@
 }
 
@@ -146,7 +146,7 @@ function Lint-CyFile {
 if (Test-Path $Target -PathType Leaf) {
     Lint-CyFile -Path $Target
 } else {
-    Get-ChildItem -Path $Target -Recurse -Filter '*.cy' -File | ForEach-Object {
+    Get-ChildItem -Path $Target -Recurse -File | Where-Object { $_.Extension -in @('.nx', '.cy') } | ForEach-Object {
         Lint-CyFile -Path $_.FullName
     }
 }

@@ -4186,7 +4186,7 @@ static int compile_file(const char *input_path, const char *output_path) {
 
 int main(int argc, char **argv) {
     if (argc < 3) {
-        fprintf(stderr, "Usage: v3_compiler <input.cy> <output.c> [--emit-self]\n");
+        fprintf(stderr, "Usage: v3_compiler <input.nx> <output.c> [--emit-self]\n");
         return 1;
     }
 

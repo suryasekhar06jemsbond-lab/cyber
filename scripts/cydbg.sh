@@ -2,13 +2,13 @@
 set -eu
 
 if [ "$#" -lt 1 ]; then
-  echo "Usage: cydbg [--break line1,line2] [--step] [--step-count N] <file.cy> [args...]" >&2
+  echo "Usage: cydbg [--break line1,line2] [--step] [--step-count N] <file.nx> [args...]" >&2
   exit 1
 fi
 
 case "${1:-}" in
   --help|-h)
-    echo "Usage: cydbg [--break line1,line2] [--step] [--step-count N] <file.cy> [args...]"
+    echo "Usage: cydbg [--break line1,line2] [--step] [--step-count N] <file.nx> [args...]"
     exit 0
     ;;
 esac

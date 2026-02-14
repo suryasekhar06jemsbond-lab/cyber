@@ -3,7 +3,7 @@ set -eu
 
 usage() {
   cat <<'USAGE'
-Usage: cylint [--strict] [target]
+Usage: cylint [--strict] [target(.nx|.cy)]
 USAGE
 }
 
@@ -76,7 +76,7 @@ lint_file() {
 if [ -f "$target" ]; then
   lint_file "$target"
 else
-  find "$target" -type f -name '*.cy' | while IFS= read -r file; do
+  find "$target" -type f \( -name '*.nx' -o -name '*.cy' \) | while IFS= read -r file; do
     lint_file "$file"
   done
 fi

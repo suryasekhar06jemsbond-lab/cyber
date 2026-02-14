@@ -4255,14 +4255,18 @@ int main(int argc, char **argv) {
     char *source = NULL;
 
     if (argc <= script_arg_index) {
-        script_path = "main.cy";
+        script_path = "main.nx";
         source = read_file(script_path);
+        if (!source) {
+            script_path = "main.cy";
+            source = read_file(script_path);
+        }
         if (!source) {
             fprintf(stderr,
                     "Usage: cyper [--trace] [--parse-only|--lint] [--vm|--vm-strict] [--max-alloc N] [--max-steps N] [--max-call-depth N] [--debug] [--break lines] [--step] [--step-count N] "
                     "[--debug-no-prompt] [--version] "
-                    "<file.cy> [args...]\n");
-            fprintf(stderr, "Hint: run from a directory that contains main.cy or pass a file path explicitly.\n");
+                    "<file.nx> [args...]\n");
+            fprintf(stderr, "Hint: run from a directory that contains main.nx (or legacy main.cy) or pass a file path explicitly.\n");
             return 1;
         }
         fallback_script_argv[0] = (char *)script_path;

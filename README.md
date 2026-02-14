@@ -1,8 +1,8 @@
-# Cy Programming Language
+# Nyx Programming Language
 
-Cy runs as a native executable (`cyper`) with no Python runtime dependency. A `cy` compatibility alias is still shipped.
+Nyx runs as a native executable (`cyper`) with no Python runtime dependency. A `cy` compatibility alias is still shipped.
 
-![Cy Logo](assets/cy-logo.png)
+![Nyx Logo](assets/cy-logo.png)
 
 ## Build
 
@@ -52,15 +52,15 @@ Launcher:
 ## Run
 
 ```bash
-./cyper main.cy
-./cyper examples/fibonacci.cy
+./cyper main.nx
+./cyper examples/fibonacci.nx
 ```
 
-If no file is passed and `main.cy` exists in the current directory, `cyper` runs `main.cy` automatically.
+If no file is passed and `main.nx` exists in the current directory, `cyper` runs `main.nx` automatically. Legacy `main.cy` is still supported.
 
 ## VS Code
 
-Install the Cy extension from the release asset `cy-language.vsix`:
+Install the Nyx extension from the release asset `cy-language.vsix`:
 
 1. Open VS Code command palette.
 2. Run `Extensions: Install from VSIX...`.
@@ -72,7 +72,7 @@ Or install automatically on Windows:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install_vscode.ps1 -Version v0.6.13
 ```
 
-Then in VS Code set file icon theme to `Cyper Seti Icons` to show `.cy` logo icons in Explorer.
+Then in VS Code set file icon theme to `Nyx Seti Icons` to show `.nx` logo icons in Explorer.
 
 Extension source lives in `editor/vscode/cy-language`.
 
@@ -93,22 +93,22 @@ Extension source lives in `editor/vscode/cy-language`.
 
 Executable script style:
 
-```cy
+```nyx
 #!/usr/bin/env cyper
 1 + 2;
 ```
 
 ```bash
-chmod +x main.cy
-./main.cy
+chmod +x main.nx
+./main.nx
 ```
 
 ## Milestones
 
 - `V0.md`: native runtime baseline
 - `V1.md`: compiler-capable runtime features
-- `V2.md`: first `.cy` compiler (`compiler/bootstrap.cy`)
-- `V3.md`: self-hosting compiler (`compiler/v3_seed.cy`)
+- `V2.md`: first `.nx` compiler (`compiler/bootstrap.nx`)
+- `V3.md`: self-hosting compiler (`compiler/v3_seed.nx`)
 - `V4.md`: runtime expansion (loops/comprehensions/class-module-typealias + lint + VM cache)
 - `BOOTSTRAP.md`: roadmap to self-hosting (`v2` and `v3`)
 - `docs/LANGUAGE_SPEC.md`: language spec draft
@@ -133,31 +133,31 @@ Current direct-codegen source subset:
 Generate compiler C and build compiler binary:
 
 ```bash
-./cyper compiler/v3_seed.cy compiler/v3_seed.cy compiler_stage1.c
+./cyper compiler/v3_seed.nx compiler/v3_seed.nx compiler_stage1.c
 cc -O2 -std=c99 -Wall -Wextra -Werror -o compiler_stage1 compiler_stage1.c
 ```
 
 Use compiler binary:
 
 ```bash
-./compiler_stage1 program.cy program.c
+./compiler_stage1 program.nx program.c
 cc -O2 -std=c99 -Wall -Wextra -Werror -o program program.c
 ./program
 ```
 
 ## v2 Compiler
 
-Current scope: compiles a restricted `.cy` input containing a single arithmetic expression statement.
+Current scope: compiles a restricted `.nx` input containing a single arithmetic expression statement.
 Do not type angle brackets (`< >`); they are placeholders in docs and break in PowerShell.
 
 ```bash
-./cyper compiler/bootstrap.cy input_expr.cy output.c
+./cyper compiler/bootstrap.nx input_expr.nx output.c
 cc -O2 -std=c99 -Wall -Wextra -Werror -o output_bin output.c
 ./output_bin
 ```
 
 ```powershell
-.\cyper compiler\bootstrap.cy input_expr.cy output.c
+.\cyper compiler\bootstrap.nx input_expr.nx output.c
 clang -O2 -std=c99 -Wall -Wextra -Werror -o output_bin.exe output.c
 .\output_bin.exe
 ```
@@ -210,30 +210,30 @@ Linter (syntax check):
 ```bash
 ./scripts/cylint.sh .
 ./scripts/cylint.sh --strict .
-./cyper --parse-only program.cy
+./cyper --parse-only program.nx
 ```
 
 Debugger (trace + breakpoints + stepper):
 
 ```bash
-./scripts/cydbg.sh program.cy
-./scripts/cydbg.sh --break 12,20 examples/fibonacci.cy
-./scripts/cydbg.sh --step-count 5 examples/fibonacci.cy
-./scripts/cydbg.sh --step examples/fibonacci.cy
+./scripts/cydbg.sh program.nx
+./scripts/cydbg.sh --break 12,20 examples/fibonacci.nx
+./scripts/cydbg.sh --step-count 5 examples/fibonacci.nx
+./scripts/cydbg.sh --step examples/fibonacci.nx
 ```
 
 Native runtime debug flags (no wrapper):
 
 ```bash
-./cyper --debug --break 12,20 program.cy
-./cyper --debug --step program.cy
-./cyper --debug --step-count 10 program.cy
-./cyper --vm program.cy
-./cyper --vm-strict program.cy
-./cyper --max-alloc 1000000 program.cy
-./cyper --max-steps 100000 program.cy
-./cyper --max-call-depth 2048 program.cy
-./cyper --parse-only program.cy
+./cyper --debug --break 12,20 program.nx
+./cyper --debug --step program.nx
+./cyper --debug --step-count 10 program.nx
+./cyper --vm program.nx
+./cyper --vm-strict program.nx
+./cyper --max-alloc 1000000 program.nx
+./cyper --max-steps 100000 program.nx
+./cyper --max-call-depth 2048 program.nx
+./cyper --parse-only program.nx
 ./cyper --version
 ```
 
@@ -257,13 +257,13 @@ PowerShell equivalents:
 .\scripts\cyfmt.ps1 -Check .
 .\scripts\cylint.ps1 .
 .\scripts\cylint.ps1 -Strict .
-.\scripts\cydbg.ps1 --break 12,20 examples\fibonacci.cy
+.\scripts\cydbg.ps1 --break 12,20 examples\fibonacci.nx
 ```
 
 ## Stdlib
 
-- `stdlib/types.cy`: compatibility helpers (predicates now also available in compiled builtins)
-- `stdlib/class.cy`: compatibility helpers (class/object helpers now also available in compiled builtins)
+- `stdlib/types.nx`: compatibility helpers (predicates now also available in compiled builtins)
+- `stdlib/class.nx`: compatibility helpers (class/object helpers now also available in compiled builtins)
 
 ## Test
 
@@ -306,15 +306,15 @@ If `pwsh` is installed outside `PATH`, run shell production gate as `PWSH_BIN=/f
 ## v3 Self-Hosting Check
 
 ```bash
-./cyper compiler/v3_seed.cy compiler/v3_seed.cy compiler_stage1.c
+./cyper compiler/v3_seed.nx compiler/v3_seed.nx compiler_stage1.c
 cc -O2 -std=c99 -Wall -Wextra -Werror -o compiler_stage1 compiler_stage1.c
-./compiler_stage1 compiler/v3_seed.cy compiler_stage2.c --emit-self
+./compiler_stage1 compiler/v3_seed.nx compiler_stage2.c --emit-self
 cmp compiler_stage1.c compiler_stage2.c
 ```
 
 ```powershell
-.\cyper.exe compiler\v3_seed.cy compiler\v3_seed.cy compiler_stage1.c
+.\cyper.exe compiler\v3_seed.nx compiler\v3_seed.nx compiler_stage1.c
 clang -O2 -std=c99 -Wall -Wextra -Werror -o compiler_stage1.exe compiler_stage1.c
-.\compiler_stage1.exe compiler\v3_seed.cy compiler_stage2.c --emit-self
+.\compiler_stage1.exe compiler\v3_seed.nx compiler_stage2.c --emit-self
 cmd /c fc /b compiler_stage1.c compiler_stage2.c
 ```

@@ -1,10 +1,10 @@
-# Cy Language Spec (Bootstrap Draft)
+# Nyx Language Spec (Bootstrap Draft)
 
 Version: `0.6-draft` (`v4 runtime`)
 
 ## File Extension
 
-- Source files use `.cy`.
+- Source files use `.nx` (legacy `.cy` remains supported).
 
 ## Lexical Rules
 
@@ -70,7 +70,7 @@ fn add(a, b) {
 7. Import statement:
 
 ```cy
-import "lib.cy";
+import "lib.nx";
 ```
 
 8. Exception handling:
@@ -194,8 +194,8 @@ Import behavior:
 
 ## Standard Library Modules
 
-1. `stdlib/types.cy`
-2. `stdlib/class.cy`
+1. `stdlib/types.nx`
+2. `stdlib/class.nx`
 
 ## Builtin Packages
 

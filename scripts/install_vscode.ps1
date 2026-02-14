@@ -2,7 +2,7 @@ param(
     [string]$Repo = 'suryasekhar06jemsbond-lab/cyber',
     [string]$Version = 'latest',
     [string]$Asset = 'cy-language.vsix',
-    [string]$ExtensionId = 'suryasekhar06jemsbond-lab.cy-language',
+    [string]$ExtensionId = 'suryasekhar06jemsbond-lab.nyx-language',
     [string]$CodeCmd
 )
 

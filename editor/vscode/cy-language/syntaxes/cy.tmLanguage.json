@@ -1,8 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-  "name": "Cy",
-  "scopeName": "source.cy",
-  "fileTypes": ["cy"],
+  "name": "Nyx",
+  "scopeName": "source.nyx",
+  "fileTypes": ["nx", "cy"],
   "patterns": [
     { "include": "#comments" },
     { "include": "#strings" },
@@ -17,7 +17,7 @@
     "comments": {
       "patterns": [
         {
-          "name": "comment.line.number-sign.cy",
+          "name": "comment.line.number-sign.nyx",
           "match": "#.*$"
         }
       ]
@@ -25,12 +25,12 @@
     "strings": {
       "patterns": [
         {
-          "name": "string.quoted.double.cy",
+          "name": "string.quoted.double.nyx",
           "begin": "\"",
           "end": "\"",
           "patterns": [
             {
-              "name": "constant.character.escape.cy",
+              "name": "constant.character.escape.nyx",
               "match": "\\\\."
             }
           ]
@@ -40,11 +40,11 @@
     "keywords": {
       "patterns": [
         {
-          "name": "keyword.control.cy",
+          "name": "keyword.control.nyx",
           "match": "\\b(if|else|switch|case|default|while|for|in|break|continue|try|catch|throw|return|import)\\b"
         },
         {
-          "name": "storage.type.cy",
+          "name": "storage.type.nyx",
           "match": "\\b(fn|class|module|typealias|let)\\b"
         }
       ]
@@ -52,7 +52,7 @@
     "constants": {
       "patterns": [
         {
-          "name": "constant.language.cy",
+          "name": "constant.language.nyx",
           "match": "\\b(true|false|null)\\b"
         }
       ]
@@ -60,7 +60,7 @@
     "numbers": {
       "patterns": [
         {
-          "name": "constant.numeric.integer.cy",
+          "name": "constant.numeric.integer.nyx",
           "match": "\\b\\d+\\b"
         }
       ]
@@ -68,35 +68,35 @@
     "declarations": {
       "patterns": [
         {
-          "name": "meta.function.cy",
+          "name": "meta.function.nyx",
           "match": "\\b(fn)\\s+([A-Za-z_][A-Za-z0-9_]*)\\b",
           "captures": {
-            "1": { "name": "storage.type.function.cy" },
-            "2": { "name": "entity.name.function.cy" }
+            "1": { "name": "storage.type.function.nyx" },
+            "2": { "name": "entity.name.function.nyx" }
           }
         },
         {
-          "name": "meta.class.cy",
+          "name": "meta.class.nyx",
           "match": "\\b(class)\\s+([A-Za-z_][A-Za-z0-9_]*)\\b",
           "captures": {
-            "1": { "name": "storage.type.class.cy" },
-            "2": { "name": "entity.name.type.class.cy" }
+            "1": { "name": "storage.type.class.nyx" },
+            "2": { "name": "entity.name.type.class.nyx" }
           }
         },
         {
-          "name": "meta.module.cy",
+          "name": "meta.module.nyx",
           "match": "\\b(module)\\s+([A-Za-z_][A-Za-z0-9_]*)\\b",
           "captures": {
-            "1": { "name": "storage.type.module.cy" },
-            "2": { "name": "entity.name.namespace.cy" }
+            "1": { "name": "storage.type.module.nyx" },
+            "2": { "name": "entity.name.namespace.nyx" }
           }
         },
         {
-          "name": "meta.typealias.cy",
+          "name": "meta.typealias.nyx",
           "match": "\\b(typealias)\\s+([A-Za-z_][A-Za-z0-9_]*)\\b",
           "captures": {
-            "1": { "name": "storage.type.cy" },
-            "2": { "name": "entity.name.type.cy" }
+            "1": { "name": "storage.type.nyx" },
+            "2": { "name": "entity.name.type.nyx" }
           }
         }
       ]
@@ -104,7 +104,7 @@
     "builtins": {
       "patterns": [
         {
-          "name": "support.function.builtin.cy",
+          "name": "support.function.builtin.nyx",
           "match": "\\b(print|len|range|read|write|argc|argv|type|str|int|push|pop|abs|min|max|clamp|sum|all|any|type_of|is_int|is_bool|is_string|is_array|is_function|is_null|keys|values|items|has|object_new|object_set|object_get|class_new|class_with_ctor|class_set_method|class_name|class_instantiate0|class_instantiate1|class_instantiate2|class_call0|class_call1|class_call2|new|lang_version|require_version)\\b"
         }
       ]
@@ -112,7 +112,7 @@
     "operators": {
       "patterns": [
         {
-          "name": "keyword.operator.cy",
+          "name": "keyword.operator.nyx",
           "match": "\\?\\?|&&|\\|\\||==|!=|<=|>=|[+\\-*/%<>=!]"
         }
       ]

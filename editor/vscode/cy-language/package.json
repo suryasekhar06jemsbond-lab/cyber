@@ -1,21 +1,25 @@
 {
-  "name": "cy-language",
-  "displayName": "Cyper Language Support",
-  "description": "Syntax highlighting, snippets, and language configuration for Cyper (.cy).",
-  "version": "0.1.1",
+  "name": "nyx-language",
+  "displayName": "Nyx Language Support",
+  "description": "Syntax highlighting, snippets, and language configuration for Nyx (.nx).",
+  "version": "0.2.0",
   "publisher": "suryasekhar06jemsbond-lab",
   "license": "UNLICENSED",
   "icon": "icons/cy-logo.png",
   "engines": {
     "vscode": "^1.85.0"
   },
+  "main": "./extension.js",
+  "activationEvents": [
+    "onLanguage:nyx"
+  ],
   "categories": [
     "Programming Languages"
   ],
   "keywords": [
+    "nyx",
+    "nx",
     "cy",
-    "cyper",
-    "cypher",
     "language",
     "compiler",
     "runtime"
@@ -28,40 +32,41 @@
   "contributes": {
     "languages": [
       {
-        "id": "cy",
+        "id": "nyx",
         "aliases": [
-          "Cyper",
-          "cyper",
+          "Nyx",
+          "nyx",
           "Cy",
           "cy"
         ],
         "extensions": [
+          ".nx",
           ".cy"
         ],
         "configuration": "./language-configuration.json",
         "icon": {
-          "light": "./icons/cy-file-light.png",
-          "dark": "./icons/cy-file-dark.png"
+          "light": "./icons/cy-logo.png",
+          "dark": "./icons/cy-logo.png"
         }
       }
     ],
     "grammars": [
       {
-        "language": "cy",
-        "scopeName": "source.cy",
+        "language": "nyx",
+        "scopeName": "source.nyx",
         "path": "./syntaxes/cy.tmLanguage.json"
       }
     ],
     "snippets": [
       {
-        "language": "cy",
+        "language": "nyx",
         "path": "./snippets/cy.json"
       }
     ],
     "iconThemes": [
       {
         "id": "cy-seti-icons",
-        "label": "Cyper Seti Icons",
+        "label": "Nyx Seti Icons",
         "path": "./icons/cy-seti-icon-theme.json"
       }
     ]

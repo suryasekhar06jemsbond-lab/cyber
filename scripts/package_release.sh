@@ -102,6 +102,8 @@ done
 
 copy_file_if_exists "$ROOT_DIR/compiler/bootstrap.cy" "$tmp_dir/compiler/bootstrap.cy"
 copy_file_if_exists "$ROOT_DIR/compiler/v3_seed.cy" "$tmp_dir/compiler/v3_seed.cy"
+copy_file_if_exists "$ROOT_DIR/compiler/bootstrap.nx" "$tmp_dir/compiler/bootstrap.nx"
+copy_file_if_exists "$ROOT_DIR/compiler/v3_seed.nx" "$tmp_dir/compiler/v3_seed.nx"
 copy_dir_if_exists "$ROOT_DIR/stdlib" "$tmp_dir/stdlib"
 copy_dir_if_exists "$ROOT_DIR/examples" "$tmp_dir/examples"
 copy_file_if_exists "$ROOT_DIR/README.md" "$tmp_dir/README.md"

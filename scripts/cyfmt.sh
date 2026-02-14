@@ -3,7 +3,7 @@ set -eu
 
 usage() {
   cat <<'USAGE'
-Usage: cyfmt [--check] [target]
+Usage: cyfmt [--check] [target(.nx|.cy)]
 USAGE
 }
 
@@ -71,7 +71,7 @@ if [ -f "$target" ]; then
 elif [ -d "$target" ]; then
   file_list=$(mktemp)
   trap 'rm -f "$file_list"' EXIT
-  find "$target" -type f -name '*.cy' > "$file_list"
+  find "$target" -type f \( -name '*.nx' -o -name '*.cy' \) > "$file_list"
   while IFS= read -r file; do
     [ -n "$file" ] || continue
     format_or_check_file "$file"

@@ -58,7 +58,7 @@ try {
         }
     }
 
-    $compilerFiles = @('bootstrap.cy', 'v3_seed.cy')
+    $compilerFiles = @('bootstrap.cy', 'v3_seed.cy', 'bootstrap.nx', 'v3_seed.nx')
     foreach ($name in $compilerFiles) {
         $src = Join-Path $root ("compiler/" + $name)
         if (Test-Path -LiteralPath $src) {
