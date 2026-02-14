@@ -1,7 +1,7 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$Target,
-    [string]$BinaryPath = '.\\build\\cy.exe',
+    [string]$BinaryPath = '.\\build\\cyper.exe',
     [string]$OutDir = '.\\dist'
 )
 
@@ -14,21 +14,34 @@ $binaryAbs = if ([System.IO.Path]::IsPathRooted($BinaryPath)) { $BinaryPath } el
 $outDirAbs = if ([System.IO.Path]::IsPathRooted($OutDir)) { $OutDir } else { Join-Path $root $OutDir }
 
 if (-not (Test-Path -LiteralPath $binaryAbs)) {
+    if ($BinaryPath -eq '.\build\cyper.exe') {
+        $legacy = Join-Path $root '.\build\cy.exe'
+        if (Test-Path -LiteralPath $legacy) {
+            $binaryAbs = $legacy
+        }
+    }
+}
+
+if (-not (Test-Path -LiteralPath $binaryAbs)) {
     throw "Binary not found: $binaryAbs"
 }
 
 New-Item -ItemType Directory -Force -Path $outDirAbs | Out-Null
 
-$archiveName = "cy-$Target.zip"
+$archiveName = "cyper-$Target.zip"
 $archivePath = Join-Path $outDirAbs $archiveName
 $hashPath = "$archivePath.sha256"
+$legacyArchiveName = "cy-$Target.zip"
+$legacyArchivePath = Join-Path $outDirAbs $legacyArchiveName
+$legacyHashPath = "$legacyArchivePath.sha256"
 
 $tmpDir = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_pkg_" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $tmpDir | Out-Null
 
 try {
-    $stageBinary = Join-Path $tmpDir 'cy.exe'
+    $stageBinary = Join-Path $tmpDir 'cyper.exe'
     Copy-Item -Force -LiteralPath $binaryAbs -Destination $stageBinary
+    Copy-Item -Force -LiteralPath $stageBinary -Destination (Join-Path $tmpDir 'cy.exe')
 
     $stageScripts = Join-Path $tmpDir 'scripts'
     $stageCompiler = Join-Path $tmpDir 'compiler'
@@ -78,14 +91,23 @@ try {
     if (Test-Path -LiteralPath $archivePath) {
         Remove-Item -Force -LiteralPath $archivePath
     }
+    if (Test-Path -LiteralPath $legacyArchivePath) {
+        Remove-Item -Force -LiteralPath $legacyArchivePath
+    }
 
     Compress-Archive -Path (Join-Path $tmpDir '*') -DestinationPath $archivePath -Force
 
     $hash = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
     Set-Content -NoNewline -LiteralPath $hashPath -Value ("{0}  {1}" -f $hash, $archiveName)
 
+    Copy-Item -Force -LiteralPath $archivePath -Destination $legacyArchivePath
+    $legacyHash = (Get-FileHash -LiteralPath $legacyArchivePath -Algorithm SHA256).Hash.ToLowerInvariant()
+    Set-Content -NoNewline -LiteralPath $legacyHashPath -Value ("{0}  {1}" -f $legacyHash, $legacyArchiveName)
+
     Write-Host ("Created {0}" -f $archivePath)
     Write-Host ("Created {0}" -f $hashPath)
+    Write-Host ("Created {0}" -f $legacyArchivePath)
+    Write-Host ("Created {0}" -f $legacyHashPath)
 }
 finally {
     Remove-Item -Recurse -Force $tmpDir -ErrorAction SilentlyContinue

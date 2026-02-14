@@ -5,11 +5,14 @@ VERSION_DEFINE := -DCY_LANG_VERSION=\"$(CY_LANG_VERSION)\"
 
 .PHONY: all clean
 
-all: build/cy
+all: build/cyper
 
-build/cy: native/cy.c
+build/cyper: native/cy.c
 	mkdir -p build
-	$(CC) $(CFLAGS) $(VERSION_DEFINE) -o build/cy native/cy.c
+	$(CC) $(CFLAGS) $(VERSION_DEFINE) -o build/cyper native/cy.c
+
+build/cy: build/cyper
+	cp build/cyper build/cy
 
 clean:
-	rm -f build/cy cy.exe
+	rm -f build/cy build/cyper cy.exe cyper.exe

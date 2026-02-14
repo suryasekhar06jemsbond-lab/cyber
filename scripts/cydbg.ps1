@@ -31,13 +31,22 @@ foreach ($arg in $CliArgs) {
 }
 
 function Resolve-RuntimePath {
+    if ($env:CYPER_RUNTIME -and (Test-Path -LiteralPath $env:CYPER_RUNTIME)) {
+        return $env:CYPER_RUNTIME
+    }
     if ($env:CY_RUNTIME -and (Test-Path -LiteralPath $env:CY_RUNTIME)) {
         return $env:CY_RUNTIME
     }
 
     $candidates = @(
+        (Join-Path $PSScriptRoot 'cyper.exe'),
+        (Join-Path $PSScriptRoot 'cyper'),
         (Join-Path $PSScriptRoot 'cy.exe'),
         (Join-Path $PSScriptRoot 'cy'),
+        '.\cyper.exe',
+        './cyper.exe',
+        '.\cyper',
+        './cyper',
         '.\cy.exe',
         './cy.exe',
         '.\cy',
@@ -49,6 +58,11 @@ function Resolve-RuntimePath {
         }
     }
 
+    $cmdCyper = Get-Command cyper -ErrorAction SilentlyContinue
+    if ($cmdCyper) { return $cmdCyper.Source }
+    $cmdCyperExe = Get-Command cyper.exe -ErrorAction SilentlyContinue
+    if ($cmdCyperExe) { return $cmdCyperExe.Source }
+
     $cmd = Get-Command cy -ErrorAction SilentlyContinue
     if ($cmd) { return $cmd.Source }
     $cmdExe = Get-Command cy.exe -ErrorAction SilentlyContinue
@@ -59,7 +73,7 @@ function Resolve-RuntimePath {
 
 $runtime = Resolve-RuntimePath
 if (-not $runtime) {
-    throw 'cy runtime not found (set CY_RUNTIME or add cy to PATH)'
+    throw 'cyper runtime not found (set CYPER_RUNTIME/CY_RUNTIME or add cyper to PATH)'
 }
 
 $hasMode = $false

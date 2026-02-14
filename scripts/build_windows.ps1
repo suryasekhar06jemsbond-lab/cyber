@@ -1,5 +1,5 @@
 param(
-    [string]$Output = 'cy.exe',
+    [string]$Output = 'cyper.exe',
     [switch]$SmokeTest,
     [switch]$NoIcon,
     [string]$LangVersion = $env:CY_LANG_VERSION
@@ -124,6 +124,27 @@ function Build-Runtime {
     }
 }
 
+function Write-CompatAlias {
+    param([string]$PrimaryPath)
+
+    $name = [System.IO.Path]::GetFileName($PrimaryPath).ToLowerInvariant()
+    $dir = Split-Path -Parent $PrimaryPath
+    if ([string]::IsNullOrWhiteSpace($dir)) { return }
+
+    $alias = $null
+    if ($name -eq 'cyper.exe') {
+        $alias = Join-Path $dir 'cy.exe'
+    } elseif ($name -eq 'cy.exe') {
+        $alias = Join-Path $dir 'cyper.exe'
+    } else {
+        return
+    }
+
+    if ($alias -ieq $PrimaryPath) { return }
+    Copy-Item -Force -LiteralPath $PrimaryPath -Destination $alias
+    Write-Host ("[build-win] wrote compatibility alias: {0}" -f $alias)
+}
+
 function Normalize-Text {
     param([string]$Text)
     $normalized = $Text -replace "`r`n", "`n" -replace "`r", "`n"
@@ -170,12 +191,13 @@ try {
                 $resPath = $null
             }
         } else {
-            Write-Warning '[build-win] no resource compiler found; building cy.exe without icon embedding'
+            Write-Warning '[build-win] no resource compiler found; building runtime without icon embedding'
         }
     }
 
     Write-Host ("[build-win] building {0}..." -f $outputPath)
     Build-Runtime -Compiler $compiler -OutputPath $outputPath -SourcePath $sourcePath -ResPath $resPath -LangVersion $LangVersion
+    Write-CompatAlias -PrimaryPath $outputPath
 
     if ($SmokeTest) {
         $mainPath = Join-Path $root 'main.cy'

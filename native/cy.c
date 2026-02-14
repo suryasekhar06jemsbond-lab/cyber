@@ -4259,7 +4259,7 @@ int main(int argc, char **argv) {
         source = read_file(script_path);
         if (!source) {
             fprintf(stderr,
-                    "Usage: cy [--trace] [--parse-only|--lint] [--vm|--vm-strict] [--max-alloc N] [--max-steps N] [--max-call-depth N] [--debug] [--break lines] [--step] [--step-count N] "
+                    "Usage: cyper [--trace] [--parse-only|--lint] [--vm|--vm-strict] [--max-alloc N] [--max-steps N] [--max-call-depth N] [--debug] [--break lines] [--step] [--step-count N] "
                     "[--debug-no-prompt] [--version] "
                     "<file.cy> [args...]\n");
             fprintf(stderr, "Hint: run from a directory that contains main.cy or pass a file path explicitly.\n");

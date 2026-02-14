@@ -8,8 +8,8 @@ Related documents:
 
 ## Stability Targets
 
-1. `cy --version` is the canonical runtime version string.
-2. `lang_version()` returns the same version string as `cy --version`.
+1. `cyper --version` is the canonical runtime version string.
+2. `lang_version()` returns the same version string as `cyper --version`.
 3. For tag releases, `.github/workflows/release.yml` injects `CY_LANG_VERSION` from the tag name (leading `v` removed) so binaries report the released version.
 4. `require_version(v)` must:
 - succeed only when `v == lang_version()`

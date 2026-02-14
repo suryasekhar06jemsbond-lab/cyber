@@ -8,9 +8,10 @@ echo "[prod] building runtime..."
 make >/dev/null
 
 echo "[prod] release package sanity..."
-./scripts/package_release.sh --target linux-x64 --binary ./build/cy --out-dir ./dist >/dev/null
-pkg_entries=$(tar -tzf ./dist/cy-linux-x64.tar.gz)
+./scripts/package_release.sh --target linux-x64 --binary ./build/cyper --out-dir ./dist >/dev/null
+pkg_entries=$(tar -tzf ./dist/cyper-linux-x64.tar.gz)
 for required in \
+  "./cyper" \
   "./cy" \
   "./scripts/cypm.sh" \
   "./scripts/cyfmt.sh" \

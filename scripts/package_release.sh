@@ -2,7 +2,7 @@
 set -eu
 
 TARGET=""
-BINARY="./build/cy"
+BINARY="./build/cyper"
 OUT_DIR="./dist"
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 
@@ -45,15 +45,24 @@ if [ -z "$TARGET" ]; then
 fi
 
 if [ ! -f "$BINARY" ]; then
+  if [ "$BINARY" = "./build/cyper" ] && [ -f "./build/cy" ]; then
+    BINARY="./build/cy"
+  fi
+fi
+
+if [ ! -f "$BINARY" ]; then
   echo "Error: binary not found: $BINARY" >&2
   exit 1
 fi
 
 mkdir -p "$OUT_DIR"
 
-archive_name="cy-${TARGET}.tar.gz"
+archive_name="cyper-${TARGET}.tar.gz"
 archive_path="$OUT_DIR/$archive_name"
 hash_path="$archive_path.sha256"
+legacy_archive_name="cy-${TARGET}.tar.gz"
+legacy_archive_path="$OUT_DIR/$legacy_archive_name"
+legacy_hash_path="$legacy_archive_path.sha256"
 
 tmp_dir=$(mktemp -d)
 cleanup() {
@@ -61,7 +70,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
-cp "$BINARY" "$tmp_dir/cy"
+cp "$BINARY" "$tmp_dir/cyper"
+chmod +x "$tmp_dir/cyper"
+cp "$tmp_dir/cyper" "$tmp_dir/cy"
 chmod +x "$tmp_dir/cy"
 
 mkdir -p "$tmp_dir/scripts"
@@ -121,5 +132,11 @@ calc_sha256() {
 hash_value=$(calc_sha256 "$archive_path")
 printf '%s  %s\n' "$hash_value" "$archive_name" > "$hash_path"
 
+cp "$archive_path" "$legacy_archive_path"
+legacy_hash_value=$(calc_sha256 "$legacy_archive_path")
+printf '%s  %s\n' "$legacy_hash_value" "$legacy_archive_name" > "$legacy_hash_path"
+
 printf 'Created %s\n' "$archive_path"
 printf 'Created %s\n' "$hash_path"
+printf 'Created %s\n' "$legacy_archive_path"
+printf 'Created %s\n' "$legacy_hash_path"

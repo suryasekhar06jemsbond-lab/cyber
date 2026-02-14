@@ -1,3 +1,3 @@
-#!/usr/bin/env cy
+#!/usr/bin/env cyper
 
 1 + 2;

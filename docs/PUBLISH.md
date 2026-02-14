@@ -8,7 +8,7 @@ Before tagging a release:
 
 1. Run `./scripts/test_production.sh` on Linux/macOS.
 2. Run `./scripts/test_production.ps1 -VmCases 300` on Windows.
-3. Confirm version output (`cy --version`) matches intended release version policy.
+3. Confirm version output (`cyper --version`) matches intended release version policy.
 
 ## 2. Tag And Publish
 
@@ -24,8 +24,10 @@ git push origin vX.Y.Z
 
 Published assets:
 
-- `cy-linux-x64.tar.gz`
-- `cy-windows-x64.zip`
+- `cyper-linux-x64.tar.gz`
+- `cyper-windows-x64.zip`
+- `cy-linux-x64.tar.gz` (compatibility asset)
+- `cy-windows-x64.zip` (compatibility asset)
 - `cy-language.vsix`
 - `*.sha256` checksum files
 

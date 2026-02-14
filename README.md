@@ -1,6 +1,6 @@
 # Cy Programming Language
 
-Cy runs as a native executable (`cy`) with no Python runtime dependency.
+Cy runs as a native executable (`cyper`) with no Python runtime dependency. A `cy` compatibility alias is still shipped.
 
 ![Cy Logo](assets/cy-logo.png)
 
@@ -14,7 +14,7 @@ Requirements:
 make
 ```
 
-Windows (build `cy.exe` with embedded logo icon from `assets/cy-logo.ico`):
+Windows (build `cyper.exe` with embedded logo icon from `assets/cy-logo.ico`):
 
 ```powershell
 .\scripts\build_windows.ps1 -SmokeTest
@@ -37,26 +37,26 @@ irm https://raw.githubusercontent.com/suryasekhar06jemsbond-lab/cyber/main/scrip
 Important:
 - For unauthenticated one-line install, the GitHub repo must be `public`.
 - Installers are checksum-aware and skip re-download when the same release is already installed.
-- Installers place `cy` plus support files (`cypm`, `cyfmt`, `cylint`, `cydbg`, `stdlib`, compiler seed/examples) in the local install root.
+- Installers place `cyper` (plus `cy` compatibility alias) and support files (`cypm`, `cyfmt`, `cylint`, `cydbg`, `stdlib`, compiler seed/examples) in the local install root.
 
 Manual install from a specific tag:
 - Linux/macOS: set `CY_VERSION=vX.Y.Z` before running `install.sh`.
 - Windows: run `install.ps1 -Version vX.Y.Z` (use `-Force` to reinstall).
 
 Runtime binary output:
-- `build/cy`
+- `build/cyper`
 
 Launcher:
-- `./cy`
+- `./cyper` (compatibility alias: `./cy`)
 
 ## Run
 
 ```bash
-./cy main.cy
-./cy examples/fibonacci.cy
+./cyper main.cy
+./cyper examples/fibonacci.cy
 ```
 
-If no file is passed and `main.cy` exists in the current directory, `cy` runs `main.cy` automatically.
+If no file is passed and `main.cy` exists in the current directory, `cyper` runs `main.cy` automatically.
 
 ## VS Code
 
@@ -72,7 +72,7 @@ Or install automatically on Windows:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install_vscode.ps1 -Version v0.6.13
 ```
 
-Then in VS Code set file icon theme to `Cy Seti Icons` to show `.cy` logo icons in Explorer.
+Then in VS Code set file icon theme to `Cyper Seti Icons` to show `.cy` logo icons in Explorer.
 
 Extension source lives in `editor/vscode/cy-language`.
 
@@ -86,13 +86,15 @@ Extension source lives in `editor/vscode/cy-language`.
 - `git push origin vX.Y.Z`
 3. GitHub Actions workflow `.github/workflows/release.yml` builds and attaches:
 - `cy-linux-x64.tar.gz`
-- `cy-windows-x64.zip`
+- `cyper-linux-x64.tar.gz`
+- `cy-windows-x64.zip` (compatibility asset)
+- `cyper-windows-x64.zip`
 - `cy-language.vsix`
 
 Executable script style:
 
 ```cy
-#!/usr/bin/env cy
+#!/usr/bin/env cyper
 1 + 2;
 ```
 
@@ -131,7 +133,7 @@ Current direct-codegen source subset:
 Generate compiler C and build compiler binary:
 
 ```bash
-./cy compiler/v3_seed.cy compiler/v3_seed.cy compiler_stage1.c
+./cyper compiler/v3_seed.cy compiler/v3_seed.cy compiler_stage1.c
 cc -O2 -std=c99 -Wall -Wextra -Werror -o compiler_stage1 compiler_stage1.c
 ```
 
@@ -149,13 +151,13 @@ Current scope: compiles a restricted `.cy` input containing a single arithmetic 
 Do not type angle brackets (`< >`); they are placeholders in docs and break in PowerShell.
 
 ```bash
-./cy compiler/bootstrap.cy input_expr.cy output.c
+./cyper compiler/bootstrap.cy input_expr.cy output.c
 cc -O2 -std=c99 -Wall -Wextra -Werror -o output_bin output.c
 ./output_bin
 ```
 
 ```powershell
-.\cy compiler\bootstrap.cy input_expr.cy output.c
+.\cyper compiler\bootstrap.cy input_expr.cy output.c
 clang -O2 -std=c99 -Wall -Wextra -Werror -o output_bin.exe output.c
 .\output_bin.exe
 ```
@@ -208,7 +210,7 @@ Linter (syntax check):
 ```bash
 ./scripts/cylint.sh .
 ./scripts/cylint.sh --strict .
-./cy --parse-only program.cy
+./cyper --parse-only program.cy
 ```
 
 Debugger (trace + breakpoints + stepper):
@@ -223,16 +225,16 @@ Debugger (trace + breakpoints + stepper):
 Native runtime debug flags (no wrapper):
 
 ```bash
-./cy --debug --break 12,20 program.cy
-./cy --debug --step program.cy
-./cy --debug --step-count 10 program.cy
-./cy --vm program.cy
-./cy --vm-strict program.cy
-./cy --max-alloc 1000000 program.cy
-./cy --max-steps 100000 program.cy
-./cy --max-call-depth 2048 program.cy
-./cy --parse-only program.cy
-./cy --version
+./cyper --debug --break 12,20 program.cy
+./cyper --debug --step program.cy
+./cyper --debug --step-count 10 program.cy
+./cyper --vm program.cy
+./cyper --vm-strict program.cy
+./cyper --max-alloc 1000000 program.cy
+./cyper --max-steps 100000 program.cy
+./cyper --max-call-depth 2048 program.cy
+./cyper --parse-only program.cy
+./cyper --version
 ```
 
 PowerShell equivalents:
@@ -304,14 +306,14 @@ If `pwsh` is installed outside `PATH`, run shell production gate as `PWSH_BIN=/f
 ## v3 Self-Hosting Check
 
 ```bash
-./cy compiler/v3_seed.cy compiler/v3_seed.cy compiler_stage1.c
+./cyper compiler/v3_seed.cy compiler/v3_seed.cy compiler_stage1.c
 cc -O2 -std=c99 -Wall -Wextra -Werror -o compiler_stage1 compiler_stage1.c
 ./compiler_stage1 compiler/v3_seed.cy compiler_stage2.c --emit-self
 cmp compiler_stage1.c compiler_stage2.c
 ```
 
 ```powershell
-.\cy.exe compiler\v3_seed.cy compiler\v3_seed.cy compiler_stage1.c
+.\cyper.exe compiler\v3_seed.cy compiler\v3_seed.cy compiler_stage1.c
 clang -O2 -std=c99 -Wall -Wextra -Werror -o compiler_stage1.exe compiler_stage1.c
 .\compiler_stage1.exe compiler\v3_seed.cy compiler_stage2.c --emit-self
 cmd /c fc /b compiler_stage1.c compiler_stage2.c

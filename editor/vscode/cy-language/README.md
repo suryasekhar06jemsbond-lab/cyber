@@ -1,13 +1,13 @@
-# Cy Language Support (VS Code)
+# Cyper Language Support (VS Code)
 
 Provides language support for `.cy` files:
 
 - syntax highlighting
 - file icon for `.cy`
 - comments/bracket auto-pairs
-- common Cy snippets
+- common Cyper snippets
 
-For `.cy` file icons in Explorer, set icon theme to `Cy Seti Icons`.
+For `.cy` file icons in Explorer, set icon theme to `Cyper Seti Icons`.
 
 ## Install From `.vsix`
 

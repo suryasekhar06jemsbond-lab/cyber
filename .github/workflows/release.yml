@@ -72,20 +72,20 @@ jobs:
         shell: bash
         run: |
           make clean
-          make build/cy CY_LANG_VERSION="$CY_LANG_VERSION"
-          actual="$(./build/cy --version)"
+          make build/cyper CY_LANG_VERSION="$CY_LANG_VERSION"
+          actual="$(./build/cyper --version)"
           if [ "$actual" != "$CY_LANG_VERSION" ]; then
             echo "version mismatch: expected $CY_LANG_VERSION got $actual" >&2
             exit 1
           fi
-          ./build/cy main.cy
+          ./build/cyper main.cy
 
       - name: Build runtime (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          ./scripts/build_windows.ps1 -Output .\build\cy.exe -SmokeTest -LangVersion $env:CY_LANG_VERSION
-          $actual = (& .\build\cy.exe --version | Out-String).Trim()
+          ./scripts/build_windows.ps1 -Output .\build\cyper.exe -SmokeTest -LangVersion $env:CY_LANG_VERSION
+          $actual = (& .\build\cyper.exe --version | Out-String).Trim()
           if ($actual -ne $env:CY_LANG_VERSION) {
             throw "version mismatch: expected $($env:CY_LANG_VERSION) got $actual"
           }
@@ -94,13 +94,13 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          ./scripts/package_release.sh --target "${{ matrix.target }}" --binary "./build/cy" --out-dir "./dist"
+          ./scripts/package_release.sh --target "${{ matrix.target }}" --binary "./build/cyper" --out-dir "./dist"
 
       - name: Package release artifact (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          ./scripts/package_release.ps1 -Target "${{ matrix.target }}" -BinaryPath ".\build\cy.exe" -OutDir ".\dist"
+          ./scripts/package_release.ps1 -Target "${{ matrix.target }}" -BinaryPath ".\build\cyper.exe" -OutDir ".\dist"
 
       - name: Upload packaged artifacts
         uses: actions/upload-artifact@v4

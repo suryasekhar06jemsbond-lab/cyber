@@ -1,8 +1,8 @@
 {
   "name": "cy-language",
-  "displayName": "Cy Language Support",
-  "description": "Syntax highlighting, snippets, and language configuration for Cy (.cy).",
-  "version": "0.1.0",
+  "displayName": "Cyper Language Support",
+  "description": "Syntax highlighting, snippets, and language configuration for Cyper (.cy).",
+  "version": "0.1.1",
   "publisher": "suryasekhar06jemsbond-lab",
   "license": "UNLICENSED",
   "icon": "icons/cy-logo.png",
@@ -14,6 +14,7 @@
   ],
   "keywords": [
     "cy",
+    "cyper",
     "cypher",
     "language",
     "compiler",
@@ -29,6 +30,8 @@
       {
         "id": "cy",
         "aliases": [
+          "Cyper",
+          "cyper",
           "Cy",
           "cy"
         ],
@@ -58,7 +61,7 @@
     "iconThemes": [
       {
         "id": "cy-seti-icons",
-        "label": "Cy Seti Icons",
+        "label": "Cyper Seti Icons",
         "path": "./icons/cy-seti-icon-theme.json"
       }
     ]

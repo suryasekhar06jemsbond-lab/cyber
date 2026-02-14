@@ -150,7 +150,7 @@ typealias NumberType = "int";
 ```
 
 Import behavior:
-1. Runtime interpreter (`cy`) resolves imports at runtime.
+1. Runtime interpreter (`cyper`) resolves imports at runtime.
 2. `v3` compiler resolves and de-duplicates imports at compile time.
 
 ## Builtins

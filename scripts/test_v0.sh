@@ -7,12 +7,14 @@ cd "$ROOT_DIR"
 echo "[v0] building native runtime..."
 make >/dev/null
 
-if [ -x ./cy ]; then
+if [ -x ./cyper ]; then
+  runtime=./cyper
+elif [ -x ./cy ]; then
   runtime=./cy
 elif [ -x ./cy.exe ]; then
   runtime=./cy.exe
 else
-  echo "FAIL: cy runtime not found (expected ./cy or ./cy.exe)" >&2
+  echo "FAIL: runtime not found (expected ./cyper, ./cy, or ./cy.exe)" >&2
   exit 1
 fi
 
@@ -27,10 +29,12 @@ echo "[v0] test: direct executable .cy"
 chmod +x ./main.cy
 shim_dir=$(mktemp -d)
 trap 'rm -rf "$shim_dir"' EXIT
-cat >"$shim_dir/cy" <<EOF
+cat >"$shim_dir/cyper" <<EOF
 #!/usr/bin/env sh
 exec "$ROOT_DIR/$runtime" "\$@"
 EOF
+chmod +x "$shim_dir/cyper"
+cp "$shim_dir/cyper" "$shim_dir/cy"
 chmod +x "$shim_dir/cy"
 out2=$(PATH="$shim_dir:$ROOT_DIR:$PATH" ./main.cy)
 [ "$out2" = "3" ] || {

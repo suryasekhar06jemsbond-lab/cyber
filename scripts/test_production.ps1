@@ -69,15 +69,16 @@ $pwshExe = Resolve-PwshExe
 
 Write-Host "[prod-win] release package sanity..."
 if ($isWin) {
-    Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/build_windows.ps1', '-Output', '.\build\cy.exe')
-    Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/package_release.ps1', '-Target', 'windows-x64', '-BinaryPath', '.\build\cy.exe', '-OutDir', '.\dist')
+    Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/build_windows.ps1', '-Output', '.\build\cyper.exe')
+    Run-Checked -Exe $pwshExe -Args @('-NoLogo', '-NoProfile', '-File', './scripts/package_release.ps1', '-Target', 'windows-x64', '-BinaryPath', '.\build\cyper.exe', '-OutDir', '.\dist')
 
-    $zipPath = Join-Path $root 'dist/cy-windows-x64.zip'
+    $zipPath = Join-Path $root 'dist/cyper-windows-x64.zip'
     $tmpPkg = Join-Path ([System.IO.Path]::GetTempPath()) ("cy_pkg_check_" + [guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Path $tmpPkg | Out-Null
     try {
         Expand-Archive -Path $zipPath -DestinationPath $tmpPkg -Force
         foreach ($rel in @(
+            'cyper.exe',
             'cy.exe',
             'scripts/cypm.ps1',
             'scripts/cyfmt.ps1',
@@ -96,18 +97,19 @@ if ($isWin) {
         Remove-Item -Recurse -Force $tmpPkg -ErrorAction SilentlyContinue
     }
 } elseif ($hasSh) {
-    if (-not (Test-Path -LiteralPath './build/cy')) {
+    if (-not (Test-Path -LiteralPath './build/cyper')) {
         if (-not $hasMake) {
-            throw "build/cy is missing and make is not available for package sanity"
+            throw "build/cyper is missing and make is not available for package sanity"
         }
-        Run-Checked -Exe 'make' -Args @('build/cy')
+        Run-Checked -Exe 'make' -Args @('build/cyper')
     }
-    Run-Checked -Exe 'sh' -Args @('./scripts/package_release.sh', '--target', 'linux-x64', '--binary', './build/cy', '--out-dir', './dist')
-    $entries = @(& tar -tzf ./dist/cy-linux-x64.tar.gz)
+    Run-Checked -Exe 'sh' -Args @('./scripts/package_release.sh', '--target', 'linux-x64', '--binary', './build/cyper', '--out-dir', './dist')
+    $entries = @(& tar -tzf ./dist/cyper-linux-x64.tar.gz)
     if ($LASTEXITCODE -ne 0) {
-        throw "Unable to inspect release archive: ./dist/cy-linux-x64.tar.gz"
+        throw "Unable to inspect release archive: ./dist/cyper-linux-x64.tar.gz"
     }
     foreach ($rel in @(
+        './cyper',
         './cy',
         './scripts/cypm.sh',
         './scripts/cyfmt.sh',
