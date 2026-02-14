@@ -27,4 +27,5 @@ jobs:
           cp ../../../assets/nyx-logo.png .
           cp ../../../README.md .
           npm install
-          npx @vscode/vsce publish -p "${{ secrets.VSCE_PAT }}"
+          chmod +x node_modules/.bin/vsce
+          npm run publish -- -p "${{ secrets.VSCE_PAT }}"

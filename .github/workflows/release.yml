@@ -126,8 +126,9 @@ jobs:
           cp ../../../assets/nyx-logo.png .
           cp ../../../README.md .
           npm install
+          chmod +x node_modules/.bin/vsce
           mkdir -p ../../../dist
-          npx @vscode/vsce package -o ../../../dist/nyx-language.vsix
+          npm run package -- -o ../../../dist/nyx-language.vsix
 
       - name: Upload VS Code extension
         uses: actions/upload-artifact@v4
