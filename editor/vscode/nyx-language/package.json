@@ -5,7 +5,7 @@
   "version": "0.8.0",
   "publisher": "suryasekhar06jemsbond-lab",
   "license": "UNLICENSED",
-  "icon": "icons/cy-logo.png",
+  "icon": "nyx-logo.png",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -26,7 +26,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/suryasekhar06jemsbond-lab/cyber.git",
-    "directory": "editor/vscode/cy-language"
+    "directory": "editor/vscode/nyx-language"
   },
   "contributes": {
     "languages": [
