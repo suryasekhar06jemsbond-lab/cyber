@@ -116,7 +116,7 @@ if (-not $runtime) {
 
 function Lint-NyFile {
     param([string]$Path)
-    & $runtime --parse-only $Path | Out-Null
+    $null = & $runtime --parse-only $Path
     if ($LASTEXITCODE -ne 0) {
         throw "Lint failed for $Path"
     }
