@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0
+
+- Added `.ny` file extension support alongside `.nx`
+- Improved syntax highlighting for comprehensive language features
+- Updated for Nyx language v0.9.0 release
+
 ## 0.2.0
 
 - Renamed language branding to Nyx.
