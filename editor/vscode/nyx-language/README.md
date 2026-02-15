@@ -1,24 +1,24 @@
 # Nyx Language Support (VS Code)
 
-Provides language support for `.nx` files:
+Provides language support for `.ny` files:
 
 - syntax highlighting
-- file icon for `.nx`
+- file icon for `.ny`
 - comments/bracket auto-pairs
 - common Nyx snippets
 
-The extension auto-applies `Nyx Seti Icons` so `.nx` icons appear immediately.
+The extension auto-applies `Nyx Seti Icons` so `.ny` icons appear immediately.
 
 ## Install From `.vsix`
 
 1. In VS Code, open command palette.
 2. Run `Extensions: Install from VSIX...`.
-3. Select `cy-language.vsix`.
+3. Select `nyx-language.vsix`.
 
 ## Package Locally
 
 ```bash
-cd editor/vscode/cy-language
+cd editor/vscode/nyx-language
 npm install
 npx @vscode/vsce package
 ```

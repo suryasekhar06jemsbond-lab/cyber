@@ -1,26 +1,12 @@
 # Nyx Programming Language
 
-Nyx runs as a native executable (`nyx`) with no Python runtime dependency.
+Nyx runs as a native executable (`nyx`) with no dependencies. Install and run immediately—no C compiler or extra tools required.
 
 ![Nyx Logo](assets/nyx-logo.png)
 
-## Build
+## Install
 
-Requirements:
-- C compiler (`cc` / `gcc` / `clang`)
-- `make`
-
-```bash
-make
-```
-
-Windows (build `nyx.exe` with embedded logo icon from `assets/cy-logo.ico`):
-
-```powershell
-.\scripts\build_windows.ps1 -SmokeTest
-```
-
-## Install From GitHub Releases
+Pre-built binaries. No compiler required.
 
 Linux/macOS:
 
@@ -43,6 +29,22 @@ Manual install from a specific tag:
 - Linux/macOS: set `NYX_VERSION=vX.Y.Z` before running `install.sh`.
 - Windows: run `install.ps1 -Version vX.Y.Z` (use `-Force` to reinstall).
 
+## Build From Source
+
+Requirements:
+- C compiler (`cc` / `gcc` / `clang`)
+- `make`
+
+```bash
+make
+```
+
+Windows (build `nyx.exe` with embedded logo icon from `assets/cy-logo.ico`):
+
+```powershell
+.\scripts\build_windows.ps1 -SmokeTest
+```
+
 Runtime binary output:
 - `build/nyx`
 
@@ -54,6 +56,7 @@ Launcher:
 ```bash
 ./nyx main.ny
 ./nyx examples/fibonacci.ny
+./nyx examples/comprehensive.ny
 ```
 
 If no file is passed and `main.ny` exists in the current directory, `nyx` runs `main.ny` automatically.
@@ -138,24 +141,24 @@ cc -O2 -std=c99 -Wall -Wextra -Werror -o compiler_stage1 compiler_stage1.c
 Use compiler binary:
 
 ```bash
-./compiler_stage1 program.nx program.c
+./compiler_stage1 program.ny program.c
 cc -O2 -std=c99 -Wall -Wextra -Werror -o program program.c
 ./program
 ```
 
 ## v2 Compiler
 
-Current scope: compiles a restricted `.nx` input containing a single arithmetic expression statement.
+Current scope: compiles a restricted `.ny` input containing a single arithmetic expression statement.
 Do not type angle brackets (`< >`); they are placeholders in docs and break in PowerShell.
 
 ```bash
-./nyx compiler/bootstrap.nx input_expr.nx output.c
+./nyx compiler/bootstrap.ny input_expr.ny output.c
 cc -O2 -std=c99 -Wall -Wextra -Werror -o output_bin output.c
 ./output_bin
 ```
 
 ```powershell
-.\nyx compiler\bootstrap.nx input_expr.nx output.c
+.\nyx compiler\bootstrap.ny input_expr.ny output.c
 clang -O2 -std=c99 -Wall -Wextra -Werror -o output_bin.exe output.c
 .\output_bin.exe
 ```
@@ -199,8 +202,8 @@ When constraints include `>` or `<` in shell, quote the argument (for example `"
 Formatter:
 
 ```bash
-./scripts/cyfmt.sh .
-./scripts/cyfmt.sh --check .
+./scripts/nyfmt.sh .
+./scripts/nyfmt.sh --check .
 ```
 
 Linter (syntax check):

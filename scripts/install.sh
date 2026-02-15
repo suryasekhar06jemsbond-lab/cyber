@@ -188,8 +188,9 @@ copy_file_if_exists "$tmp_dir/unpack/README.md" "$NYX_HOME/README.md"
 
 for tool in nypm nyfmt nylint nydbg; do
   if [ -f "$NYX_HOME/scripts/$tool.sh" ]; then
-    install -m 755 "$NYX_HOME/scripts/$tool.sh" "$NYX_INSTALL_DIR/$tool"
-    install -m 755 "$NYX_HOME/scripts/$tool.sh" "$NYX_INSTALL_DIR/$tool.sh"
+    chmod +x "$NYX_HOME/scripts/$tool.sh"
+    ln -sf "$NYX_HOME/scripts/$tool.sh" "$NYX_INSTALL_DIR/$tool"
+    ln -sf "$NYX_HOME/scripts/$tool.sh" "$NYX_INSTALL_DIR/$tool.sh"
   fi
 done
 

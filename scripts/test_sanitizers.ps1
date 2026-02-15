@@ -50,7 +50,7 @@ try {
         throw 'Failed to build sanitized runtime'
     }
 
-    $smoke = Join-Path $tmp 'smoke.nx'
+    $smoke = Join-Path $tmp 'smoke.ny'
 @"
 fn add(a, b) {
     return a + b;
@@ -76,7 +76,7 @@ let xs = [n + 1 for n in [1, 2, 3, 4] if n > 1];
 print(add(M.id(b.get()), xs[0]));
 "@ | Set-Content -NoNewline -LiteralPath $smoke
 
-    $limits = Join-Path $tmp 'limits.nx'
+    $limits = Join-Path $tmp 'limits.ny'
 @"
 let i = 0;
 while (true) {

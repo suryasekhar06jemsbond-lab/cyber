@@ -1,0 +1,6 @@
+# ny lockfile v1
+roots=app
+pkg.stdlib=.\stdlib
+ver.stdlib=1.2.0
+pkg.app=.\app
+ver.app=0.2.0

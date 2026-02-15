@@ -37,7 +37,8 @@
           "nyx"
         ],
         "extensions": [
-          ".nx"
+          ".nx",
+          ".ny"
         ],
         "configuration": "./language-configuration.json",
         "icon": {

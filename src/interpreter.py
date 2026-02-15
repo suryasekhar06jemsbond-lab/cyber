@@ -1,5 +1,6 @@
 from src.ast_nodes import *
 from dataclasses import dataclass
+import sys
 import time
 import asyncio
 from functools import reduce
@@ -86,6 +87,8 @@ class Class:
 class Instance:
     cls: Class
     fields: dict
+    @property
+    def methods(self): return self.cls.methods
     def inspect(self) -> str: return f"{self.cls.name.value} instance"
     def get(self, name):
         if name in self.fields: return self.fields[name]
@@ -93,6 +96,12 @@ class Instance:
         if method: return method
         if self.cls.superclass: return self.cls.superclass.methods.get(name)
     def set(self, name, value): self.fields[name] = value
+
+@dataclass
+class BoundMethod:
+    method: Function
+    receiver: Instance
+    def inspect(self) -> str: return f"bound method"
 
 @dataclass
 class Module:
@@ -280,6 +289,10 @@ async def evaluate(node: Node, env: Environment):
     if node_type == InfixExpression:
         left = await evaluate(node.left, env)
         if _is_error(left): return left
+        # For member access (. operator), don't evaluate the right side - it's the member name
+        if node.operator == ".":
+            right = node.right  # Use the AST node directly, not evaluated
+            return _eval_infix_expression(node.operator, left, right)
         right = await evaluate(node.right, env)
         if _is_error(right): return right
         return _eval_infix_expression(node.operator, left, right)
@@ -302,7 +315,7 @@ async def evaluate(node: Node, env: Environment):
         if _is_error(left): return left
         index = await evaluate(node.index, env)
         if _is_error(index): return index
-        return _eval_index_expression(left, index)
+        return await _eval_index_expression(left, index)
     if node_type == HashLiteral: return await _eval_hash_literal(node, env)
 
     # Statements
@@ -314,7 +327,21 @@ async def evaluate(node: Node, env: Environment):
     if node_type == AssignExpression:
         val = await evaluate(node.value, env)
         if _is_error(val): return val
-        env.set(node.name.value, val)
+        # Handle both simple assignment and member assignment
+        if isinstance(node.name, Identifier):
+            env.set(node.name.value, val)
+        elif isinstance(node.name, InfixExpression) and node.name.operator == '.':
+            # Member assignment: obj.property = value
+            left = await evaluate(node.name.left, env)
+            if _is_error(left): return left
+            if not isinstance(left, Instance):
+                return Error(f"cannot assign to member of non-instance: {type(left).__name__}")
+            # Get the member name (right side of the dot)
+            if not isinstance(node.name.right, Identifier):
+                return Error("member name must be identifier")
+            left.set(node.name.right.value, val)
+        else:
+            return Error(f"invalid assignment target")
         return val
     if node_type == ReturnStatement:
         val = await evaluate(node.return_value, env) if node.return_value else NULL
@@ -329,7 +356,10 @@ async def evaluate(node: Node, env: Environment):
     if node_type == NewExpression:
         cls = await evaluate(node.cls, env)
         if _is_error(cls): return cls
-        return Instance(cls, {})
+        if not isinstance(cls, Class):
+            return Error(f"new requires a class, got {type(cls).__name__}")
+        # Return the class so that _apply_function can create the instance and call init
+        return cls
     if node_type == AsyncStatement: return await _eval_async_statement(node, env)
     if node_type == AwaitExpression: return await _eval_await_expression(node, env)
     if node_type == BreakStatement: return BreakValue()
@@ -369,16 +399,18 @@ def _eval_literal(node):
 def _eval_prefix_expression(operator, right):
     if operator == "!": return FALSE if _is_truthy(right) else TRUE
     if operator == "-":
-        if not isinstance(right, (Integer, Float)): return Error(f"unknown operator: -{type(right).__name__}")
+        if not isinstance(right, (Integer, Float)): return Error(f"unknown operator: -{type(right).__name__.upper()}")
         return type(right)(-right.value)
     if operator == "~":
-        if not isinstance(right, Integer): return Error(f"unknown operator: ~{type(right).__name__}")
+        if not isinstance(right, Integer): return Error(f"unknown operator: ~{type(right).__name__.upper()}")
         return Integer(~right.value)
-    return Error(f"unknown operator: {operator}{type(right).__name__}")
+    return Error(f"unknown operator: {operator}{type(right).__name__.upper()}")
 
 def _eval_infix_expression(operator, left, right):
+    if operator == ".":
+        return _eval_member_expression(left, right)
     if type(left) != type(right) and operator not in ('==', '!='):
-        return Error(f"type mismatch: {type(left).__name__} {operator} {type(right).__name__}")
+        return Error(f"type mismatch: {type(left).__name__.upper()} {operator} {type(right).__name__.upper()}")
 
     if isinstance(left, (Integer, Float)) and isinstance(right, (Integer, Float)):
         return _eval_numeric_infix_expression(operator, left, right)
@@ -387,7 +419,32 @@ def _eval_infix_expression(operator, left, right):
     if operator == "==": return Boolean(left == right)
     if operator == "!=": return Boolean(left != right)
     
-    return Error(f"unknown operator: {type(left).__name__} {operator} {type(right).__name__}")
+    return Error(f"unknown operator: {type(left).__name__.upper()} {operator} {type(right).__name__.upper()}")
+
+def _eval_member_expression(left, right):
+    """Evaluate member access expression (e.g., obj.method)"""
+    if not isinstance(right, Identifier):
+        return Error(f"member name must be identifier, got {type(right).__name__}")
+    
+    member_name = right.value
+    
+    if isinstance(left, Instance):
+        # Instance member access - use the Instance's get method for proper lookup
+        result = left.get(member_name)
+        if result:
+            if isinstance(result, Function):
+                # Bind method to instance
+                return BoundMethod(result, left)
+            return result
+        return Error(f"instance has no member '{member_name}'")
+    
+    if isinstance(left, Hash):
+        key = right.hash_key()
+        if key in left.pairs:
+            return left.pairs[key][1]
+        return Error(f"hash has no key '{member_name}'")
+    
+    return Error(f"member access not supported on {type(left).__name__}")
 
 def _eval_numeric_infix_expression(op, left, right):
     lval, rval = left.value, right.value
@@ -449,6 +506,18 @@ async def _apply_function(fn, args):
         evaluated = await evaluate(fn.body, extended_env)
         if isinstance(evaluated, ReturnValue): return evaluated.value
         return evaluated # Should be NULL for functions without return
+    if isinstance(fn, BoundMethod):
+        # Apply bound method - bind 'self' to the receiver
+        extended_env = Environment(outer=fn.method.env)
+        # Set 'self' as first parameter if the method expects it
+        if fn.method.parameters:
+            first_param = fn.method.parameters[0]
+            extended_env.set(first_param.value, fn.receiver)
+        for param, arg in zip(fn.method.parameters[1:], args):
+            extended_env.set(param.value, arg)
+        evaluated = await evaluate(fn.method.body, extended_env)
+        if isinstance(evaluated, ReturnValue): return evaluated.value
+        return evaluated
     if isinstance(fn, Builtin):
         # some builtins are async
         if asyncio.iscoroutinefunction(fn.fn):
@@ -459,6 +528,7 @@ async def _apply_function(fn, args):
         initializer = fn.methods.get("init")
         if initializer:
             # The 'self' argument is implicitly passed
+            # Ignore the return value of init - it should not affect the instance
             await _apply_function(initializer, [instance] + args)
         return instance
     return Error(f"not a function: {type(fn).__name__}")

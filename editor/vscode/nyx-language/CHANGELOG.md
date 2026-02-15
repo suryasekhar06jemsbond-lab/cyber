@@ -3,7 +3,7 @@
 ## 0.2.0
 
 - Renamed language branding to Nyx.
-- Switched file association to `.nx` only.
+- Switched file association to `.ny` only.
 - Updated icon theme label to `Nyx Seti Icons`.
 
 ## 0.1.2
@@ -19,5 +19,5 @@
 ## 0.1.0
 
 - Initial Nyx language support extension.
-- Added `.nx` syntax highlighting grammar.
+- Added `.ny` syntax highlighting grammar.
 - Added language configuration and snippets.

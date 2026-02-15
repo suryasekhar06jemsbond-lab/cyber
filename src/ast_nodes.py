@@ -158,7 +158,7 @@ class InfixExpression(Expression):
 @dataclass
 class AssignExpression(Expression):
     token: Token
-    name: Identifier
+    name: Expression  # Can be Identifier or InfixExpression (member access)
     value: Expression
 
     def token_literal(self) -> str:

@@ -1,0 +1,129 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Nyx",
+	"fileTypes": ["nx", "ny"],
+	"patterns": [
+		{
+			"include": "#comments"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#constants"
+		},
+		{
+			"include": "#support"
+		},
+		{
+			"include": "#functions"
+		},
+		{
+			"include": "#operators"
+		},
+		{
+			"include": "#numbers"
+		}
+	],
+	"repository": {
+		"comments": {
+			"patterns": [
+				{
+					"name": "comment.line.double-slash.nyx",
+					"match": "//.*$"
+				},
+				{
+					"name": "comment.block.nyx",
+					"begin": "/\\*",
+					"end": "\\*/"
+				}
+			]
+		},
+		"strings": {
+			"patterns": [
+				{
+					"name": "string.quoted.double.nyx",
+					"begin": "\"",
+					"end": "\"",
+					"patterns": [
+						{
+							"name": "constant.character.escape.nyx",
+							"match": "\\\\."
+						}
+					]
+				},
+				{
+					"name": "string.quoted.single.nyx",
+					"begin": "'",
+					"end": "'",
+					"patterns": [
+						{
+							"name": "constant.character.escape.nyx",
+							"match": "\\\\."
+						}
+					]
+				}
+			]
+		},
+		"keywords": {
+			"patterns": [
+				{
+					"name": "keyword.control.nyx",
+					"match": "\\b(if|else|while|for|in|break|continue|return|switch|case|default)\\b"
+				},
+				{
+					"name": "storage.type.nyx",
+					"match": "\\b(var|let|const|function|class|module|typealias)\\b"
+				},
+				{
+					"name": "keyword.operator.new.nyx",
+					"match": "\\bnew\\b"
+				}
+			]
+		},
+		"constants": {
+			"patterns": [
+				{
+					"name": "constant.language.nyx",
+					"match": "\\b(true|false|null)\\b"
+				}
+			]
+		},
+		"support": {
+			"patterns": [
+				{
+					"name": "support.function.builtin.nyx",
+					"match": "\\b(print|range|str|int|abs|min|max|clamp|sum|all|any|values|items|has|len|require|import|lang_version|require_version|class_new|class_with_ctor|class_set_method|class_name|class_instantiate0|class_instantiate1|class_instantiate2|class_call0|class_call1|class_call2)\\b"
+				}
+			]
+		},
+		"functions": {
+			"patterns": [
+				{
+					"name": "entity.name.function.nyx",
+					"match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)(?=\\s*\\()"
+				}
+			]
+		},
+		"operators": {
+			"patterns": [
+				{
+					"name": "keyword.operator.nyx",
+					"match": "\\+|\\-|\\*|/|%|==|!=|<=|>=|<|>|=|!|&&|\\|\\||\\?\\?"
+				}
+			]
+		},
+		"numbers": {
+			"patterns": [
+				{
+					"name": "constant.numeric.nyx",
+					"match": "\\b\\d+(\\.\\d+)?\\b"
+				}
+			]
+		}
+	},
+	"scopeName": "source.nyx"
+}

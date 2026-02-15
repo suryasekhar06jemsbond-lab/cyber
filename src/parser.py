@@ -124,6 +124,8 @@ class Parser:
 
     def parse_statement(self):
         token_type = self.cur_token.type
+        if token_type == TokenType.SEMICOLON:
+            return None
         if token_type == TokenType.LET:
             return self.parse_let_statement()
         elif token_type == TokenType.RETURN:
@@ -246,7 +248,8 @@ class Parser:
         return InfixExpression(token=token, left=left, operator=operator, right=right)
 
     def parse_assign_expression(self, name):
-        if not isinstance(name, Identifier):
+        # Accept Identifier or InfixExpression (member access) as assignment target
+        if not isinstance(name, (Identifier, InfixExpression)):
             self.errors.append(f"Expected identifier on left side of assignment, got {type(name)}")
             return None
             

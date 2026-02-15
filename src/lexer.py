@@ -80,11 +80,11 @@ class Lexer:
         token_type = TokenType.FLOAT if is_float else TokenType.INT
         return self.source[start_pos:self.position], token_type
 
-    def _read_string(self):
+    def _read_string(self, quote_char):
         start_pos = self.position + 1
         while True:
             self._read_char()
-            if self.ch == '"' or self.ch == '':
+            if self.ch == quote_char or self.ch == '':
                 break
         return self.source[start_pos:self.position]
 
@@ -95,6 +95,25 @@ class Lexer:
 
 
         tok = Token(TokenType.ILLEGAL, self.ch, self.line, self.column)
+        start_col = self.column
+
+        if self.ch == '/':
+            if self._peek_char() == '/': # // or //=
+                self._read_char() # consume first /
+                if self._peek_char() == '=': # //=
+                    self._read_char() # consume second /
+                    self._read_char() # consume =
+                    return Token(TokenType.FLOOR_DIVIDE_ASSIGN, '//=', self.line, start_col)
+                else: # it was just //
+                    self._read_char() # consume second /
+                    return Token(TokenType.FLOOR_DIVIDE, '//', self.line, start_col)
+            elif self._peek_char() == '=': # /=
+                self._read_char()
+                self._read_char()
+                return Token(TokenType.SLASH_ASSIGN, '/=', self.line, start_col)
+            else: # /
+                self._read_char()
+                return Token(TokenType.SLASH, '/', self.line, start_col)
 
         if self.ch.isalpha() or self.ch == '_':
             literal = self._read_identifier()
@@ -105,16 +124,17 @@ class Lexer:
             literal, token_type = self._read_number()
             return Token(token_type, literal, self.line, self.column - len(literal))
 
-        if self.ch == '"':
-            literal = self._read_string()
-            return Token(TokenType.STRING, literal, self.line, self.column - len(literal) - 1)
+        if self.ch == '"' or self.ch == "'":
+            start_col = self.column
+            literal = self._read_string(self.ch)
+            self._read_char() # consume closing quote
+            return Token(TokenType.STRING, literal, self.line, start_col)
 
         char_map = {
             '=': (TokenType.EQ, '==') if self._peek_char() == '=' else (TokenType.ASSIGN, '='),
             '+': (TokenType.PLUS_ASSIGN, '+=') if self._peek_char() == '=' else (TokenType.PLUS, '+'),
             '-': (TokenType.MINUS_ASSIGN, '-=') if self._peek_char() == '=' else (TokenType.MINUS, '-'),
             '*': (TokenType.ASTERISK_ASSIGN, '*=') if self._peek_char() == '=' else (TokenType.POWER, '**') if self._peek_char() == '*' else (TokenType.ASTERISK, '*'),
-            '/': (TokenType.SLASH_ASSIGN, '/=') if self._peek_char() == '=' else (TokenType.FLOOR_DIVIDE, '//') if self._peek_char() == '/' else (TokenType.SLASH, '/'),
             '%': (TokenType.MODULO_ASSIGN, '%=') if self._peek_char() == '=' else (TokenType.MODULO, '%'),
             '<': (TokenType.LE, '<=') if self._peek_char() == '=' else (TokenType.LEFT_SHIFT, '<<') if self._peek_char() == '<' else (TokenType.LT, '<'),
             '>': (TokenType.GE, '>=') if self._peek_char() == '=' else (TokenType.RIGHT_SHIFT, '>>') if self._peek_char() == '>' else (TokenType.GT, '>'),

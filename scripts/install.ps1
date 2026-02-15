@@ -173,7 +173,7 @@ function Copy-DirReplace {
 
 function New-CmdShim {
     param([string]$Name)
-    $scriptPath = Join-Path $supportRoot ("scripts/" + $Name + '.ps1')
+    $scriptPath = Join-Path (Join-Path $supportRoot 'scripts') "$Name.ps1"
     if (-not (Test-Path -LiteralPath $scriptPath)) { return }
 
     $shimPath = Join-Path $InstallDir ($Name + '.cmd')
