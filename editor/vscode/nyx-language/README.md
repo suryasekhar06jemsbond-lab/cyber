@@ -1,4 +1,4 @@
-# Nyx Language - VS Code Extension
+# Nyx Programming Language - VS Code Extension
 
 <p align="center">
   <img src="nyx-logo.png" alt="Nyx Logo" width="128" height="128"/>
@@ -16,263 +16,142 @@
   </a>
 </p>
 
-Nyx is a modern, expressive programming language that runs everywhere. This extension provides full IDE support for Nyx in Visual Studio Code.
+---
 
-## ✨ Features
+## 🚀 What is Nyx?
 
-### 🚀 Getting Started
-- **Quick Installation**: Install from VS Code Marketplace or download the `.vsix` file
-- **Global CLI**: After one-time setup, use `nyx` from any terminal
-- **Built-in Runtime**: The extension includes the Nyx runtime for immediate use
+**Nyx** is a modern, expressive, high-level programming language designed for versatility and performance. Written in C with a custom VM, Nyx combines the simplicity of scripting languages with the power of systems programming.
 
-### 🛠️ IDE Features
-- **Syntax Highlighting**: Full support for `.ny` and `.nx` file extensions
-- **Code Snippets**: Common patterns and templates
-- **File Icons**: Custom icons for Nyx files in Explorer
-- **Integrated Terminal**: Run Nyx files directly from VS Code
+### What Nyx Can Do:
 
-### 📦 Nyx Package Manager (nypm)
-- Initialize new projects
-- Install and manage dependencies
-- Publish packages to registries
-- Version management
+- **Web Development** - HTTP servers, REST APIs, WebSocket support
+- **Systems Programming** - Native performance with low-level memory control  
+- **Machine Learning** - Tensor operations, neural networks, autograd
+- **Data Science** - Collections, algorithms, FFT, linear algebra
+- **Scripting** - Quick automation and prototyping
+- **Game Development** - 2D graphics, game engines
+- **CLI Applications** - Command-line tools and utilities
+- **Cryptography** - Hashing, encryption, JWT, digital signatures
+- **Networking** - TCP/UDP sockets, HTTP, WebSocket
+- **Database Operations** - SQL, NoSQL, Redis integration
+- **Parallel Computing** - Async/await, distributed computing
 
-### 🧪 Testing & Development
-- Run individual files or entire projects
-- Debug support with breakpoints
-- Test coverage reporting
-- Benchmarking tools
+### What Nyx is Good For:
 
-## 📖 Language Overview
+1. **Rapid Development** - Clean, concise syntax lets you build faster
+2. **Cross-Platform** - Runs on Windows, Linux, macOS seamlessly
+3. **ML/AI Projects** - Built-in tensor operations and neural network modules
+4. **Educational Use** - Simple enough for beginners, powerful for experts
+5. **Enterprise Applications** - Robust error handling and testing frameworks
+6. **Research & Experiments** - Easy prototyping with extensive stdlib
 
-Nyx is a concise, expressive language designed for:
+---
+
+## ✨ Key Features
+
+### Core Language Features
+- **Modern Syntax** - Clean, expressive, Python-like readability
+- **Object-Oriented** - Classes, inheritance, polymorphism
+- **Functional Programming** - First-class functions, closures, comprehensions
+- **Memory Safety** - Ownership & borrowing system (like Rust)
+- **Error Handling** - Try-catch with custom exceptions
+- **Modules** - Import/export system with namespaces
+
+### IDE & Developer Experience
+- **Syntax Highlighting** - Full support for `.ny` and `.nx` files
+- **Code Snippets** - Common patterns and templates
+- **File Icons** - Custom icons for Nyx files
+- **Integrated Terminal** - Run Nyx directly in VS Code
+- **Debug Support** - Breakpoints, step-through debugging
+- **Auto-completion** - Intelligent code suggestions
+
+### Standard Library (80+ Modules)
+- **Tensor & Math** - matrix, tensor, linear algebra, FFT
+- **Neural Networks** - nn, autograd, optimizers
+- **Data Structures** - collections, heap, graph, trie
+- **Web & Network** - http, websocket, socket, network
+- **Cryptography** - crypto, jwt, hashing, encryption
+- **Database** - database, redis, sql support
+- **ML/AI** - mlops, experiment, metrics, visualize
+- **Async** - async/await, parallel computing
+
+### Package Management
+- **nypm** - Full-featured package manager
+- **Version Management** - Semantic versioning
+- **Registry Support** - Public and private registries
+- **Dependency Locking** - Reproducible builds
+
+---
+
+## 📋 Version Verification
+
+### Check Your Nyx Version:
+
+```powershell
+# From terminal
+nyx --version
+
+# Expected output: 0.20.1 (or newer)
+```
+
+### Version in Code:
 
 ```nyx
-// Hello World
+// Get runtime version
+print(lang_version());
+
+// Require specific version
+require_version(">=0.20.0");
+
+// Check version constraints
+require_version("^0.20.0");   // Compatible with 0.20.x
+require_version("~0.20.0");    // Exactly 0.20.x
+require_version(">=0.20.0");   // 0.20.0 or higher
+```
+
+### Extension Version:
+
+The VS Code extension version is displayed in:
+- Extension panel in VS Code
+- The `.vsix` filename (e.g., `nyx-language-0.20.1.vsix`)
+
+---
+
+## 💻 Code Syntax Overview
+
+### Hello World
+
+```nyx
 print("Hello, Nyx!");
-
-// Variables
-let name = "World";
-let greeting = "Hello, " + name + "!";
-
-// Functions
-fn add(a, b) {
-    return a + b;
-}
-
-// Classes
-class Greeter {
-    fn init(self, name) {
-        self.name = name;
-    }
-    
-    fn greet(self) {
-        return "Hello, " + self.name + "!";
-    }
-}
-
-let g = new Greeter("Nyx");
-print(g.greet());
-
-// Arrays and iteration
-let numbers = [1, 2, 3, 4, 5];
-for num in numbers {
-    print(num * 2);
-}
-
-// Array comprehensions
-let doubled = [x * 2 for x in numbers if x > 2];
 ```
 
-## 🔧 Installation
-
-### Option 1: VS Code Marketplace (Recommended)
-1. Open VS Code
-2. Go to Extensions (`Ctrl+Shift+X`)
-3. Search for "Nyx Language"
-4. Click Install
-
-### Option 2: Manual Installation (VSIX)
-1. Download the `nyx-language-X.X.X.vsix` file
-2. In VS Code: `Extensions → ⋮ → Install from VSIX...`
-3. Select the downloaded file
-
-### Option 3: Command Line
-```powershell
-# Windows
-code --install-extension nyx-language.vsix
-
-# Linux
-code --install-extension nyx-language.vsix
-```
-
-## ⚡ Quick Start
-
-### 1. Create a New Project
-```powershell
-# Using VS Code command palette
-# Press Ctrl+Shift+P and type "Nyx: Create Project"
-
-# Or using terminal
-nyx init my-project
-cd my-project
-```
-
-### 2. Write Your First Nyx Code
-
-Create `main.ny`:
-```nyx
-// main.ny - My first Nyx program
-print("Welcome to Nyx!");
-
-let numbers = [1, 2, 3, 4, 5];
-let sum = 0;
-
-for n in numbers {
-    sum = sum + n;
-}
-
-print("Sum: " + str(sum));
-```
-
-### 3. Run Your Code
-
-**From VS Code:**
-- Press `F1` → Type "Nyx: Run File" → Press Enter
-- Or right-click → "Run Nyx File"
-
-**From Terminal:**
-```powershell
-# After global installation
-nyx main.ny
-
-# Or use the wrapper in project
-.\nyx.bat main.ny
-```
-
-## 📚 Language Syntax
-
-### Variables and Types
+### Variables & Types
 
 ```nyx
-// Integer
-let age = 25;
-
-// String
+// Variables (immutable by default)
 let name = "Nyx";
-let message = "Hello, " + "World!";
-
-// Boolean
-let isAwesome = true;
-
-// Array
+let age = 25;
+let is_awesome = true;
 let numbers = [1, 2, 3, 4, 5];
-
-// Object
-let person = {
-    name: "John",
-    age: 30
-};
-
-// Null
-let nothing = null;
-```
-
-### Operators
-
-```nyx
-// Arithmetic
-let sum = 10 + 5;      // 15
-let diff = 10 - 5;     // 5
-let prod = 10 * 5;     // 50
-let quot = 10 / 5;     // 2
-let mod = 10 % 3;      // 1
-
-// Comparison
-let eq = 5 == 5;       // true
-let neq = 5 != 3;      // true
-let lt = 3 < 5;        // true
-let gt = 5 > 3;        // true
-let lte = 3 <= 5;      // true
-let gte = 5 >= 5;      // true
-
-// Logical
-let and = true && false;  // false
-let or = true || false;   // true
-let not = !true;          // false
-
-// Null coalescing
-let value = null ?? "default";  // "default"
-```
-
-### Control Flow
-
-```nyx
-// If-else
-if age >= 18 {
-    print("Adult");
-} else if age >= 13 {
-    print("Teen");
-} else {
-    print("Child");
-}
-
-// While loop
-let i = 0;
-while i < 5 {
-    print(i);
-    i = i + 1;
-}
-
-// For loop (array)
-for num in numbers {
-    print(num);
-}
-
-// For loop (with index)
-for i, num in numbers {
-    print(str(i) + ": " + str(num));
-}
-
-// Switch
-let day = "Monday";
-switch day {
-    case "Saturday", "Sunday" {
-        print("Weekend!");
-    }
-    default {
-        print("Weekday");
-    }
-}
+let person = { name: "John", age: 30 };
 ```
 
 ### Functions
 
 ```nyx
-// Basic function
-fn greet(name) {
-    return "Hello, " + name + "!";
-}
-
-// Multiple parameters
-fn add(a, b) {
-    return a + b;
-}
-
-// Default parameters
 fn greet(name, greeting = "Hello") {
     return greeting + ", " + name + "!";
 }
 
-// Higher-order functions
-fn apply(fn, value) {
-    return fn(value);
+fn add(a, b) {
+    return a + b;
 }
 
-let result = apply(fn(x) { return x * 2; }, 5);  // 10
+// Lambda/Anonymous functions
+let double = fn(x) { return x * 2; };
 ```
 
-### Classes
+### Classes & Objects
 
 ```nyx
 class Person {
@@ -282,7 +161,7 @@ class Person {
     }
     
     fn introduce(self) {
-        return "I'm " + self.name + ", " + str(self.age) + " years old";
+        return "I'm " + self.name;
     }
 }
 
@@ -290,18 +169,59 @@ let john = new Person("John", 30);
 print(john.introduce());
 ```
 
+### Control Flow
+
+```nyx
+// If-else
+if age >= 18 {
+    print("Adult");
+} else {
+    print("Minor");
+}
+
+// For loop
+for num in numbers {
+    print(num);
+}
+
+// While loop
+while i < 5 {
+    i = i + 1;
+}
+
+// Switch
+switch value {
+    case 1 { print("One"); }
+    default { print("Other"); }
+}
+```
+
+### Error Handling
+
+```nyx
+try {
+    let result = risky_operation();
+} catch error {
+    print("Error: " + str(error));
+}
+
+throw "Custom error!";
+```
+
+### Array Comprehensions
+
+```nyx
+let numbers = [1, 2, 3, 4, 5];
+let doubled = [x * 2 for x in numbers];
+let filtered = [x for x in numbers if x > 2];
+```
+
 ### Modules
 
 ```nyx
-// math.ny - Module file
+// math.ny
 module Math {
-    fn square(x) {
-        return x * x;
-    }
-    
-    fn cube(x) {
-        return x * x * x;
-    }
+    fn square(x) { return x * x; }
 }
 
 // Using module
@@ -309,224 +229,226 @@ import Math;
 print(Math.square(5));  // 25
 ```
 
-### Error Handling
+---
 
-```nyx
-// Try-catch
-try {
-    let result = riskyOperation();
-    print(result);
-} catch error {
-    print("Error: " + error);
-}
+## 🛠️ How to Use
 
-// Throw custom errors
-fn divide(a, b) {
-    if b == 0 {
-        throw "Cannot divide by zero!";
-    }
-    return a / b;
-}
+### Installation Options
+
+#### Option 1: VS Code Marketplace (Recommended)
+1. Open VS Code
+2. Press `Ctrl+Shift+X`
+3. Search "Nyx Language"
+4. Click Install
+
+#### Option 2: Manual (VSIX)
+```powershell
+code --install-extension nyx-language-0.20.1.vsix
 ```
 
-## 💻 Command Reference
+#### Option 3: Portable
+1. Download `nyx.exe` from releases
+2. Add to PATH
+3. Run `nyx --version` to verify
 
-### VS Code Commands (Ctrl+Shift+P)
+### Creating Your First Project
 
-| Command | Description |
-|---------|-------------|
-| `Nyx: Run File` | Run the current .ny/.nx file |
-| `Nyx: Create Project` | Create a new Nyx project |
-| `Nyx: Initialize Module` | Create a nyx.mod file |
-| `Nyx: Install Package` | Install a Nyx package |
-| `Nyx: Build Package` | Build the current project |
-| `Nyx: Test Package` | Run tests |
-| `Nyx: Lint Workspace` | Check for issues |
-| `Nyx: Format Code` | Format the code |
-| `Nyx: Benchmark File` | Run benchmarks |
+```powershell
+# Initialize project
+nyx init my-project
+cd my-project
+
+# Create main.ny
+echo 'print("Hello, Nyx!");' > main.ny
+
+# Run
+nyx main.ny
+```
+
+### Running Code in VS Code
+
+| Action | Command |
+|--------|---------|
+| Run File | `F1` → "Nyx: Run File" |
+| Debug | `F1` → "Nyx: Debug" |
+| Format | `Shift+Alt+F` |
+| Lint | `F1` → "Nyx: Lint" |
 
 ### Terminal Commands
 
-After global installation:
-
 ```powershell
-# Run a Nyx file
+# Run a file
 nyx main.ny
 
 # Run with arguments
 nyx script.ny arg1 arg2
 
-# Version info
-nyx --version
-
-# Parse only (syntax check)
+# Parse-only (check syntax)
 nyx --parse-only file.ny
 
-# Lint file
+# Lint
 nyx --lint file.ny
 
-# Run with VM
-nyx --vm file.ny
-
-# Debug mode
+# Debug
 nyx --debug file.ny
 ```
 
-## 🛠️ Tools
+---
 
-### nyfmt - Code Formatter
-```powershell
-# Format file
-nyfmt file.ny
+## 📦 Standard Library Highlights
 
-# Check formatting
-nyfmt --check file.ny
+### Tensor & Machine Learning
+
+```nyx
+import tensor;
+
+// Create tensor
+let t = tensor.zeros([3, 3]);
+let t2 = tensor.ones([2, 2]);
+
+// Operations
+let result = tensor.matmul(t, t2);
+let sum = tensor.sum(t);
 ```
 
-### nylint - Linter
-```powershell
-# Lint file
-nylint file.ny
+### Neural Networks
 
-# Strict mode
-nylint --strict file.ny
+```nyx
+import nn;
+
+// Create layers
+let linear = nn.Linear.new(784, 128);
+let relu = nn.ReLU.new();
+let output = nn.Softmax.new(10);
+
+// Forward pass
+let x = tensor.randn([32, 784]);
+let y = linear.forward(x);
+y = relu.forward(y);
 ```
 
-### nypm - Package Manager
-```powershell
-# Initialize project
-nypm init my-project
+### Collections & Algorithms
 
-# Add dependency
-nypm add mylib ./mylib 1.0.0
+```nyx
+import collections;
 
-# Install dependencies
-nypm install
+// Data structures
+let list = collections.LinkedList.new();
+list.push_back(1);
+list.push_back(2);
 
-# Publish package
-nypm publish mypkg 1.0.0 ./mypkg
+let heap = collections.MinHeap.new();
+heap.push(5);
+heap.push(1);
+heap.push(3);
+
+let tree = collections.BST.new();
+tree.insert(10);
+tree.insert(5);
 ```
 
-### nydbg - Debugger
-```powershell
-# Debug with breakpoints
-nydbg file.ny
+### Web & Network
 
-# Debug with specific breakpoints
-nydbg --break 10,20 file.ny
+```nyx
+import http;
 
-# Step-through debugging
-nydbg --step file.ny
+// HTTP server
+let server = http.Server.new(8080);
+server.get("/", fn(req) {
+    return http.Response.ok("Hello!");
+});
+server.listen();
+
+// HTTP client
+let response = http.get("https://api.example.com");
+print(response.body);
 ```
+
+---
+
+## 🧪 Testing
+
+```nyx
+import test;
+
+test.describe("My Functions", fn() {
+    test.it("should add correctly", fn() {
+        test.assert_eq(add(2, 3), 5);
+    });
+    
+    test.it("should handle negatives", fn() {
+        test.assert_eq(add(-1, 1), 0);
+    });
+});
+
+test.run();
+```
+
+---
 
 ## 📁 Project Structure
-
-A typical Nyx project:
 
 ```
 my-project/
 ├── main.ny           # Entry point
 ├── nyx.mod           # Module definition
-├── ny.lock           # Dependency lock file
-├── .cydeps/          # Installed dependencies
+├── ny.lock           # Dependency lock
+├── .cydeps/          # Dependencies
 ├── src/
-│   └── utils.ny      # Source files
+│   └── utils.ny
 ├── tests/
-│   └── test.ny       # Test files
+│   └── test.ny
 └── README.md
 ```
 
-### Module Definition (nyx.mod)
-```nyx
-module "my-project" {
-    version "1.0.0"
-    description "My awesome project"
-    author "Your Name"
-    license "MIT"
-}
-```
+---
 
-## 🔄 Version Compatibility
+## 🔧 Tools
 
-Nyx follows semantic versioning. The language guarantees:
+| Tool | Purpose |
+|------|---------|
+| `nyx` | Runtime interpreter |
+| `nyfmt` | Code formatter |
+| `nylint` | Linter |
+| `nypm` | Package manager |
+| `nydbg` | Debugger |
 
-- **Patch versions** (1.0.x): Bug fixes, no breaking changes
-- **Minor versions** (1.x.0): New features, backward compatible
-- **Major versions** (x.0.0): Breaking changes
+---
 
-Use version constraints:
-```nyx
-require_version("^1.0.0");  // Compatible with 1.x.x
-require_version("~1.2.0");   // Compatible with 1.2.x
-require_version(">=1.0.0");  // 1.0.0 or higher
-```
+## 📖 Version Compatibility
 
-## 🎯 Examples
+Nyx uses semantic versioning:
 
-### Fibonacci
-```nyx
-fn fib(n) {
-    if n <= 1 {
-        return n;
-    }
-    return fib(n - 1) + fib(n - 2);
-}
+| Version Type | Example | Changes |
+|-------------|---------|---------|
+| Patch | 0.20.1 | Bug fixes only |
+| Minor | 0.21.0 | New features, backward compatible |
+| Major | 1.0.0 | Breaking changes |
 
-for i in range(10) {
-    print("Fib(" + str(i) + ") = " + str(fib(i)));
-}
-```
-
-### HTTP Request (with cy:http)
-```nyx
-import cy:http;
-
-let response = cy:http.get("https://api.example.com/data");
-print(response.status);
-print(response.body);
-```
-
-### JSON Parsing (with cy:json)
-```nyx
-import cy:json;
-
-let json_str = '{"name": "Nyx", "version": "1.0"}';
-let obj = cy:json.parse(json_str);
-print(obj.name);  // "Nyx"
-```
+---
 
 ## 🐛 Troubleshooting
 
 ### "nyx is not recognized"
-Make sure you've installed nyx globally:
 ```powershell
 # Windows
 irm https://raw.githubusercontent.com/suryasekhar06jemsbond-lab/cyber/main/scripts/install.ps1 | iex
 
-# Linux/macOS
+# Linux
 curl -fsSL https://raw.githubusercontent.com/suryasekhar06jemsbond-lab/cyber/main/scripts/install.sh | sh
 ```
 
-Then restart your terminal.
-
 ### Extension not loading
-1. Check VS Code logs: `Help → Toggle Developer Tools → Console`
-2. Try reinstalling the extension
-3. Check that `.ny` and `.nx` files are recognized
+1. Check logs: `Help → Developer Tools → Console`
+2. Reinstall the extension
+3. Restart VS Code
 
-### Build errors
-Ensure you have a C compiler installed:
-- **Windows**: Visual Studio Build Tools, MinGW (gcc), or LLVM (clang)
-- **Linux**: gcc or clang
+---
 
 ## 📄 License
 
-See [LICENSE.md](LICENSE.md) for details.
-
-## 🙏 Acknowledgments
-
-- Built with C99 and VS Code Extension API
-- Inspired by modern scripting languages
+Proprietary - All Rights Reserved
+Copyright (c) 2026 Surya Sekhar Roy
 
 ---
 
