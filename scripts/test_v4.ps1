@@ -233,7 +233,7 @@ print(nyhttp.text("$payloadPathCy"));
 
     Write-Host "[v4-win] lint check..."
     $lintScript = Join-Path $root 'scripts/nylint.ps1'
-    Invoke-Checked -Exe $lintScript -Args @('-Strict', $programPath)
+    & $lintScript -Strict $programPath
 
     Write-Host "[v4-win] PASS"
 }
