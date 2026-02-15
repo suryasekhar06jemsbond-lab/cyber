@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.20.1
+
+- Updated for Nyx language v0.20.1 release
+- PowerShell pipeline error fix in nylint.ps1
+- Full test suite compatibility
+
 ## 0.9.0
 
 - Added `.ny` file extension support alongside `.nx`
