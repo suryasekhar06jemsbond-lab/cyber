@@ -1,13 +1,84 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
+import { execSync } from 'child_process';
 
 const NYX_MODE: vscode.DocumentFilter = { language: 'nyx', scheme: 'file' };
 
+// Get path to embedded nyx binary
+function getNyxPath(): string {
+    const extPath = __dirname;
+    const isWindows = process.platform === 'win32';
+    return path.join(extPath, isWindows ? 'nyx.exe' : 'nyx');
+}
+
+// Install nyx to PATH if not already available
+async function ensureNyxInstalled(): Promise<string> {
+    const extPath = path.join(__dirname, 'nyx.exe');
+    
+    // Check if bundled nyx exists
+    if (!fs.existsSync(extPath)) {
+        throw new Error('Nyx runtime not found in extension');
+    }
+    
+    // Check if nyx is already in PATH
+    try {
+        execSync('nyx --version', { stdio: 'ignore' });
+        return 'nyx';
+    } catch {
+        // nyx not in PATH, install it
+    }
+    
+    // Install to user's local bin directory
+    const isWindows = process.platform === 'win32';
+    const installDir = isWindows 
+        ? path.join(os.homedir(), 'AppData', 'Local', 'Programs', 'nyx')
+        : path.join(os.homedir(), '.local', 'bin');
+    
+    if (!fs.existsSync(installDir)) {
+        fs.mkdirSync(installDir, { recursive: true });
+    }
+    
+    const destPath = isWindows 
+        ? path.join(installDir, 'nyx.exe')
+        : path.join(installDir, 'nyx');
+    
+    // Copy nyx to install directory
+    fs.copyFileSync(extPath, destPath);
+    
+    if (!isWindows) {
+        fs.chmodSync(destPath, '755');
+    }
+    
+    // Add to PATH (user environment)
+    const currentPath = process.env.PATH || '';
+    if (!currentPath.includes(installDir)) {
+        // For Windows, we need to set user PATH
+        if (isWindows) {
+            try {
+                execSync(`setx PATH "${installDir};%PATH%"`, { stdio: 'ignore' });
+            } catch {
+                // Fallback: create a wrapper script
+            }
+        }
+    }
+    
+    return destPath;
+}
+
 export function activate(context: vscode.ExtensionContext) {
     console.log('Nyx extension is now active!');
+    
+    // Try to ensure nyx is available
+    ensureNyxInstalled().then(nyxPath => {
+        console.log('Nyx runtime ready:', nyxPath);
+    }).catch(err => {
+        console.error('Failed to ensure nyx:', err);
+    });
 
     const commands = [
+        'nyx.run.file',
         'nyx.build.package',
         'nyx.build.workspace',
         'nyx.install.package',
@@ -41,6 +112,25 @@ export function activate(context: vscode.ExtensionContext) {
             // In a real implementation, this would call the Nyx CLI or Language Server
             const action = cmd.split('.').slice(1).join(' ');
             vscode.window.showInformationMessage(`Nyx: ${action} triggered`);
+            
+            // Run current file with embedded nyx
+            if (cmd === 'nyx.run.file') {
+                const editor = vscode.window.activeTextEditor;
+                if (!editor) {
+                    vscode.window.showErrorMessage('No active file');
+                    return;
+                }
+                const filePath = editor.document.uri.fsPath;
+                if (!filePath.endsWith('.ny') && !filePath.endsWith('.nx')) {
+                    vscode.window.showErrorMessage('Please open a .ny or .nx file to run');
+                    return;
+                }
+                const nyxPath = getNyxPath();
+                const terminal = vscode.window.createTerminal('Nyx Run');
+                terminal.show();
+                terminal.sendText(`"${nyxPath}" "${filePath}"`);
+                return;
+            }
             
             // Example integration with CLI for build
             if (cmd === 'nyx.build.package') {
