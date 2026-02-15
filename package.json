@@ -1,6 +1,21 @@
 {
-  "name": "nyx-net",
-  "version": "1.0.0",
+  "name": "nyx-lang",
+  "version": "1.0.1",
+  "description": "Nyx Programming Language",
   "main": "index.js",
-  "license": "MIT"
+  "license": "PROPRIETARY",
+  "author": "Surya Sekhar Roy",
+  "copyright": "Copyright (c) 2026 Surya Sekhar Roy. All Rights Reserved.",
+  "repository": {
+    "type": "private",
+    "url": "https://github.com/suryasekhar06jemsbond-lab/cyber"
+  },
+  "keywords": [
+    "programming-language",
+    "compiler",
+    "interpreter",
+    "systems-programming",
+    "ml",
+    "ai"
+  ]
 }

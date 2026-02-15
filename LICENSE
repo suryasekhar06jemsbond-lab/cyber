@@ -1,0 +1,332 @@
+================================================================================
+                      PROPRIETARY LICENSE AGREEMENT
+                         NYX PROGRAMMING LANGUAGE
+                ALL RIGHTS RESERVED - STRICTLY CONFIDENTIAL
+================================================================================
+
+IMPORTANT: THIS IS A LEGAL AGREEMENT BETWEEN YOU ("LICENSEE") AND THE 
+COPYRIGHT OWNER ("LICENSOR"). BY ACCESSING, DOWNLOADING, INSTALLING, OR USING 
+THIS SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THIS AGREEMENT.
+
+================================================================================
+                              SECTION 1: DEFINITIONS
+================================================================================
+
+1.1 "SOFTWARE" means the Nyx Programming Language, including but not limited 
+    to:
+    - The nyx compiler and interpreter (native/nyx.c)
+    - All source code, header files, and documentation
+    - Standard library modules (stdlib/*.ny)
+    - Compiler source code (compiler/, src/)
+    - Build scripts and tools (scripts/, *.js, *.bat, *.sh)
+    - IDE extensions and plugins (editor/vscode/)
+    - All associated files, assets, and intellectual property
+
+1.2 "LICENSEE" means any individual, organization, or entity that accesses or 
+    uses the Software.
+
+1.3 "LICENSOR" means the exclusive copyright owner of the Software.
+
+1.4 "DERIVATIVE WORK" means any work based upon, derived from, or incorporating 
+    the Software, including translations, modifications, enhancements, 
+    adaptations, or combinations thereof.
+
+1.5 "COMMERCIAL USE" means any use of the Software for direct or indirect 
+    commercial advantage or monetary compensation.
+
+================================================================================
+                          SECTION 2: INTELLECTUAL PROPERTY
+================================================================================
+
+2.1 COPYRIGHT OWNERSHIP
+    The Software and all intellectual property rights therein are the sole and 
+    exclusive property of the Licensor. The copyright notice "Copyright (c) 2026 
+    Surya Sekhar Roy" shall be prominently displayed in all copies of the 
+    Software.
+
+2.2 TRADE SECRETS
+    The implementation details, algorithms, internal structures, optimization 
+    techniques, and design decisions embodied in the Software constitute trade 
+    secrets of the Licensor. Licensee agrees to maintain the confidentiality of 
+    such information.
+
+2.3 TRADEMARKS
+    "Nyx", "Cyber", and associated logos are trademarks of the Licensor. This 
+    Agreement does not grant any rights to use these trademarks without prior 
+    written consent.
+
+2.4 PATENTS
+    The Licensor retains all patent rights, if any, related to the Software. 
+    No license or immunity under any patent is granted herein.
+
+================================================================================
+                            SECTION 3: LICENSE GRANT
+================================================================================
+
+3.1 PROPRIETARY LICENSE (STRICTLY LIMITED)
+    Subject to the terms and conditions of this Agreement, the Licensor hereby 
+    grants to Licensee a LIMITED, NON-EXCLUSIVE, NON-TRANSFERABLE, REVOCABLE 
+    license to:
+
+    a) Use the Software for evaluation and development purposes ONLY on systems 
+       owned or controlled by Licensee
+    
+    b) Modify the Software solely for internal debugging and troubleshooting
+    
+    c) Create derivative works for internal use ONLY
+
+3.2 RESTRICTIONS - ABSOLUTELY NO PERMISSION IS GRANTED FOR:
+
+    ❌ Redistributing, sublicensing, renting, or lending the Software
+    ❌ Publishing or disclosing the Software or any part thereof
+    ❌ Using the Software for commercial products or services
+    ❌ Creating derivative works for external distribution
+    ❌ Using the Software in any competing product or service
+    ❌ Reverse engineering, decompiling, or disassembling (except as permitted 
+      by mandatory law for interoperability)
+    ❌ Removing or altering any copyright notices or proprietary markings
+    ❌ Claiming ownership or authorship of the Software or any derivatives
+    ❌ Using the Software to develop competing programming languages
+    ❌ Providing the Software as part of any SaaS or cloud service
+    ❌ Distributing the Software in any form (source, binary, or compiled)
+
+3.3 COMMERCIAL LICENSE REQUIRED
+    Any commercial use of the Software requires a separate written commercial 
+    license agreement and payment of applicable licensing fees. Contact the 
+    Licensor at copyright@nyx-lang.dev for commercial licensing inquiries.
+
+3.4 EDUCATIONAL USE
+    Educational institutions may use the Software for teaching purposes only 
+    with written permission from the Licensor. Such use is limited to 
+    non-commercial educational activities.
+
+================================================================================
+                         SECTION 4: PROHIBITED ACTIVITIES
+================================================================================
+
+4.1 ABSOLUTE PROHIBITIONS
+    The following activities are STRICTLY PROHIBITED and constitute material 
+    breach of this Agreement:
+
+    a) COPYRIGHTS AND COPYRIGHTS
+       - Copying the Software beyond what is absolutely necessary for use
+       - Creating archives or repositories of the Software
+       - Distributing the Software via any medium
+
+    b) COMPETING PRODUCTS
+       - Using the Software to create any competing programming language
+       - Incorporating the Software or its components into competing tools
+       - Building products or services that substitute for the Software
+
+    c) REVERSE ENGINEERING
+       - Decompiling, disassembling, or debugging the Software
+       - Attempting to discover source code or algorithms
+       - Creating tools that analyze or transform the Software
+
+    d) COMMERCIAL EXPLOITATION
+       - Selling, licensing, or leasing the Software
+       - Using the Software in any commercial product or service
+       - Offering the Software as part of any paid service
+
+    e) ATTRIBUTION AND CLAIMS
+       - Removing copyright notices
+       - Adding your own copyright notices
+       - Claiming ownership of the Software
+
+4.2 ENFORCEMENT
+    Any violation of Section 4.1 shall result in:
+    a) Immediate termination of all licenses
+    b) Legal action for damages and injunctive relief
+    c) Disgorgement of all profits derived from the violation
+    d) Liability for legal fees and costs
+
+================================================================================
+                           SECTION 5: DISCLAIMER OF WARRANTY
+================================================================================
+
+5.1 THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS 
+    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND 
+    NON-INFRINGEMENT.
+
+5.2 THE LICENSOR DOES NOT WARRANT THAT THE SOFTWARE WILL BE ERROR-FREE, 
+    VIRUS-FREE, OR THAT IT WILL MEET LICENSEE'S REQUIREMENTS.
+
+5.3 LICENSEE ASSUMES ALL RISKS ASSOCIATED WITH THE USE OF THE SOFTWARE, 
+    INCLUDING ANY RISKS TO COMPUTER SYSTEMS, DATA LOSS, OR OTHER DAMAGES.
+
+================================================================================
+                           SECTION 6: LIMITATION OF LIABILITY
+================================================================================
+
+6.1 IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY INDIRECT, INCIDENTAL, 
+    SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED 
+    TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
+    PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
+    LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OR INABILITY 
+    TO USE THE SOFTWARE.
+
+6.2 THE LICENSOR'S TOTAL LIABILITY UNDER THIS AGREEMENT SHALL NOT EXCEED 
+    THE AMOUNT PAID BY LICENSEE, IF ANY, FOR THE SOFTWARE.
+
+================================================================================
+                         SECTION 7: CONFIDENTIALITY OBLIGATIONS
+================================================================================
+
+7.1 CONFIDENTIAL INFORMATION
+    Licensee agrees that the Software contains confidential and proprietary 
+    information of the Licensor, including but not limited to:
+    - Source code and implementation details
+    - Compiler architecture and optimization techniques
+    - Internal APIs and interfaces
+    - Performance characteristics and benchmarks
+    - Future development plans and roadmaps
+
+7.2 OBLIGATIONS
+    Licensee agrees to:
+    a) Hold all Confidential Information in strict confidence
+    b) Not disclose Confidential Information to any third party
+    c) Use Confidential Information only as permitted under this Agreement
+    d) Protect Confidential Information using at least the same degree of care 
+       used to protect its own confidential information, but in no event less 
+       than reasonable care
+
+7.3 EXCLUSIONS
+    The obligations of Section 7.2 shall not apply to information that:
+    a) Is or becomes publicly available through no fault of Licensee
+    b) Was rightfully in Licensee's possession prior to disclosure
+    c) Is independently developed by Licensee without use of Confidential Info
+    d) Is disclosed pursuant to a court order or legal requirement
+
+================================================================================
+                          SECTION 8: INDEMNIFICATION
+================================================================================
+
+8.1 LICENSEE agrees to indemnify, defend, and hold harmless the Licensor and 
+    its officers, directors, employees, and agents from and against any and all 
+    claims, damages, losses, liabilities, costs, and expenses (including 
+    reasonable attorneys' fees) arising out of or relating to:
+
+    a) Licensee's breach of any term of this Agreement
+    b) Licensee's use of the Software in violation of this Agreement
+    c) Any derivative works or modifications created by Licensee
+    d) Licensee's distribution or disclosure of the Software
+
+================================================================================
+                          SECTION 9: TERMINATION
+================================================================================
+
+9.1 TERMINATION FOR CAUSE
+    The Licensor may terminate this Agreement immediately upon written notice 
+    if Licensee:
+    a) Breaches any term of this Agreement
+    b) Fails to comply with any restriction or prohibition
+    c) Becomes insolvent or files for bankruptcy
+
+9.2 EFFECT OF TERMINATION
+    Upon termination of this Agreement:
+    a) All licenses granted herein shall immediately terminate
+    b) Licensee shall immediately cease all use of the Software
+    c) Licensee shall destroy all copies of the Software
+    d) Licensee shall delete all installations from all systems
+    e) Confidentiality obligations shall survive termination
+
+9.3 INJUNCTIVE RELIEF
+    Licensee acknowledges that any breach of this Agreement may cause 
+    irreparable harm to the Licensor for which monetary damages would be 
+    inadequate. Accordingly, the Licensor shall be entitled to seek equitable 
+    relief, including injunction and specific performance, in addition to all 
+    other remedies available at law or in equity.
+
+================================================================================
+                          SECTION 10: GOVERNING LAW
+================================================================================
+
+10.1 This Agreement shall be governed by and construed in accordance with the 
+     laws of India, without regard to its conflict of laws principles.
+
+10.2 Any dispute arising out of or relating to this Agreement shall be subject 
+     to the exclusive jurisdiction of the courts located in Hyderabad, 
+     Telangana, India.
+
+10.3 Licensee consents to the personal jurisdiction of such courts and waives 
+     any objection to venue in such courts.
+
+================================================================================
+                         SECTION 11: MISCELLANEOUS
+================================================================================
+
+11.1 ENTIRE AGREEMENT
+    This Agreement constitutes the entire agreement between the parties 
+    concerning the subject matter hereof and supersedes all prior agreements 
+    and understandings, whether written or oral.
+
+11.2 AMENDMENTS
+    This Agreement may not be amended or modified except by a written 
+    instrument signed by the Licensor.
+
+11.3 SEVERABILITY
+    If any provision of this Agreement is held to be unenforceable, such 
+    provision shall be reformed only to the extent necessary to make it 
+    enforceable, and the remaining provisions shall remain in full force and 
+    effect.
+
+11.4 WAIVER
+    The failure of the Licensor to enforce any right or provision of this 
+    Agreement shall not constitute a waiver of such right or provision.
+
+11.5 ASSIGNMENT
+    Licensee may not assign or transfer this Agreement or any rights or 
+    obligations hereunder without the prior written consent of the Licensor.
+
+11.6 SURVIVAL
+    Sections 2 (Intellectual Property), 5 (Disclaimer of Warranty), 
+    6 (Limitation of Liability), 7 (Confidentiality), 8 (Indemnification), 
+    9 (Termination), 10 (Governing Law), and 11 (Miscellaneous) shall 
+    survive any termination of this Agreement.
+
+11.7 NOTICES
+    All notices required or permitted under this Agreement shall be in 
+    writing and shall be deemed delivered when sent by registered mail or 
+    internationally recognized courier to:
+
+    Copyright Owner: Surya Sekhar Roy
+    Address: Hyderabad, Telangana, India
+    Email: copyright@nyx-lang.dev
+
+================================================================================
+                         SECTION 12: ENFORCEMENT COSTS
+================================================================================
+
+12.1 In the event the Licensor takes any legal action to enforce this 
+     Agreement, Licensee shall be responsible for payment of all reasonable 
+     attorneys' fees, court costs, and expenses incurred by the Licensor in 
+     connection with such action.
+
+================================================================================
+                      SECTION 13: ACKNOWLEDGMENT
+================================================================================
+
+13.1 BY ACCESSING, DOWNLOADING, INSTALLING, OR USING THE SOFTWARE, LICENSEE 
+     ACKNOWLEDGES THAT IT HAS READ THIS AGREEMENT, UNDERSTANDS IT, AND AGREES 
+     TO BE BOUND BY ALL OF ITS TERMS AND CONDITIONS.
+
+13.2 LICENSEE FURTHER ACKNOWLEDGES THAT THIS AGREEMENT IS THE COMPLETE AND 
+     EXCLUSIVE STATEMENT OF THE AGREEMENT BETWEEN THE PARTIES AND SUPERSEDES 
+     ALL PROPOSALS OR PRIOR AGREEMENTS, ORAL OR WRITTEN, AND ANY OTHER 
+     COMMUNICATIONS RELATING TO THE SUBJECT MATTER HEREOF.
+
+================================================================================
+                    WARNING: UNAUTHORIZED USE IS PROHIBITED
+================================================================================
+
+The Software is protected by copyright law and international treaties. 
+Unauthorized reproduction, distribution, or use of this Software is a 
+serious offense and may result in civil and criminal penalties.
+
+Violators will be prosecuted to the maximum extent permitted by law.
+
+Copyright (c) 2026 Surya Sekhar Roy. All Rights Reserved.
+
+================================================================================
