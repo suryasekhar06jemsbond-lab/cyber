@@ -28,3 +28,18 @@ Security fixes are applied to the `main` branch and included in the next release
 - `scripts/test_production.sh`
 - `scripts/test_production.ps1 -VmCases 300`
 4. Publish advisory with mitigation and upgrade instructions.
+
+## Proprietary Notice
+
+**This software is PROPRIETARY and CONFIDENTIAL.**
+
+Unauthorized access, use, reproduction, or distribution of this software is strictly prohibited and may result in civil and criminal penalties.
+
+See the [LICENSE](LICENSE) file for full terms and conditions regarding:
+- Usage rights and restrictions
+- Confidentiality obligations
+- Intellectual property protections
+- Prohibited activities
+- Enforcement and liability
+
+Copyright (c) 2026 Surya Sekhar Roy. All Rights Reserved.
