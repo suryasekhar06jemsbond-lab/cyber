@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.2
+
+- Major release with comprehensive documentation update
+- Updated README with complete language guide
+- Added examples for web development, ML, file processing
+- Updated version information to v2.0.2
+- Full standard library reference documentation
+
 ## 0.20.1
 
 - Updated for Nyx language v0.20.1 release

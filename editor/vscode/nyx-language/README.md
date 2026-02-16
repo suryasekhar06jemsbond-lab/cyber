@@ -1,4 +1,4 @@
-# Nyx Programming Language - Complete Guide
+# Nyx Programming Language - Complete Guide (Beginner to Advanced)
 
 <p align="center">
   <img src="nyx-logo.png" alt="Nyx Logo" width="200" height="200"/>
@@ -20,102 +20,54 @@
 
 ---
 
-# 📖 Table of Contents
+# Table of Contents
 
-1. [What is Nyx?](#what-is-nyx)
-2. [What Nyx Can Do](#what-nyx-can-do)
-3. [What Nyx is Good For](#what-nyx-is-good-for)
-4. [Installation](#installation)
-5. [Version Verification](#version-verification)
-6. [Language Basics](#language-basics)
-7. [Standard Library Reference](#standard-library-reference)
-8. [Running Code](#running-code)
-9. [Tools & CLI Commands](#tools--cli-commands)
-10. [Examples by Category](#examples-by-category)
-11. [Project Structure](#project-structure)
-12. [Troubleshooting](#troubleshooting)
+1. [Introduction](#introduction)
+2. [Installation](#installation)
+3. [Your First Nyx Program](#your-first-nyx-program)
+4. [Language Fundamentals](#language-fundamentals)
+5. [Data Types](#data-types)
+6. [Variables and Mutability](#variables-and-mutability)
+7. [Operators](#operators)
+8. [Control Flow](#control-flow)
+9. [Functions](#functions)
+10. [Classes and Object-Oriented Programming](#classes-and-object-oriented-programming)
+11. [Modules and Imports](#modules-and-imports)
+12. [Error Handling](#error-handling)
+13. [Concurrency and Async Programming](#concurrency-and-async-programming)
+14. [Standard Library Reference](#standard-library-reference)
+15. [Advanced Features](#advanced-features)
+16. [Examples and Recipes](#examples-and-recipes)
+17. [Project Structure](#project-structure)
+18. [Troubleshooting](#troubleshooting)
 
 ---
 
-# 🔰 What is Nyx?
+# 1. Introduction
 
-**Nyx** is a modern, expressive, high-level programming language that runs everywhere. Written in C with a custom VM, it combines the simplicity of scripting languages with the power of systems programming.
+## What is Nyx?
 
-## Key Characteristics:
-- **Modern Syntax** - Clean, readable code like Python
-- **High Performance** - Compiled to bytecode, runs on custom VM
-- **Memory Safe** - Ownership & borrowing system (inspired by Rust)
-- **Cross-Platform** - Windows, Linux, macOS
-- **Rich Standard Library** - 70+ built-in modules
-- **Package Manager** - Built-in nypm for dependencies
+**Nyx** is a modern, expressive, high-level programming language that runs everywhere. Written in C with a custom VM, it combines the simplicity of scripting languages with the power of systems programming. Whether you're a beginner learning to code or an expert building complex systems, Nyx has something for everyone.
 
-## Version Information:
-- **Current Version**: 0.20.1
+## Why Learn Nyx?
+
+- **Modern Syntax** - Clean, readable code like Python but with systems-level capabilities
+- **High Performance** - Compiled to bytecode, runs on custom VM with JIT compilation
+- **Memory Safe** - Ownership & borrowing system (inspired by Rust) prevents memory bugs
+- **Cross-Platform** - Windows, Linux, macOS - write once, run anywhere
+- **Rich Standard Library** - 70+ built-in modules for any task
+- **Package Manager** - Built-in nypm for easy dependency management
+- **Great Tooling** - VS Code extension, debugger, formatter, linter
+
+## Version Information
+- **Current Version**: 2.0.2
 - **License**: Proprietary
 - **Author**: Surya Sekhar Roy
 - **Repository**: github.com/suryasekhar06jemsbond-lab/cyber
 
 ---
 
-# 🚀 What Nyx Can Do
-
-Nyx is a general-purpose language suitable for virtually any programming task:
-
-| Category | Capabilities |
-|----------|-------------|
-| **Web Development** | HTTP servers, REST APIs, WebSocket, routing, middleware |
-| **Machine Learning** | Tensor operations, neural networks, autograd, optimizers |
-| **Data Science** | Collections, algorithms, FFT, linear algebra, statistics |
- Programming** | Low| **Systems-level memory control, FFI, native performance |
-| ** Automation, fileScripting** | processing, system tasks |
-| **Game Development** | 2D graphics, game loops, sprite rendering |
-| **CLI Applications** | Command-line tools, argument parsing, colored output |
-| **Cryptography** | Hashing, encryption, JWT, digital signatures, AES/RSA |
-| **Networking** | TCP/UDP sockets, HTTP client/server, WebSocket |
-| **Database** | SQL support, NoSQL, Redis integration |
-| **Parallel Computing** | Async/await, parallel execution, distributed computing |
-| **NLP** | Text processing, tokenization, language models |
-| **Visualization** | Charts, graphs, data plotting |
-| **GUI** | Desktop GUI applications, window management |
-
----
-
-# ⭐ What Nyx is Good For
-
-## 1. Rapid Development
-Clean, concise syntax lets you build applications faster with less boilerplate.
-
-```nyx
-// Quick HTTP server in 5 lines
-import http;
-let server = http.Server.new(8080);
-server.get("/", fn(r) { return r.send("Hello!"); });
-server.listen();
-```
-
-## 2. Machine Learning & AI
-Built-in tensor operations and neural network modules make ML development straightforward.
-
-```nyx
-import tensor, nn, autograd;
-// Create neural network layers, perform backpropagation
-```
-
-## 3. Cross-Platform Development
-Write once, run anywhere - same code works on Windows, Linux, macOS.
-
-## 4. Educational Use
-Simple enough for beginners to learn programming, powerful enough for experts.
-
-## 5. Enterprise Applications
-Robust error handling, testing frameworks, and mature tooling for production use.
-
-## 6. Research & Experiments
-Easy prototyping with extensive standard library and package ecosystem.
-
----
-
-# 💾 Installation
+# 2. Installation
 
 ## Option 1: VS Code Marketplace (Recommended)
 
@@ -130,14 +82,14 @@ Easy prototyping with extensive standard library and package ecosystem.
 
 ```powershell
 # Download the .vsix file from releases
-code --install-extension nyx-language-0.20.1.vsix
+code --install-extension nyx-language-2.0.2.vsix
 ```
 
 ## Option 3: Standalone Runtime
 
 ```powershell
 # Windows - Download and run
-curl -L -o nyx.exe "https://github.com/suryasekhar06jemsbond-lab/cyber/releases/download/v0.20.1/nyx.exe"
+curl -L -o nyx.exe "https://github.com/suryasekhar06jemsbond-lab/cyber/releases/download/v2.0.2/nyx.exe"
 nyx.exe --version
 
 # Add to PATH for global access
@@ -153,135 +105,352 @@ irm https://raw.githubusercontent.com/suryasekhar06jemsbond-lab/cyber/main/scrip
 curl -fsSL https://raw.githubusercontent.com/suryasekhar06jemsbond-lab/cyber/main/scripts/install.sh | sh
 ```
 
----
-
-# ✅ Version Verification
-
-## Check Nyx Runtime Version
+## Verify Installation
 
 ```powershell
-# Terminal command
 nyx --version
+# Output: 2.0.2
 
-# Output: 0.20.1
+nyx --help
 ```
-
-## Check Version in Code
-
-```nyx
-// Get runtime version string
-print(lang_version());
-// Output: "0.20.1"
-
-// Require specific version
-require_version(">=0.20.0");
-
-// Version constraints
-require_version("^0.20.0");   // Compatible with 0.20.x
-require_version("~0.20.0");    // Exactly 0.20.x  
-require_version(">=0.20.0");   // 0.20.0 or higher
-require_version("0.20.0");     // Exactly 0.20.0
-```
-
-## Check Extension Version
-
-- Open VS Code Extensions panel
-- Look for "Nyx Language" entry
-- Version displayed in the extension info
 
 ---
 
-# 📚 Language Basics
+# 3. Your First Nyx Program
 
 ## Hello World
 
+Create a file called `hello.ny` and write:
+
 ```nyx
-print("Hello, Nyx!");
+print("Hello, World!");
 ```
 
-## Variables
+Run it:
 
-```nyx
-// Immutable variables (default)
-let name = "Nyx";
-let age = 25;
-let is_awesome = true;
-
-// Mutable variables
-mut count = 0;
-count = count + 1;
-
-// Type annotations
-let num: int = 42;
-let text: string = "Hello";
-let flag: bool = true;
+```powershell
+nyx hello.ny
 ```
 
-## Data Types
+Output: `Hello, World!`
+
+## Simple Calculator
 
 ```nyx
-// Numbers
-let integer = 42;
-let float = 3.14;
-let hex = 0xFF;
-let binary = 0b1010;
-let octal = 0o755;
+// A simple calculator program
+let a = 10;
+let b = 5;
 
-// Strings
+print("a + b = " + str(a + b));
+print("a - b = " + str(a - b));
+print("a * b = " + str(a * b));
+print("a / b = " + str(a / b));
+```
+
+## Interactive Input
+
+```nyx
+import io;
+
+print("Enter your name:");
+let name = io.input();
+print("Hello, " + name + "!");
+```
+
+---
+
+# 4. Language Fundamentals
+
+## Comments
+
+```nyx
+// This is a single-line comment
+
+/*
+ This is a
+ multi-line comment
+*/
+
+/// Documentation comment
+```
+
+## Statements and Expressions
+
+```nyx
+// Statement - performs an action
+let x = 5;
+
+// Expression - produces a value
+let y = x + 3;  // x + 3 is an expression
+```
+
+## Blocks
+
+```nyx
+let result = {
+    let a = 10;
+    let b = 20;
+    a + b  // Last expression is the block's value
+};
+print(result);  // 30
+```
+
+---
+
+# 5. Data Types
+
+## Primitive Types
+
+### Numbers
+
+```nyx
+// Integers
+let int_val = 42;
+let hex_val = 0xFF;      // 255
+let binary_val = 0b1010; // 10
+let octal_val = 0o755;   // 493
+
+// Floats
+let float_val = 3.14;
+let scientific = 1e10;    // 10000000000
+
+// Type conversion
+let str_num = "42";
+let num = int(str_num);  // 42
+let as_str = str(42);    // "42"
+let as_float = float(3); // 3.0
+```
+
+### Strings
+
+```nyx
 let s1 = "Hello";
 let s2 = 'World';
-let s3 = `Template string: ${s1}`;
+let s3 = `Template: ${s1} ${s2}`;  // "Template: Hello World"
 
-// Arrays
-let arr = [1, 2, 3, 4, 5];
-let empty = [];
-
-// Objects/Dictionaries
-let obj = {
-    name: "John",
-    age: 30,
-    city: "NYC"
-};
-
-// Null
-let nothing = null;
+// String methods
+let len = len("Hello");           // 5
+let upper = "hello".to_upper();   // "HELLO"
+let lower = "HELLO".to_lower();  // "hello"
+let trimmed = "  hello  ".trim(); // "hello"
+let split = "a,b,c".split(",");  // ["a", "b", "c"]
+let replace = "hello".replace("l", "r"); // "herro"
+let contains = "hello".contains("ell"); // true
+let starts = "hello".starts_with("hel"); // true
+let ends = "hello".ends_with("lo");     // true
+let index = "hello".find("l");          // 2
+let substr = "hello".substr(1, 3);      // "ell"
+let join = ["a", "b", "c"].join("-");   // "a-b-c"
 ```
 
-## Operators
+### Booleans
 
 ```nyx
-// Arithmetic
-let sum = 10 + 5;      // 15
-let diff = 10 - 5;      // 5
-let prod = 10 * 5;      // 50
-let quot = 10 / 5;      // 2
-let mod = 10 % 3;       // 1
-let pow = 2 ** 8;       // 256
+let is_true = true;
+let is_false = false;
 
-// Comparison
-let eq = 5 == 5;        // true
-let neq = 5 != 3;       // true
-let lt = 3 < 5;         // true
-let gt = 5 > 3;         // true
-let lte = 3 <= 5;        // true
-let gte = 5 >= 5;       // true
+// Boolean operations
+let and_op = true && false;   // false
+let or_op = true || false;     // true
+let not_op = !true;            // false
+```
 
-// Logical
-let and_result = true && false;   // false
-let or_result = true || false;    // true
-let not_result = !true;            // false
+### Null
+
+```nyx
+let empty = null;
 
 // Null coalescing
-let value = null ?? "default";    // "default"
+let value = null ?? "default"; // "default"
 
 // Null-aware access
 let name = user?.name ?? "Anonymous";
 ```
 
-## Control Flow
+## Compound Types
+
+### Arrays
 
 ```nyx
-// If-else
+// Array creation
+let numbers = [1, 2, 3, 4, 5];
+let mixed = [1, "two", 3.0, true];
+let empty = [];
+
+// Array indexing (0-based)
+let first = numbers[0];   // 1
+let last = numbers[-1];    // 5
+
+// Array slicing
+let slice = numbers[1:4];  // [2, 3, 4]
+
+// Array methods
+let len = len(numbers);                // 5
+numbers.push(6);                       // [1,2,3,4,5,6]
+let popped = numbers.pop();            // 6, numbers = [1,2,3,4,5]
+let shifted = numbers.shift();         // 1, numbers = [2,3,4,5]
+numbers.unshift(0);                    // [0,1,2,3,4,5]
+let joined = numbers.join(", ");       // "1, 2, 3, 4, 5"
+let reversed = numbers.reverse();       // [5,4,3,2,1]
+let sorted = numbers.sort();           // [1,2,3,4,5]
+let cloned = numbers.clone();
+
+// Array comprehension
+let squares = [for x in range(10) { x * x }];  // [0,1,4,9,16,25,36,49,64,81]
+let evens = [for x in range(10) if x % 2 == 0 { x }]; // [0,2,4,6,8]
+```
+
+### Objects (Dictionaries)
+
+```nyx
+// Object creation
+let person = {
+    name: "John",
+    age: 30,
+    city: "NYC"
+};
+
+// Accessing values
+let name = person.name;    // "John"
+let age = person["age"];   // 30
+
+// Modifying objects
+person.age = 31;
+person.email = "john@example.com";
+del person.city;
+
+// Object methods
+let keys = keys(person);      // ["name", "age", "email"]
+let values = values(person);   // ["John", 31, "john@example.com"]
+let has_name = "name" in person; // true
+let merged = {a: 1}.merge({b: 2}); // {a: 1, b: 2}
+let cloned = person.clone();
+
+// Object spread
+let defaults = {theme: "dark", lang: "en"};
+let user_config = {...defaults, theme: "light"};
+```
+
+### Tuples
+
+```nyx
+let point = (10, 20);
+let x = point[0];  // 10
+let y = point[1];  // 20
+
+// Destructuring
+let (a, b) = point;
+```
+
+---
+
+# 6. Variables and Mutability
+
+## Immutable Variables (Default)
+
+```nyx
+let name = "Nyx";
+let age = 5;
+
+// Cannot reassign
+// name = "Other";  // Error!
+```
+
+## Mutable Variables
+
+```nyx
+mut count = 0;
+count = count + 1;
+print(count);  // 1
+```
+
+## Constants
+
+```nyx
+const PI = 3.14159;
+const MAX_SIZE = 100;
+```
+
+## Type Annotations
+
+```nyx
+let num: int = 42;
+let text: string = "Hello";
+let flag: bool = true;
+let arr: [int] = [1, 2, 3];
+let obj: {name: string, age: int} = {name: "John", age: 30};
+```
+
+---
+
+# 7. Operators
+
+## Arithmetic Operators
+
+```nyx
+let a = 10, b = 3;
+
+let sum = a + b;      // 13
+let diff = a - b;     // 7
+let prod = a * b;     // 30
+let quot = a / b;     // 3 (integer division)
+let rem = a % b;      // 1 (remainder)
+let pow = a ** b;     // 1000 (10^3)
+
+// Increment/Decrement
+mut x = 5;
+x += 3;   // 8
+x -= 2;   // 6
+x *= 2;   // 12
+x /= 3;   // 4
+```
+
+## Comparison Operators
+
+```nyx
+let a = 5, b = 10;
+
+let eq = a == b;    // false
+let neq = a != b;   // true
+let lt = a < b;     // true
+let gt = a > b;     // false
+let lte = a <= b;   // true
+let gte = a >= b;   // false
+```
+
+## Logical Operators
+
+```nyx
+let a = true, b = false;
+
+let and = a && b;   // false
+let or = a || b;    // true
+let not = !a;       // false
+```
+
+## Null Coalescing
+
+```nyx
+let a = null ?? "default";  // "default"
+let b = "value" ?? "default"; // "value"
+```
+
+## Ternary Operator
+
+```nyx
+let age = 20;
+let status = age >= 18 ? "adult" : "minor";
+```
+
+---
+
+# 8. Control Flow
+
+## If-Else
+
+```nyx
+let age = 20;
+
 if age >= 18 {
     print("Adult");
 } else if age >= 13 {
@@ -289,106 +458,229 @@ if age >= 18 {
 } else {
     print("Child");
 }
+```
 
-// Ternary
-let status = age >= 18 ? "Adult" : "Minor";
+## Match (Pattern Matching)
 
-// While loop
-let i = 0;
-while i < 5 {
-    print(i);
-    i = i + 1;
-}
+```nyx
+let value = 2;
 
-// For loop (array iteration)
-for num in [1, 2, 3, 4, 5] {
-    print(num);
-}
+let result = match value {
+    1 => "one",
+    2 => "two",
+    3 => "three",
+    _ => "other"
+};
+print(result);  // "two"
 
-// For loop (with index)
-for i, num in numbers {
-    print("${i}: ${num}");
-}
+// Match with conditions
+let num = 15;
+let desc = match {
+    num < 0 => "negative",
+    num == 0 => "zero",
+    num < 10 => "single digit",
+    num < 100 => "double digit",
+    _ => "large number"
+};
+```
 
-// For range
-for i in range(10) {
-    print(i);  // 0-9
-}
+## Switch
 
-// Switch/match
+```nyx
 let day = "Monday";
+
 switch day {
     case "Saturday", "Sunday" {
         print("Weekend!");
     }
     case "Monday" {
-        print("Start of week");
+        print("Start of work week");
     }
     default {
         print("Weekday");
     }
 }
-
-// Match expression
-let result = match value {
-    1 => "one",
-    2 => "two",
-    _ => "other"
-};
 ```
 
-## Functions
+## While Loop
 
 ```nyx
-// Basic function
+mut i = 0;
+while i < 5 {
+    print(i);
+    i += 1;
+}
+// Output: 0, 1, 2, 3, 4
+```
+
+## For Loop
+
+```nyx
+// Iterate over array
+for num in [1, 2, 3, 4, 5] {
+    print(num);
+}
+
+// Iterate with index
+for i, num in [10, 20, 30] {
+    print("${i}: ${num}");
+}
+
+// Iterate over range
+for i in range(5) {     // 0, 1, 2, 3, 4
+    print(i);
+}
+
+for i in range(1, 6) {  // 1, 2, 3, 4, 5
+    print(i);
+}
+
+// Iterate over object
+for key, value in {name: "John", age: 30} {
+    print("${key}: ${value}");
+}
+```
+
+## Loop Control
+
+```nyx
+// Break
+for i in range(10) {
+    if i == 5 {
+        break;
+    }
+    print(i);  // 0, 1, 2, 3, 4
+}
+
+// Continue
+for i in range(5) {
+    if i == 2 {
+        continue;
+    }
+    print(i);  // 0, 1, 3, 4 (skips 2)
+}
+```
+
+---
+
+# 9. Functions
+
+## Basic Functions
+
+```nyx
 fn greet(name) {
     return "Hello, " + name + "!";
 }
 
-// Multiple parameters
-fn add(a, b) {
-    return a + b;
-}
+print(greet("Nyx"));  // "Hello, Nyx!"
+```
 
+## Parameters and Return Types
+
+```nyx
 // Default parameters
 fn greet(name, greeting = "Hello") {
     return greeting + ", " + name + "!";
 }
 
-// Variadic
-fn sum_all(*numbers) {
+print(greet("Nyx"));           // "Hello, Nyx!"
+print(greet("Nyx", "Hi"));     // "Hi, Nyx!"
+
+// Return type annotations
+fn add(a: int, b: int): int {
+    return a + b;
+}
+
+// Variadic functions
+fn sum(*numbers) {
     let total = 0;
     for n in numbers {
-        total = total + n;
+        total += n;
     }
     return total;
 }
 
-// Lambda/Anonymous
-let double = fn(x) { return x * 2; };
-let add_ten = fn(x) { x + 10 };
+print(sum(1, 2, 3, 4, 5));  // 15
+```
 
-// Higher-order functions
+## Lambda Functions
+
+```nyx
+let double = fn(x) { x * 2 };
+print(double(5));  // 10
+
+// Immediately invoked
+print(fn(x, y) { x + y }(3, 4));  // 7
+```
+
+## Higher-Order Functions
+
+```nyx
 fn apply(fn, value) {
     return fn(value);
 }
 
-let result = apply(fn(x) { return x * 2; }, 5);  // 10
+let result = apply(fn(x) { x * 2 }, 5);
+print(result);  // 10
 
-// Closure
+// Return a function
+fn multiplier(n) {
+    return fn(x) { x * n };
+}
+
+let double = multiplier(2);
+let triple = multiplier(3);
+print(double(5));   // 10
+print(triple(5));  // 15
+```
+
+## Closures
+
+```nyx
 fn counter() {
     let count = 0;
     return fn() {
-        count = count + 1;
+        count += 1;
         return count;
     };
 }
+
 let c = counter();
 print(c());  // 1
 print(c());  // 2
+print(c());  // 3
 ```
 
-## Classes
+## Recursion
+
+```nyx
+fn factorial(n) {
+    if n <= 1 {
+        return 1;
+    }
+    return n * factorial(n - 1);
+}
+
+print(factorial(5));  // 120
+
+// Fibonacci
+fn fib(n) {
+    if n <= 1 {
+        return n;
+    }
+    return fib(n - 1) + fib(n - 2);
+}
+
+for i in range(10) {
+    print(fib(i));
+}
+```
+
+---
+
+# 10. Classes and Object-Oriented Programming
+
+## Defining Classes
 
 ```nyx
 class Person {
@@ -403,33 +695,126 @@ class Person {
         return "I'm " + self.name + ", " + str(self.age) + " years old";
     }
     
+    // Another method
+    fn birthday(self) {
+        self.age += 1;
+    }
+    
     // Static method
     static fn create(name) {
         return new Person(name, 0);
     }
 }
 
+// Creating instances
 let john = new Person("John", 30);
 print(john.introduce());
+john.birthday();
+print(john.age);  // 31
 
-// Inheritance
-class Employee < Person {
-    fn init(self, name, age, role) {
-        super.init(name, age);
-        self.role = role;
-    }
-    
-    fn introduce(self) {
-        return super.introduce() + " I work as " + self.role;
-    }
-}
+// Static method
+let baby = Person.create("Baby");
 ```
 
-## Modules
+## Inheritance
 
 ```nyx
-// math.ny - Module file
-module Math {
+class Animal {
+    fn init(self, name) {
+        self.name = name;
+    }
+    
+    fn speak(self) {
+        return "...";
+    }
+}
+
+class Dog < Animal {
+    fn init(self, name, breed) {
+        super.init(name);
+        self.breed = breed;
+    }
+    
+    fn speak(self) {
+        return "Woof!";
+    }
+    
+    fn fetch(self) {
+        return self.name + " fetches the ball";
+    }
+}
+
+let dog = new Dog("Buddy", "Golden Retriever");
+print(dog.speak());  // "Woof!"
+print(dog.fetch());   // "Buddy fetches the ball"
+```
+
+## Encapsulation
+
+```nyx
+class BankAccount {
+    fn init(self, initial_balance) {
+        // Private variable (convention)
+        self._balance = initial_balance;
+    }
+    
+    fn deposit(self, amount) {
+        if amount > 0 {
+            self._balance += amount;
+            return true;
+        }
+        return false;
+    }
+    
+    fn withdraw(self, amount) {
+        if amount > 0 && amount <= self._balance {
+            self._balance -= amount;
+            return true;
+        }
+        return false;
+    }
+    
+    fn get_balance(self) {
+        return self._balance;
+    }
+}
+
+let account = new BankAccount(1000);
+account.deposit(500);
+account.withdraw(200);
+print(account.get_balance());  // 1300
+```
+
+## Static Variables
+
+```nyx
+class Counter {
+    static mut count = 0;
+    
+    fn init(self) {
+        Counter.count += 1;
+    }
+    
+    static fn get_count() {
+        return Counter.count;
+    }
+}
+
+let a = new Counter();
+let b = new Counter();
+print(Counter.get_count());  // 2
+```
+
+---
+
+# 11. Modules and Imports
+
+## Creating Modules
+
+Create a file `math_utils.ny`:
+
+```nyx
+module MathUtils {
     const PI = 3.14159;
     
     fn square(x) {
@@ -445,39 +830,48 @@ module Math {
         return n * factorial(n - 1);
     }
 }
-
-// Using module
-import Math;
-print(Math.square(5));     // 25
-print(Math.PI);            // 3.14159
-print(Math.factorial(5));  // 120
-
-// Alias import
-import math as m;
-print(m.square(4));
-
-// Selective import
-import Math.{square, cube};
-
-// Built-in modules
-import tensor;
-import nn;
-import http;
-import json;
 ```
 
-## Error Handling
+## Importing Modules
 
 ```nyx
-// Try-catch
+// Import entire module
+import MathUtils;
+print(MathUtils.square(5));     // 25
+print(MathUtils.PI);            // 3.14159
+
+// Alias import
+import MathUtils as mu;
+print(mu.cube(3));               // 27
+
+// Selective import
+import MathUtils.{square, cube};
+
+// Import built-in modules
+import math;
+import json;
+import http;
+import tensor;
+```
+
+---
+
+# 12. Error Handling
+
+## Try-Catch
+
+```nyx
 try {
     let result = risky_operation();
     print("Success: " + str(result));
 } catch error {
     print("Error: " + str(error));
 }
+```
 
-// Try-catch with specific types
+## Catch Specific Errors
+
+```nyx
 try {
     parse_data(input);
 } catch ParseError as e {
@@ -487,8 +881,11 @@ try {
 } catch error {
     print("Unknown error: " + str(error));
 }
+```
 
-// Throw custom errors
+## Throw Custom Errors
+
+```nyx
 fn divide(a, b) {
     if b == 0 {
         throw "Cannot divide by zero!";
@@ -496,117 +893,437 @@ fn divide(a, b) {
     return a / b;
 }
 
-// Finally block
 try {
-    let file = open("data.txt");
-    // process file
+    let result = divide(10, 0);
 } catch error {
-    print("Error: " + str(error));
-} finally {
-    // cleanup code
+    print(error);  // "Cannot divide by zero!"
 }
 ```
 
-## Array Comprehensions
+## Finally Block
 
 ```nyx
-let numbers = [1, 2, 3, 4, 5];
-
-// Map
-let doubled = [x * 2 for x in numbers];
-
-// Filter
-let filtered = [x for x in numbers if x > 2];
-
-// Map + Filter
-let result = [x * 2 for x in numbers if x % 2 == 0];
-
-// Nested
-let matrix = [[i * j for j in range(5)] for i in range(5)];
-
-// Dictionary comprehension
-let squares = {x: x*x for x in range(10)};
+try {
+    risky_operation();
+} catch error {
+    print("Error: " + str(error));
+} finally {
+    cleanup();  // Always runs
+}
 ```
 
 ---
 
-# 📦 Standard Library Reference
+# 13. Concurrency and Async Programming
 
-Nyx includes 70+ built-in modules. Here's how to use each one:
+## Async Functions
 
-## 🚂 Tensor & Math
-
-### tensor - Tensor Operations
 ```nyx
-import tensor;
+import async;
 
-// Create tensors
-let t1 = tensor.zeros([3, 3]);
-let t2 = tensor.ones([2, 2]);
-let t3 = tensor.randn([4, 4]);  // Random normal
-let t4 = tensor.arange(10);      // 0 to 9
+// Async function
+async fn fetch_data(url) {
+    let response = http.get(url);
+    return response.json();
+}
 
-// Operations
-let sum = tensor.sum(t1);
-let mean = tensor.mean(t1);
-let max_val = tensor.max(t1);
-let min_val = tensor.min(t1);
-
-// Matrix operations
-let result = tensor.matmul(t1, t2);
-let transposed = tensor.transpose(t1);
-let inverted = tensor.inverse(t2);
-
-// Reshape
-let reshaped = tensor.reshape(t1, [9, 1]);
-
-// Concatenate
-let combined = tensor.concat(t1, t2, axis: 0);
-
-// Slicing
-let slice = tensor.slice(t1, [0, 0], [2, 2]);
-
-// Save/Load
-tensor.save(t1, "tensor.npy");
-let loaded = tensor.load("tensor.npy");
+// Await result
+let data = await fetch_data("https://api.example.com/data");
 ```
-**Run**: `nyx script.ny`
+
+## Parallel Execution
+
+```nyx
+// Run multiple tasks in parallel
+let results = await async.collect([
+    fetch_data("https://api1.com"),
+    fetch_data("https://api2.com"),
+    fetch_data("https://api3.com")
+]);
+```
+
+## Spawning Tasks
+
+```nyx
+let task = async.spawn(fn() {
+    let result = long_computation();
+    return result;
+});
+
+// Do other work here...
+
+let result = await task;
+```
+
+## Channels
+
+```nyx
+let channel = async.channel();
+
+async.spawn(fn() {
+    channel.send("message");
+});
+
+let msg = channel.recv();
+```
+
+---
+
+# 14. Standard Library Reference
+
+This section covers all 70+ modules in the Nyx standard library.
+
+## Core Modules
+
+### json - JSON Processing
+
+```nyx
+import json;
+
+// Parse JSON string
+let data = json.parse('{"name": "John", "age": 30}');
+print(data.name);  // "John"
+
+// Convert to JSON string
+let str = json.stringify({name: "John", age: 30});
+// '{"name":"John","age":30}'
+```
+
+### http - Web Server and Client
+
+```nyx
+import http;
+
+// Create HTTP server
+let server = http.Server.new(8080);
+
+// Define routes
+server.get("/", fn(req) {
+    return req.send("Hello!");
+});
+
+server.get("/api/users", fn(req) {
+    return req.json({
+        users: [
+            {name: "Alice", age: 30},
+            {name: "Bob", age: 25}
+        ]
+    });
+});
+
+server.post("/api/data", fn(req) {
+    let data = req.json();
+    return req.json({received: true});
+});
+
+// Make HTTP request
+let response = http.get("https://api.example.com/data");
+let status = response.status;
+let body = response.json();
+```
+
+### file - File Operations
+
+```nyx
+import file;
+
+// Read file
+let content = file.read("data.txt");
+
+// Write file
+file.write("output.txt", "Hello, World!");
+
+// Append to file
+file.append("log.txt", "New entry\n");
+
+// Check if file exists
+if file.exists("data.txt") {
+    print("File exists");
+}
+
+// Get file info
+let info = file.info("data.txt");
+print(info.size);
+print(info.modified);
+
+// List directory
+let files = file.list(".");
+```
+
+### os - Operating System
+
+```nyx
+import os;
+
+// Environment variables
+let path = os.getenv("PATH");
+os.setenv("MY_VAR", "value");
+
+// System info
+let platform = os.platform();  // "windows", "linux", "darwin"
+let arch = os.arch();           // "x64", "arm64"
+
+// Execute command
+let output = os.exec("ls -la");
+print(output);
+
+// Get current directory
+let cwd = os.cwd();
+
+// File path operations
+let joined = os.path.join("dir", "file.txt");
+let basename = os.path.basename("/path/to/file.txt");  // "file.txt"
+let dirname = os.path.dirname("/path/to/file.txt");    // "/path/to"
+```
+
+### time - Date and Time
+
+```nyx
+import time;
+
+// Current time
+let now = time.now();
+print(now.unix());      // Unix timestamp
+print(now.iso());       // ISO 8601 string
+
+// Parse time
+let parsed = time.parse("2024-01-15", "%Y-%m-%d");
+print(parsed.year);
+print(parsed.month);
+print(parsed.day);
+
+// Format time
+let formatted = now.format("%Y-%m-%d %H:%M:%S");
+
+// Time arithmetic
+let tomorrow = now.add(1, "day");
+let yesterday = now.sub(1, "day");
+
+// Sleep
+time.sleep(1);  // Sleep for 1 second
+```
+
+### regex - Regular Expressions
+
+```nyx
+import regex;
+
+// Match
+let pattern = regex.new(r"\d+");
+let match = pattern.match("abc123def");
+print(match.group());  // "123"
+
+// Find all
+let matches = pattern.find_all("abc123def456");
+print(matches);  // ["123", "456"]
+
+// Replace
+let result = pattern.replace("abc123def", "NUM");
+// "abcNUMdef"
+
+// Split
+let parts = pattern.split("a1b2c3");
+// ["a", "b", "c"]
+```
+
+---
+
+## Data Structures
+
+### collections - Advanced Collections
+
+```nyx
+import collections;
+
+// List (Doubly-linked list)
+let list = collections.list();
+list.push_back(1);
+list.push_back(2);
+list.push_front(0);
+
+// Queue
+let queue = collections.queue();
+queue.push(1);
+queue.push(2);
+let first = queue.pop();
+
+// Stack
+let stack = collections.stack();
+stack.push(1);
+stack.push(2);
+let top = stack.pop();
+
+// Deque
+let deque = collections.deque();
+deque.push_front(1);
+deque.push_back(2);
+
+// Heap (priority queue)
+let heap = collections.heap();
+heap.push(3);
+heap.push(1);
+heap.push(2);
+let min = heap.pop();  // 1
+
+// Tree
+let tree = collections.tree();
+tree.insert(5);
+tree.insert(3);
+tree.insert(7);
+
+// Graph
+let graph = collections.graph();
+graph.add_edge(1, 2);
+graph.add_edge(2, 3);
+```
+
+---
+
+## Math and Science
 
 ### math - Mathematical Functions
+
 ```nyx
 import math;
 
-// Constants
-print(math.PI);   // 3.14159...
-print(math.E);     // 2.71828...
-
 // Basic functions
 print(math.abs(-5));      // 5
-print(math.floor(3.7));   // 3
-print(math.ceil(3.2));    // 4
+print(math.ceil(3.14));   // 4
+print(math.floor(3.14));  // 3
 print(math.round(3.5));   // 4
+print(math.sqrt(16));     // 4
+print(math.pow(2, 3));   // 8
 
 // Trigonometry
 print(math.sin(math.PI / 2));  // 1
 print(math.cos(0));             // 1
-print(math.tan(math.PI / 4));   // ~1
-
-// Power & roots
-print(math.sqrt(16));    // 4
-print(math.pow(2, 8));   // 256
-print(math.exp(1));      // ~2.718
+print(math.tan(0));             // 0
+print(math.atan(1));            // π/4
 
 // Logarithms
-print(math.log(math.E));     // 1
-print(math.log10(100));      // 2
-print(math.log2(8));         // 3
+print(math.log(math.E));        // 1
+print(math.log10(100));         // 2
+print(math.exp(1));             // 2.718...
 
-// Special functions
-print(math.gamma(5));    // 24
-print(math.factorial(5)); // 120
+// Constants
+print(math.PI);
+print(math.E);
+
+// Min/Max
+print(math.min(1, 2, 3));  // 1
+print(math.max(1, 2, 3));  // 3
+
+// Clamp
+print(math.clamp(5, 0, 10));  // 5
+print(math.clamp(-1, 0, 10)); // 0
+```
+
+### tensor - Multi-dimensional Arrays
+
+```nyx
+import tensor;
+
+// Create tensors
+let t1 = tensor.tensor([1, 2, 3, 4]);
+let t2 = tensor.randn([3, 4]);  // Random normal
+let t3 = tensor.zeros([2, 3]);
+let t4 = tensor.ones([2, 3]);
+let t5 = tensor.arange(10);  // 0 to 9
+
+// Operations
+let sum = tensor.sum(t1);
+let mean = tensor.mean(t1);
+let std = tensor.std(t1);
+
+// Math operations
+let added = t1 + 1;
+let multiplied = t1 * 2;
+let matmul = tensor.matmul(tensor.randn([2, 3]), tensor.randn([3, 2]));
+
+// Reshape
+let reshaped = tensor.reshape(t1, [2, 2]);
+
+// Indexing
+let val = t1[0];
+let slice = t1[0:2];
+
+// Conversion
+let arr = t1.to_array();
+```
+
+### nn - Neural Networks
+
+```nyx
+import nn;
+
+// Layers
+let linear = nn.Linear.new(10, 5);
+let conv = nn.Conv2d.new(1, 16, 3);
+let relu = nn.ReLU.new();
+let sigmoid = nn.Sigmoid.new();
+let dropout = nn.Dropout.new(0.5);
+
+// Activation functions
+let activated = relu.forward(tensor.randn([4, 10]));
+
+// Create a model
+let model = nn.Sequential([
+    nn.Linear.new(784, 128),
+    nn.ReLU.new(),
+    nn.Dropout.new(0.2),
+    nn.Linear.new(128, 10)
+]);
+
+// Forward pass
+let input = tensor.randn([32, 784]);
+let output = model.forward(input);
+print(tensor.shape(output));  // [32, 10]
+```
+
+### optim - Optimization Algorithms
+
+```nyx
+import optim;
+
+// SGD optimizer
+let sgd = optim.SGD.new(model.parameters(), lr: 0.01, momentum: 0.9);
+
+// Adam optimizer
+let adam = optim.Adam.new(model.parameters(), lr: 0.001);
+
+// Training loop
+for epoch in range(100) {
+    let pred = model.forward(x);
+    let loss = compute_loss(pred, y);
+    
+    optimizer.zero_grad();
+    loss.backward();
+    optimizer.step();
+}
+```
+
+### autograd - Automatic Differentiation
+
+```nyx
+import autograd;
+
+// Create variables with gradients
+let x = autograd.variable(3.0);
+let y = autograd.variable(2.0);
+
+// Perform operations
+let z = x * y + x;
+
+// Backward
+z.backward();
+
+// Get gradients
+print(x.grad);  // dy/dx = y + 1 = 3
+print(y.grad);  // dy/dy = x = 3
 ```
 
 ### fft - Fast Fourier Transform
+
 ```nyx
 import fft;
 
@@ -615,431 +1332,153 @@ let signal = [1, 2, 3, 4];
 let transformed = fft.fft(signal);
 
 // Inverse FFT
-let restored = fft.ifft(transformed);
+let reconstructed = fft.ifft(transformed);
 
 // Power spectrum
-let spectrum = fft.power(signal);
+let power = fft.power(signal);
 
-// 2D FFT
-let image = tensor.randn([64, 64]);
-let freq = fft.fft2d(image);
+// Frequency bins
+let freqs = fft.freq(44100, len(signal));
 ```
 
 ### blas - Linear Algebra
+
 ```nyx
 import blas;
 
-// Matrix operations (optimized)
-let a = tensor.randn([100, 100]);
-let b = tensor.randn([100, 100]);
-let c = blas.gemm(a, b);  // Matrix multiply
+// Matrix multiplication
+let a = [[1, 2], [3, 4]];
+let b = [[5, 6], [7, 8]];
+let result = blas.matmul(a, b);
 
 // Vector operations
-let x = tensor.randn([100]);
-let y = tensor.randn([100]);
-let dot = blas.dot(x, y);
+let v1 = [1, 2, 3];
+let v2 = [4, 5, 6];
+let dot = blas.dot(v1, v2);     // 32
+let norm1 = blas.norm(v1);      // sqrt(14)
 
-// Norms
-let norm2 = blas.norm(x);
-let norm1 = blas.norm(x, 1);
+// Solve linear system
+let A = [[2, 1], [1, 3]];
+let b = [3, 4];
+let x = blas.solve(A, b);
 ```
 
-### autograd - Automatic Differentiation
+### sparse - Sparse Matrices
+
 ```nyx
-import autograd;
+import sparse;
 
-// Create variables
-let x = autograd.variable(2.0);
-let y = autograd.variable(3.0);
+// Create sparse matrix
+let indices = [[0, 1], [1, 2], [2, 0]];
+let values = [1, 2, 3];
+let shape = [3, 3];
+let sm = sparse.csr(indices, values, shape);
 
-// Define computation
-let z = x * y + x;
-
-// Backward pass
-z.backward();
-
-// Get gradients
-print(x.grad);  // dy/dx = y = 3
-print(y.grad);  // dy/dy = x = 2
+// Operations
+let result = sparse.matmul(sm, dense_vector);
 ```
 
 ---
 
-## 🧠 Neural Networks
+## Networking
 
-### nn - Neural Network Modules
+### network - Network Utilities
+
 ```nyx
-import nn, tensor;
+import network;
 
-// Create layers
-let linear = nn.Linear.new(784, 128);
-let conv2d = nn.Conv2d.new(1, 32, kernel_size: 3);
-let relu = nn.ReLU.new();
-let sigmoid = nn.Sigmoid.new();
-let tanh = nn.Tanh.new();
-let softmax = nn.Softmax.new(10);
+// TCP
+let tcp = network.TCP.new();
+tcp.connect("example.com", 80);
+tcp.send("GET / HTTP/1.1\r\n\r\n");
+let response = tcp.recv();
+tcp.close();
 
-// Create network
-class Network {
-    fn init(self) {
-        self.fc1 = nn.Linear.new(784, 256);
-        self.fc2 = nn.Linear.new(256, 128);
-        self.fc3 = nn.Linear.new(128, 10);
-        self.relu = nn.ReLU.new();
-    }
-    
-    fn forward(self, x) {
-        x = self.relu.forward(self.fc1.forward(x));
-        x = self.relu.forward(self.fc2.forward(x));
-        x = self.fc3.forward(x);
-        return x;
-    }
-}
-
-// Forward pass
-let net = Network.new();
-let input = tensor.randn([32, 784]);
-let output = net.forward(input);
-print(tensor.shape(output));  // [32, 10]
+// UDP
+let udp = network.UDP.new();
+udp.bind("0.0.0.0", 8080);
+let (data, addr) = udp.recvfrom();
+udp.sendto(data, addr);
 ```
 
-### optimize - Optimizers
-```nyx
-import optimize, autograd, tensor;
+### socket - Low-level Sockets
 
-// Create optimizer
-let params = [
-    autograd.variable(tensor.randn([10, 10])),
-    autograd.variable(tensor.randn([10]))
-];
-let optimizer = optimize.Adam.new(params, lr: 0.001);
-
-// Training loop
-for epoch in range(100) {
-    let loss = train_step(params);
-    loss.backward();
-    optimizer.step();
-    optimizer.zero_grad();
-}
-
-// Other optimizers
-let sgd = optimize.SGD.new(params, lr: 0.01, momentum: 0.9);
-let rmsprop = optimize.RMSprop.new(params, lr: 0.01);
-let adagrad = optimize.Adagrad.new(params);
-```
-
-### train - Training Utilities
-```nyx
-import train, tensor, nn;
-
-// Create data loader
-let train_data = train.DataLoader.new(
-    tensor.randn([1000, 784]),
-    tensor.randint(10, [1000]),
-    batch_size: 32,
-    shuffle: true
-);
-
-// Training loop
-for epoch in range(10) {
-    for batch in train_data {
-        let input = batch[0];
-        let target = batch[1];
-        // train step
-    }
-}
-
-// Checkpointing
-train.save_checkpoint("model.pt", model, optimizer, epoch);
-train.load_checkpoint("model.pt", model, optimizer);
-```
-
----
-
-## 📊 Data Structures & Algorithms
-
-### collections - Collections & Data Structures
-```nyx
-import collections;
-
-// LinkedList
-let list = collections.LinkedList.new();
-list.push_back(1);
-list.push_back(2);
-list.push_front(0);
-for val in list {
-    print(val);
-}
-
-// Binary Search Tree
-let bst = collections.BST.new();
-bst.insert(5);
-bst.insert(3);
-bst.insert(7);
-print(bst.search(5));
-print(bst.inorder());
-
-// AVL Tree (self-balancing)
-let avl = collections.AVL.new();
-avl.insert(10);
-avl.insert(20);
-avl.insert(30);
-
-// Red-Black Tree
-let rbtree = collections.RedBlackTree.new();
-rbtree.insert(1);
-rbtree.insert(5);
-rbtree.insert(10);
-
-// Heap
-let minheap = collections.MinHeap.new();
-minheap.push(5);
-minheap.push(1);
-minheap.push(3);
-print(minheap.pop());  // 1
-
-let maxheap = collections.MaxHeap.new();
-
-// Graph
-let graph = collections.Graph.new();
-graph.add_edge("A", "B", 1.0);
-graph.add_edge("B", "C", 2.0);
-let path = graph.dijkstra("A", "C");
-
-// Trie
-let trie = collections.Trie.new();
-trie.insert("hello");
-trie.insert("world");
-print(trie.search("hello"));
-print(trie.starts_with("he"));
-
-// HashMap
-let map = collections.HashMap.new();
-map.set("key", "value");
-print(map.get("key"));
-```
-
-### algorithm - Algorithms
-```nyx
-import algorithm, collections;
-
-// Sorting
-let arr = [5, 2, 8, 1, 9];
-algorithm.quicksort(arr);
-algorithm.merge_sort(arr);
-algorithm.heap_sort(arr);
-
-// Searching
-let sorted = [1, 2, 3, 4, 5];
-print(algorithm.binary_search(sorted, 3));  // 2
-
-// Shuffling
-algorithm.shuffle(arr);
-
-// Set operations
-let a = [1, 2, 3];
-let b = [2, 3, 4];
-let union = algorithm.union(a, b);
-let intersection = algorithm.intersection(a, b);
-let difference = algorithm.difference(a, b);
-```
-
-### heap - Priority Queue
-```nyx
-import heap;
-
-// Min Heap
-let min_h = heap.MinHeap.new();
-min_h.push(5);
-min_h.push(1);
-min_h.push(3);
-print(min_h.pop());  // 1
-print(min_h.peek()); // 3
-
-// Max Heap
-let max_h = heap.MaxHeap.new();
-max_h.push(1);
-max_h.push(5);
-max_h.push(3);
-print(max_h.pop());  // 5
-```
-
----
-
-## 🌐 Web & Network
-
-### http - HTTP Server & Client
-```nyx
-import http;
-
-// HTTP Server
-let server = http.Server.new(8080);
-
-// GET request
-server.get("/", fn(req) {
-    return http.Response.ok("Hello World!");
-});
-
-server.get("/api/users", fn(req) {
-    let users = [{"name": "John"}, {"name": "Jane"}];
-    return http.Response.json(users);
-});
-
-// POST request
-server.post("/api/data", fn(req) {
-    let body = req.body;
-    // process data
-    return http.Response.created({"status": "ok"});
-});
-
-// With middleware
-server.use(fn(req, next) {
-    print("Request: " + req.path);
-    return next(req);
-});
-
-// Start server
-server.listen();
-
-// HTTP Client
-let response = http.get("https://api.github.com");
-print(response.status);       // 200
-print(response.body);         // JSON response
-print(response.headers);      // Headers
-
-// POST request
-let post_response = http.post("https://api.example.com/data", 
-    body: '{"name": "Nyx"}',
-    headers: {"Content-Type": "application/json"}
-);
-```
-
-### socket - TCP/UDP Sockets
 ```nyx
 import socket;
 
-// TCP Server
-let server = socket.TCP.new();
-server.bind("127.0.0.1", 8080);
-server.listen();
+// Create socket
+let sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM);
+sock.connect(("example.com", 80));
 
-let client = server.accept();
-client.send("Welcome!");
-let msg = client.recv();
-client.close();
+// Send/Receive
+sock.send(b"Hello");
+let data = sock.recv(1024);
 
-// TCP Client
-let client = socket.TCP.new();
-client.connect("127.0.0.1", 8080);
-client.send("Hello");
-let response = client.recv();
-
-// UDP
-let udp = socket.UDP.new();
-udp.bind(8081);
-udp.send("127.0.0.1", 8080, "Message");
-let (data, addr) = udp.recv();
-```
-
-### web - Web Utilities
-```nyx
-import web;
-
-// URL parsing
-let url = web.parse_url("https://user:pass@example.com:8080/path?query=1#anchor");
-print(url.scheme);   // https
-print(url.host);     // example.com
-print(url.port);     // 8080
-print(url.path);     // /path
-print(url.query);    // query=1
-
-// Query string
-let qs = web.parse_qs("name=John&age=30");
-print(qs["name"]);   // John
-
-// HTML parsing
-let html = "<div><p>Hello</p></div>";
-let doc = web.parse_html(html);
-let text = doc.text();
+sock.close();
 ```
 
 ---
 
-## 🔐 Cryptography
+## Cryptography
 
 ### crypto - Cryptographic Functions
+
 ```nyx
 import crypto;
 
 // Hashing
-let sha256 = crypto.sha256("Hello World");
-let sha512 = crypto.sha512("Hello");
-let md5 = crypto.md5("Hello");
-let blake2b = crypto.blake2b("Data");
+let sha256 = crypto.sha256("hello");
+let md5 = crypto.md5("hello");
+let sha1 = crypto.sha1("hello");
 
-// Encryption
-let key = crypto.generate_key("AES-256");
-let encrypted = crypto.encrypt("Secret message", key);
-let decrypted = crypto.decrypt(encrypted, key);
+// HMAC
+let hmac = crypto.hmac_sha256("key", "message");
+
+// AES encryption
+let key = crypto.rand_bytes(32);  // 256-bit key
+let iv = crypto.rand_bytes(16);   // 128-bit IV
+let encrypted = crypto.aes_encrypt("message", key, iv);
+let decrypted = crypto.aes_decrypt(encrypted, key, iv);
 
 // RSA
-let (pub, priv) = crypto.rsa_generate(2048);
-let ciphertext = crypto.rsa_encrypt("Message", pub);
-let plaintext = crypto.rsa_decrypt(ciphertext, priv);
+let (pubkey, privkey) = crypto.rsa_generate(2048);
+let encrypted = crypto.rsa_encrypt(pubkey, "message");
+let decrypted = crypto.rsa_decrypt(privkey, encrypted);
 
-// Digital signature
-let signature = crypto.sign(data, private_key);
-let valid = crypto.verify(data, signature, public_key);
+// Random
+let random_bytes = crypto.rand_bytes(32);
+let random_int = crypto.rand_int(100);
 ```
 
 ### jwt - JSON Web Tokens
+
 ```nyx
 import jwt;
 
 // Create token
 let payload = {
-    "sub": "user123",
-    "name": "John Doe",
-    "iat": 1516239022
+    sub: "1234567890",
+    name: "John Doe",
+    iat: time.now().unix()
 };
-let secret = "my-secret-key";
-let token = jwt.encode(payload, secret);
+let token = jwt.encode(payload, "secret", "HS256");
 
 // Verify token
-let decoded = jwt.decode(token, secret);
-print(decoded["sub"]);  // user123
-
-// With expiration
-let exp_payload = jwt.encode(payload, secret, expires_in: "1h");
-let verified = jwt.verify(exp_payload, secret);
-```
-
-### hashing - Password Hashing
-```nyx
-import hashing;
-
-// Hash password
-let hash = hashing.hash("mypassword");
-let verify = hashing.verify("mypassword", hash);
-
-// Different algorithms
-let bcrypt_hash = hashing.bcrypt("password", cost: 10);
-let argon2_hash = hashing.argon2("password");
-
-// Verify
-print(hashing.verify("mypassword", bcrypt_hash));  // true
+let decoded = jwt.decode(token, "secret");
+print(decoded.name);  // "John Doe"
 ```
 
 ---
 
-## 💾 Database
+## Database
 
-### database - SQL Database
+### database - Database Operations
+
 ```nyx
 import database;
 
 // Connect to SQLite
-let db = database.connect("mydb.sqlite");
+let db = database.connect("myapp.db");
 
 // Create table
 db.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)");
@@ -1048,468 +1487,1502 @@ db.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)")
 db.execute("INSERT INTO users (name, email) VALUES (?, ?)", ["John", "john@example.com"]);
 
 // Query
-let rows = db.query("SELECT * FROM users WHERE name = ?", ["John"]);
+let rows = db.query("SELECT * FROM users WHERE id = ?", [1]);
 for row in rows {
-    print(row["name"]);
+    print(row.name);
 }
 
-// Prepared statements
-let stmt = db.prepare("SELECT * FROM users WHERE id = ?");
-let user = stmt.fetch(1);
+// Update
+db.execute("UPDATE users SET name = ? WHERE id = ?", ["Jane", 1]);
+
+// Delete
+db.execute("DELETE FROM users WHERE id = ?", [1]);
+
+db.close();
 ```
 
 ### redis - Redis Client
+
 ```nyx
 import redis;
 
 // Connect
-let client = redis.connect("localhost", 6379);
+let r = redis.connect("localhost", 6379);
 
-// Strings
-client.set("key", "value");
-let val = client.get("key");
-client.incr("counter");
-client.decr("counter");
+// String operations
+r.set("key", "value");
+let val = r.get("key");
+r.incr("counter");
+r.append("key", "more");
 
-// Lists
-client.lpush("mylist", "item1");
-client.rpush("mylist", "item2");
-let items = client.lrange("mylist", 0, -1);
+// Hash operations
+r.hset("user", "name", "John");
+r.hget("user", "name");
+r.hgetall("user");
 
-// Hashes
-client.hset("user:1", "name", "John");
-client.hset("user:1", "age", "30");
-let user = client.hgetall("user:1");
+// List operations
+r.lpush("queue", "item");
+let item = r.rpop("queue");
 
 // Pub/Sub
-let pubsub = client.subscribe("news");
-pubsub.on("message", fn(channel, msg) {
-    print(msg);
-});
-client.publish("news", "Breaking news!");
+let pub = redis.connect("localhost", 6379);
+pub.publish("channel", "message");
+
+let sub = redis.connect("localhost", 6379);
+sub.subscribe("channel");
+let msg = sub.recv();
 ```
 
 ---
 
-## 📊 Data Processing
+## Data Processing
 
-### json - JSON Processing
+### compress - Compression
+
 ```nyx
-import json;
+import compress;
 
-// Parse JSON
-let data = json.parse('{"name": "Nyx", "version": "1.0"}');
-print(data["name"]);  // Nyx
+// Gzip
+let compressed = compress.gzip("large text data");
+let decompressed = compress.gunzip(compressed);
 
-// Stringify
-let str = json.stringify(data);
+// ZIP
+let zipped = compress.zip({"file1.txt": "content1", "file2.txt": "content2"});
+let unzipped = compress.unzip(zipped);
 
-// Pretty print
-let pretty = json.stringify(data, indent: 2);
+// Zlib
+let deflated = compress.deflate("data");
+let inflated = compress.inflate(deflated);
+```
 
-// Validate
-let valid = json.validate(json_str);
+### serialization - Serialization
+
+```nyx
+import serialization;
+
+// Pickle (Nyx object serialization)
+let data = {name: "John", scores: [90, 85, 88]};
+let pickled = serialization.pickle(data);
+let unpickled = serialization.unpickle(pickled);
+
+// MessagePack
+let packed = serialization.pack(data);
+let unpacked = serialization.unpack(packed);
+
+// Protocol Buffers (simplified)
+let encoded = serialization.protobuf_encode(data, schema);
+let decoded = serialization.protobuf_decode(encoded, schema);
 ```
 
 ### xml - XML Processing
+
 ```nyx
 import xml;
 
 // Parse XML
-let doc = xml.parse('<root><item>Hello</item></root>');
-let text = doc.find("item").text();
+let doc = xml.parse('<root><item id="1">Hello</item></root>');
+let item = doc.root.children[0];
+print(item.attr["id"]);  // "1"
+print(item.text);         // "Hello"
 
-// Create XML
+// Build XML
 let builder = xml.Builder.new();
 builder.start("root");
-builder.element("item", "Value");
-builder.end();
+builder.start("item", {id: "1"});
+builder.text("Hello");
+builder.end("item");
+builder.end("root");
 let xml_str = builder.to_string();
-
-// Transform
-let transformed = xml.xslt_transform(doc, stylesheet);
-```
-
-### compression - Data Compression
-```nyx
-import compress;
-
-// Compress
-let data = "Hello World!";
-let compressed = compress.gzip(data);
-let deflated = compress.deflate(data);
-
-// Decompress
-let decompressed = compress.gunzip(compressed);
-let inflated = compress.inflate(deflated);
-
-// Zip files
-compress.zip(["file1.txt", "file2.txt"], "archive.zip");
-let files = compress.unzip("archive.zip");
 ```
 
 ---
 
-## 🧪 Testing
+## Advanced Computing
+
+### nlp - Natural Language Processing
+
+```nyx
+import nlp;
+
+// Tokenization
+let tokens = nlp.tokenize("Hello, world!");
+// ["Hello", ",", "world", "!"]
+
+// Stop words removal
+let filtered = nlp.remove_stop_words(tokens);
+
+// Stemming
+let stemmed = nlp.stem("running");  // "run"
+
+// Lemmatization
+let lemmas = nlp.lemmatize(["running", "ran"]);  // ["run", "run"]
+
+// Sentiment analysis
+let sentiment = nlp.sentiment("I love this product!");  // positive
+
+// Named Entity Recognition
+let entities = nlp.ner("John works at Google in NYC");
+// [{"text": "John", "type": "PERSON"}, {"text": "Google", "type": "ORG"}, {"text": "NYC", "type": "LOC"}]
+
+// Word embeddings
+let vec = nlp.embedding("king");
+let similar = nlp.most_similar("king", ["queen", "man", "woman"]);
+```
+
+### visualize - Data Visualization
+
+```nyx
+import visualize;
+
+// Line chart
+let chart = visualize.line_chart();
+chart.add_series([1, 2, 3, 4, 5], label: "Sales");
+chart.add_series([2, 4, 6, 8, 10], label: "Revenue");
+chart.set_title("Sales vs Revenue");
+chart.save("chart.html");
+
+// Bar chart
+let bar = visualize.bar_chart();
+bar.add_category("Q1", [100, 200]);
+bar.add_category("Q2", [150, 250]);
+bar.save("bar.html");
+
+// Scatter plot
+let scatter = visualize.scatter();
+scatter.add_points([[1,2], [3,4], [5,6]]);
+scatter.save("scatter.html");
+
+// Histogram
+let hist = visualize.histogram();
+hist.add_data([1,1,2,2,2,3,3,4]);
+hist.save("hist.html");
+
+// Heatmap
+let heatmap = visualize.heatmap();
+heatmap.set_data([[1,2,3], [4,5,6], [7,8,9]]);
+heatmap.save("heatmap.html");
+```
+
+### experiment - ML Experiment Tracking
+
+```nyx
+import experiment;
+
+// Create experiment
+let exp = experiment.start("my_experiment");
+exp.log_param("learning_rate", 0.01);
+exp.log_param("batch_size", 32);
+
+// Log metrics
+for epoch in range(100) {
+    let train_loss = train();
+    let val_loss = validate();
+    
+    exp.log_metric("train_loss", train_loss, step: epoch);
+    exp.log_metric("val_loss", val_loss, step: exp.step);
+}
+
+// Log artifacts
+exp.log_artifact("model.pt", model);
+exp.log_artifact("results.csv", csv_data);
+
+// End experiment
+exp.end();
+```
+
+### mlops - MLOps Utilities
+
+```nyx
+import mlops;
+
+// Model serving
+let server = mlops.serve(model, port: 8080);
+server.predict(input_data);
+
+// Model registry
+mlops.register_model("my_model", model, metrics: {accuracy: 0.95});
+let loaded = mlops.load_model("my_model");
+
+// Feature store
+let fs = mlops.FeatureStore.new("my_store");
+fs.write_features("user_features", user_id, features);
+let features = fs.read_features("user_features", user_id);
+
+// Model monitoring
+let monitor = mlops.Monitor.new(model);
+monitor.track_predictions(predictions);
+let drift = monitor.detect_drift(new_data);
+```
+
+---
+
+## GUI and Graphics
+
+### gui - Desktop GUI
+
+```nyx
+import gui;
+
+// Create window
+let window = gui.Window.new("My App", 800, 600);
+
+// Create widgets
+let button = gui.Button.new("Click Me");
+button.on_click(fn() {
+    print("Button clicked!");
+});
+
+let label = gui.Label.new("Hello, Nyx!");
+
+let input = gui.Input.new();
+let text = input.text;
+
+let checkbox = gui.Checkbox.new("Enable feature");
+
+let slider = gui.Slider.new(0, 100, 50);
+
+// Layout
+let layout = gui.VBox.new();
+layout.add(label);
+layout.add(button);
+layout.add(input);
+layout.add(checkbox);
+layout.add(slider);
+
+window.set_layout(layout);
+
+// Event loop
+window.show();
+```
+
+### game - 2D Game Development
+
+```nyx
+import game;
+
+// Create game
+let g = game.Game.new("My Game", 800, 600);
+
+// Create sprites
+let player = game.Sprite.new("player.png");
+player.set_position(100, 100);
+player.set_velocity(5, 0);
+
+// Create scene
+let scene = game.Scene.new();
+scene.add(player);
+
+// Game loop
+g.on_update(fn(dt) {
+    player.move();
+    
+    if player.collides_with(enemy) {
+        player.take_damage();
+    }
+});
+
+g.on_draw(fn() {
+    scene.render();
+});
+
+g.run();
+```
+
+---
+
+## System and Utilities
+
+### process - Process Management
+
+```nyx
+import process;
+
+// Execute command
+let output = process.exec("ls -la");
+print(output.stdout);
+print(output.stderr);
+print(output.exit_code);
+
+// Spawn process
+let child = process.spawn("my_program", ["arg1", "arg2"]);
+let pid = child.pid;
+let output = child.wait();
+
+// Current process
+let pid = process.pid();
+let args = process.args();
+let env = process.env();
+```
+
+### cli - Command-Line Interface
+
+```nyx
+import cli;
+
+// Parse arguments
+let parser = cli.new_parser();
+parser.add_option("-n", "--name", type: "string", required: true);
+parser.add_option("-v", "--verbose", type: "bool");
+parser.add_option("-p", "--port", type: "int", default: 8080);
+
+let args = parser.parse();
+
+// Colored output
+print(cli.color("Success!", "green"));
+print(cli.color("Error!", "red"));
+print(cli.color("Warning!", "yellow"));
+
+// Progress bar
+let bar = cli.progress_bar(100);
+for i in range(100) {
+    bar.update(i);
+    time.sleep(0.01);
+}
+```
+
+### log - Logging
+
+```nyx
+import log;
+
+// Configure logger
+log.setup(level: "INFO", format: "[{time}] {level}: {message}");
+
+// Log messages
+log.debug("Debug message");
+log.info("Info message");
+log.warning("Warning message");
+log.error("Error message");
+log.critical("Critical message");
+
+// With context
+log.info("User action", user_id: 123, action: "login");
+```
+
+### debug - Debugging
+
+```nyx
+import debug;
+
+// Print variable
+debug.print(var);
+
+// Breakpoint
+debug.breakpoint();
+
+// Stack trace
+debug.traceback();
+
+// Memory inspection
+debug.inspect(obj);
+
+// Timing
+let duration = debug.timeit(fn() {
+    expensive_operation();
+});
+```
+
+### config - Configuration Management
+
+```nyx
+import config;
+
+// Load config file
+let cfg = config.load("app.json");
+
+// Get values
+let port = cfg.get("server.port", default: 8080);
+let debug = cfg.get("debug.enabled", default: false);
+
+// Nested values
+let db_host = cfg.get("database.host");
+
+// Set values
+cfg.set("server.port", 9000);
+cfg.set("new_key", "new_value");
+
+// Save
+cfg.save("app.json");
+
+// Environment variables
+let env_cfg = config.from_env();
+let api_key = env_cfg.get("API_KEY");
+```
+
+### cache - Caching
+
+```nyx
+import cache;
+
+// In-memory cache
+let c = cache.new();
+c.set("key1", "value1", ttl: 60);  // 60 second TTL
+let val = c.get("key1");
+c.delete("key1");
+
+// LRU cache
+let lru = cache.lru(100);  // Max 100 items
+lru.set("key", "value");
+
+// File cache
+let file_cache = cache.file("./cache_dir");
+file_cache.set("data", some_data);
+
+// Redis cache
+let redis_cache = cache.redis("localhost", 6379);
+redis_cache.set("key", "value", ttl: 3600);
+```
+
+### io - Input/Output
+
+```nyx
+import io;
+
+// Read from stdin
+let input = io.input();
+print("You entered: " + input);
+
+// Read line
+let line = io.input_line();
+
+// File I/O (same as file module)
+let f = io.file_open("test.txt", "r");
+let content = f.read();
+f.close();
+
+// Binary I/O
+let bin = io.file_open("data.bin", "rb");
+let bytes = bin.read_bytes(1024);
+bin.close();
+```
+
+---
+
+## Additional Modules
+
+### algorithm - Algorithms
+
+```nyx
+import algorithm;
+
+// Sorting
+let sorted = algorithm.sort([3, 1, 4, 1, 5]);
+let sorted_desc = algorithm.sort_desc([3, 1, 4]);
+
+// Searching
+let index = algorithm.binary_search([1, 2, 3, 4, 5], 3);
+
+// Shuffling
+let shuffled = algorithm.shuffle([1, 2, 3, 4, 5]);
+
+// Permutations
+let perms = algorithm.permutations([1, 2, 3]);
+
+// Combinations
+let combs = algorithm.combinations([1, 2, 3, 4], 2);
+```
+
+### bench - Benchmarking
+
+```nyx
+import bench;
+
+// Time execution
+let duration = bench.timeit(fn() {
+    // code to benchmark
+});
+
+// Memory usage
+let mem = bench.memory_usage(fn() {
+    // code
+});
+
+// Compare functions
+let results = bench.compare([
+    fn() { sort_fast(data) },
+    fn() { sort_slow(data) }
+]);
+```
+
+### class - Class Utilities
+
+```nyx
+import class_util;
+
+// Metaclass
+class MyMeta {
+    static fn new_class(name, bases) {
+        // Custom class creation
+    }
+}
+
+// Class methods
+class MyClass {
+    fn instance_method(self) {}
+    static fn static_method() {}
+}
+```
+
+### cron - Cron Jobs
+
+```nyx
+import cron;
+
+// Schedule job
+let job = cron.schedule("0 * * * *", fn() {
+    print("Hourly task");
+});
+
+// Parse cron expression
+let next = cron.next_run("0 0 * * *");
+print(next);
+```
+
+### distributed - Distributed Computing
+
+```nyx
+import distributed;
+
+// Create cluster
+let cluster = distributed.Cluster.new(["node1:8000", "node2:8000"]);
+
+// Run distributed task
+let result = cluster.submit_task(fn() {
+    // Task code
+});
+
+// Distributed data
+let ddata = cluster.distribute([1, 2, 3, 4]);
+let mapped = ddata.map(fn(x) { x * 2 });
+let reduced = ddata.reduce(fn(a, b) { a + b });
+```
+
+### ffi - Foreign Function Interface
+
+```nyx
+import ffi;
+
+// Call C function
+let lib = ffi.load("libc.so.6");
+let puts = lib.func("puts", ffi.types.int, [ffi.types.char_ptr]);
+puts("Hello from C!");
+```
+
+### formatter - Code Formatting
+
+```nyx
+import formatter;
+
+// Format Nyx code
+let formatted = formatter.format(source_code);
+
+// Check formatting
+let is_formatted = formatter.check(source_code);
+
+// Apply formatting
+let result = formatter.apply(source_code);
+```
+
+### governance - Governance
+
+```nyx
+import governance;
+
+// Access control
+let acl = governance.ACL.new();
+acl.allow("user1", "read", "resource1");
+acl.deny("user2", "write", "resource1");
+
+// Rate limiting
+let limiter = governance.RateLimiter.new(100, 60);  // 100 per minute
+
+// Audit logging
+governance.audit.log("user1", "read", "resource1");
+```
+
+### hub - Model Hub
+
+```nyx
+import hub;
+
+// List models
+let models = hub.list("text-classification");
+
+// Load model
+let classifier = hub.load("hf:bert-base-uncased");
+
+// Use model
+let result = classifier("I love this!");
+```
+
+### metrics - Metrics and Monitoring
+
+```nyx
+import metrics;
+
+// Counter
+let counter = metrics.counter("requests");
+counter.inc();
+
+// Gauge
+let gauge = metrics.gauge("temperature");
+gauge.set(25.5);
+
+// Histogram
+let histogram = metrics.histogram("request_duration");
+histogram.observe(0.5);
+
+// Export to Prometheus
+let exporter = metrics.prometheusExporter();
+exporter.serve(9090);
+```
+
+### monitor - System Monitoring
+
+```nyx
+import monitor;
+
+// CPU
+let cpu = monitor.cpu();
+print(cpu.usage());      // Percentage
+print(cpu.per_core());   // Per-core usage
+
+// Memory
+let mem = monitor.memory();
+print(mem.used());
+print(mem.available());
+print(mem.percent());
+
+// Disk
+let disk = monitor.disk();
+print(disk.usage("/"));
+print(disk.io_counters());
+
+// Network
+let net = monitor.net();
+print(net.io_counters());
+```
+
+### parser - Parsing
+
+```nyx
+import parser;
+
+// JSON (same as json module)
+let data = parser.json.parse('{"a": 1}');
+
+// CSV
+let rows = parser.csv.parse("a,b,c\n1,2,3");
+for row in rows {
+    print(row.a);
+}
+
+// INI
+let config = parser.ini.parse("[section]\nkey=value");
+
+// Custom grammar
+let grammar = parser.Grammar.new();
+grammar.rule("expr", "number | expr op expr");
+let parsed = grammar.parse("1 + 2");
+```
+
+### precision - High Precision
+
+```nyx
+import precision;
+
+// Decimal
+let d = precision.decimal("3.14159265358979323846");
+let result = d + precision.decimal("0.00000005");
+
+// BigInt
+let big = precision.bigint("12345678901234567890");
+let factorial = precision.factorial(100);
+```
+
+### serving - Model Serving
+
+```nyx
+import serving;
+
+// Create inference server
+let server = serving.Server.new(model);
+server.add_preprocess(fn(input) {
+    return normalize(input);
+});
+server.add_postprocess(fn(output) {
+    return softmax(output);
+});
+server.start(port: 8080);
+
+// Make prediction
+let result = server.predict(input_data);
+```
+
+### state_machine - State Machines
+
+```nyx
+import state_machine;
+
+// Define state machine
+let sm = state_machine.StateMachine.new("idle");
+
+sm.add_state("idle");
+sm.add_state("processing");
+sm.add_state("complete");
+
+sm.add_transition("idle", "processing", "start");
+sm.add_transition("processing", "complete", "finish");
+sm.add_transition("complete", "idle", "reset");
+
+// Run
+sm.start();
+sm.send("start");
+print(sm.current_state());  // "processing"
+```
+
+### string - String Utilities
+
+```nyx
+import string;
+
+// Case conversion
+print(string.capitalize("hello"));  // "Hello"
+print(string.upper("hello"));       // "HELLO"
+print(string.lower("HELLO"));       // "hello"
+print(string.title("hello world")); // "Hello World"
+
+// Padding
+print(string.pad_left("5", 3, "0"));  // "005"
+print(string.pad_right("hi", 5, ".")); // "hi..."
+
+// Trimming
+print(string.strip("  hello  "));   // "hello"
+print(string.lstrip("  hello"));    // "hello"
+print(string.rstrip("hello  "));    // "hello"
+
+// Search
+print(string.find("hello", "ll"));   // 2
+print(string.rfind("hello", "l"));   // 3
+print(string.contains("hello", "ll")); // true
+
+// Split
+print(string.split("a,b,c", ","));    // ["a", "b", "c"]
+print(string.splitlines("a\nb\nc"));  // ["a", "b", "c"]
+```
+
+### symbolic - Symbolic Math
+
+```nyx
+import symbolic;
+
+// Variables
+let x = symbolic.var("x");
+let y = symbolic.var("y");
+
+// Expressions
+let expr = x ** 2 + 2 * x + 1;
+
+// Simplification
+let simplified = symbolic.simplify(expr);
+
+// Differentiation
+let dx = symbolic.diff(expr, x);
+
+// Evaluation
+let val = expr.subs(x, 2);  // 4 + 4 + 1 = 9
+
+// Solve equation
+let solutions = symbolic.solve(x ** 2 - 4, x);  // [-2, 2]
+```
+
+### systems - Systems Programming
+
+```nyx
+import systems;
+
+// Memory
+let ptr = systems.alloc(100);
+systems.free(ptr);
+
+// Pointers
+let addr = systems.address_of(variable);
+let value = systems.deref(addr);
+
+// Memory operations
+systems.memcpy(dest, src, size);
+systems.memset(ptr, value, size);
+systems.memcmp(ptr1, ptr2, size);
+```
 
 ### test - Testing Framework
+
 ```nyx
 import test;
 
-// Basic tests
-test.describe("Math functions", fn() {
-    test.it("should add correctly", fn() {
-        test.assert_eq(add(2, 3), 5);
+// Assertions
+test.assert_eq(1 + 1, 2);
+test.assert_neq(1, 2);
+test.assert_true(true);
+test.assert_false(false);
+test.assert_null(null);
+test.assert_not_null("value");
+test.assert_throw(fn() { throw "error" });
+
+// Test cases
+test.describe("My Module", fn() {
+    test.it("should add numbers", fn() {
+        test.assert_eq(add(1, 2), 3);
     });
     
-    test.it("should multiply correctly", fn() {
-        test.assert_eq(multiply(3, 4), 12);
+    test.it("should handle errors", fn() {
+        // Test code
     });
 });
-
-// Assertions
-test.assert(true);
-test.assert_eq(actual, expected);
-test.assert_ne(a, b);
-test.assert_gt(5, 3);
-test.assert_lt(3, 5);
-test.assert_in("needle", "haystack");
-test.assert_contains([1,2,3], 2);
 
 // Run tests
 test.run();
+```
 
-// With coverage
-test.run_coverage();
+### time - Time (Advanced)
+
+```nyx
+import time;
+
+// Timers
+let timer = time.Timer.new();
+timer.start();
+expensive_operation();
+let elapsed = timer.elapsed();
+
+// Time zones
+let utc = time.now_utc();
+let local = time.now_local("America/New_York");
+
+// Durations
+let dur = time.duration(1, "hour");
+let later = time.now().add(dur);
+```
+
+### train - Training Utilities
+
+```nyx
+import train;
+
+// Data loader
+let loader = train.DataLoader.new(dataset, batch_size: 32, shuffle: true);
+
+for batch in loader {
+    let x = batch.input;
+    let y = batch.target;
+    
+    let pred = model.forward(x);
+    let loss = criterion(pred, y);
+    
+    optimizer.zero_grad();
+    loss.backward();
+    optimizer.step();
+}
+
+// Checkpointing
+train.checkpoint.save(model, optimizer, epoch: 10, loss: 0.5);
+train.checkpoint.load("checkpoint.pt");
+```
+
+### validator - Data Validation
+
+```nyx
+import validator;
+
+// Define schema
+let schema = validator.schema({
+    name: validator.string().required().min(1).max(100),
+    email: validator.string().required().email(),
+    age: validator.number().min(0).max(150),
+    role: validator.enum(["admin", "user", "guest"]),
+    metadata: validator.object({
+        active: validator.boolean(),
+        tags: validator.array(validator.string())
+    })
+});
+
+// Validate
+let result = schema.validate(data);
+if !result.is_valid {
+    print(result.errors);
+}
+```
+
+### web - Web Utilities
+
+```nyx
+import web;
+
+// URL parsing
+let url = web.parse_url("https://example.com/path?query=value");
+print(url.host);    // "example.com"
+print(url.path);    // "/path"
+print(url.query);   // {query: "value"}
+
+// HTML parsing
+let doc = web.parse_html('<html><body><div class="content">Hello</div></body></html>');
+let div = doc.query_selector(".content");
+print(div.text);  // "Hello"
+
+// URL encoding
+let encoded = web.url_encode({key: "value with spaces"});
+let decoded = web.url_decode(encoded);
+```
+
+### types - Type System
+
+```nyx
+import types;
+
+// Type checking
+types.is_int(42);      // true
+types.is_string("hi"); // true
+types.is_array([]);    // true
+types.is_object({});   // true
+types.is_function(fn() {}); // true
+
+// Type conversion
+let str_type = types.type_of(value);
+let is_same = types.is_same(typeof(a), typeof(b));
+
+// Union types
+let union = types.union("string", "number");
 ```
 
 ---
 
-## 🛠️ Tools & CLI Commands
+# 15. Advanced Features
 
-## Core Commands
+## Iterators
 
-```powershell
-# Run a Nyx file
-nyx main.ny
+```nyx
+let numbers = [1, 2, 3, 4, 5];
 
-# Run with arguments
-nyx script.ny arg1 arg2
+// Map
+let doubled = numbers.map(fn(x) { x * 2 });
 
-# Check version
-nyx --version
+// Filter
+let evens = numbers.filter(fn(x) { x % 2 == 0 });
 
-# Parse only (syntax check)
-nyx --parse-only file.ny
+// Reduce
+let sum = numbers.reduce(fn(acc, x) { acc + x }, 0);
 
-# Lint file
-nyx --lint file.ny
-
-# Run with VM
-nyx --vm file.ny
-
-# Debug mode
-nyx --debug file.ny
-
-# Trace execution
-nyx --trace file.ny
-
-# Max steps limit
-nyx --max-steps 10000 file.ny
-
-# Max call depth
-nyx --max-call-depth 1000 file.ny
+// Chain
+let result = numbers
+    .filter(fn(x) { x > 2 })
+    .map(fn(x) { x * 10 })
+    .reduce(fn(acc, x) { acc + x }, 0);
 ```
 
-## Code Formatting (nyfmt)
+## Generators
 
-```powershell
-# Format file
-nyfmt file.ny
+```nyx
+fn range_gen(n) {
+    let i = 0;
+    while i < n {
+        yield i;
+        i += 1;
+    }
+}
 
-# Check formatting (no changes)
-nyfmt --check file.ny
-
-# Format directory
-nyfmt ./src/
-
-# Custom indent
-nyfmt --indent 4 file.ny
+for num in range_gen(5) {
+    print(num);  // 0, 1, 2, 3, 4
+}
 ```
 
-## Linting (nylint)
+## Decorators
 
-```powershell
-# Lint file
-nylint file.ny
+```nyx
+fn timing_decorator(fn) {
+    return fn(input) {
+        let start = time.now();
+        let result = fn(input);
+        let elapsed = time.now().sub(start);
+        print("Function took " + str(elapsed) + "ms");
+        return result;
+    };
+}
 
-# Strict mode
-nylint --strict file.ny
-
-# Output format
-nylint --format json file.ny
-
-# Lint directory
-nylint ./src/
+@timing_decorator
+fn slow_function() {
+    time.sleep(1);
+}
 ```
 
-## Package Manager (nypm)
+## Metaprogramming
 
-```powershell
-# Initialize project
-nypm init my-project
+```nyx
+// Macro-like code generation
+fn create_adder(n) {
+    return "fn add_" + str(n) + "(x) { return x + " + str(n) + "; }";
+}
 
-# Add dependency
-nypm add tensor ./local-tensor
-
-# Install dependencies
-nypm install
-
-# List dependencies
-nypm list
-
-# Remove dependency
-nypm remove mylib
-
-# Publish package
-nypm publish mypkg 1.0.0 ./mypkg
-
-# Search registry
-nypm search tensor
+eval(create_adder(5));  // Creates add_5 function
+print(add_5(10));  // 15
 ```
 
-## Debugger (nydbg)
+## Memory Management
 
-```powershell
-# Debug file
-nydbg file.ny
+```nyx
+// Ownership
+let obj1 = new MyClass();
+let obj2 = obj1;  // obj1 is moved to obj2
+// obj1 is now invalid
 
-# Breakpoints
-nydbg --break 10,20 file.ny
+// Borrowing
+fn process(ref obj) {
+    // Can read and modify obj temporarily
+    obj.value = 42;
+}
 
-# Step through
-nydbg --step file.ny
-
-# Watch variables
-nydbg --watch "count,x,y" file.ny
-
-# Conditional breakpoints
-nydbg --break 15 --condition "i > 10" file.ny
+let data = new MyData();
+process(ref data);
+// data is valid again after function returns
 ```
 
 ---
 
-# 💻 Examples by Category
+# 16. Examples and Recipes
 
-## Web Server
+## Web Server with Routing
+
 ```nyx
 import http;
 
-let server = http.Server.new(8080);
+let app = http.Server.new(8080);
 
-server.get("/", fn(req) {
-    return http.Response.html("<h1>Welcome to Nyx!</h1>");
+// Middleware
+fn logger(req, next) {
+    print(req.method + " " + req.path);
+    return next(req);
+}
+
+app.use(logger);
+
+// Routes
+app.get("/", fn(r) { r.send("Welcome") });
+app.get("/api/users", fn(r) { r.json({users: []}) });
+app.post("/api/users", fn(r) { 
+    let user = r.json();
+    r.json({created: true, id: 1});
 });
 
-server.get("/api/data", fn(req) {
-    return http.Response.json({
-        status: "ok",
-        data: [1, 2, 3, 4, 5]
-    });
+app.listen();
+```
+
+## REST API
+
+```nyx
+import http, json;
+
+let server = http.Server.new(3000);
+let users = [
+    {id: 1, name: "Alice"},
+    {id: 2, name: "Bob"}
+];
+
+server.get("/api/users", fn(req) {
+    return req.json(users);
 });
 
-server.post("/api/submit", fn(req) {
-    let body = json.parse(req.body);
-    return http.Response.json({received: body});
+server.get("/api/users/:id", fn(req) {
+    let id = int(req.params.id);
+    let user = users.filter(fn(u) { u.id == id })[0];
+    if user {
+        return req.json(user);
+    }
+    return req.status(404).json({error: "Not found"});
+});
+
+server.post("/api/users", fn(req) {
+    let new_user = r.json();
+    new_user.id = len(users) + 1;
+    users.push(new_user);
+    return req.status(201).json(new_user);
 });
 
 server.listen();
-print("Server running on http://localhost:8080");
 ```
-**Run**: `nyx server.ny`
 
-## Machine Learning
+## Database Application
+
 ```nyx
-import tensor, nn, autograd, optimize;
+import database, json;
 
-// Create simple neural network
-let w1 = autograd.variable(tensor.randn([2, 4]));
-let b1 = autograd.variable(tensor.zeros([4]));
-let w2 = autograd.variable(tensor.randn([4, 1]));
-let b2 = autograd.variable(tensor.zeros([1]));
+let db = database.connect("blog.db");
 
-let optimizer = optimize.SGD.new([w1, b1, w2, b2], lr: 0.1);
+// Initialize
+db.execute("CREATE TABLE IF NOT EXISTS posts (
+    id INTEGER PRIMARY KEY,
+    title TEXT,
+    content TEXT,
+    created_at TEXT
+)");
 
-// Training data
-let X = tensor.array([[0,0], [0,1], [1,0], [1,1]]);
-let y = tensor.array([[0], [1], [1], [0]]);  // XOR
+// Create post
+fn create_post(title, content) {
+    let now = time.now().iso();
+    db.execute("INSERT INTO posts (title, content, created_at) VALUES (?, ?, ?)",
+        [title, content, now]);
+}
 
-// Train
-for epoch in range(1000) {
-    // Forward
-    let h = tensor.matmul(X, w1.value) + b1.value;
-    let h_relu = tensor.relu(h);
-    let pred = tensor.matmul(h_relu, w2.value) + b2.value;
+// Get all posts
+fn get_posts() {
+    return db.query("SELECT * FROM posts ORDER BY created_at DESC");
+}
+
+// Get post by ID
+fn get_post(id) {
+    let rows = db.query("SELECT * FROM posts WHERE id = ?", [id]);
+    return rows[0];
+}
+
+// Update post
+fn update_post(id, title, content) {
+    db.execute("UPDATE posts SET title = ?, content = ? WHERE id = ?",
+        [title, content, id]);
+}
+
+// Delete post
+fn delete_post(id) {
+    db.execute("DELETE FROM posts WHERE id = ?", [id]);
+}
+```
+
+## File Processing Pipeline
+
+```nyx
+import file, json, compress;
+
+fn process_files(input_dir, output_dir) {
+    let files = file.list(input_dir);
     
-    // Loss
-    let loss = tensor.mean(tensor.pow(tensor.sub(pred, y), 2));
-    
-    // Backward
-    loss.backward();
-    optimizer.step();
-    optimizer.zero_grad();
-    
-    if epoch % 100 == 0 {
-        print("Epoch " + str(epoch) + " Loss: " + str(loss.value));
+    for filepath in files {
+        if filepath.ends_with(".json") {
+            // Read
+            let content = file.read(filepath);
+            let data = json.parse(content);
+            
+            // Process
+            let processed = process_data(data);
+            
+            // Write
+            let output_path = output_dir + "/" + file.basename(filepath);
+            file.write(output_path, json.stringify(processed));
+            
+            // Compress
+            let compressed = compress.gzip(json.stringify(processed));
+            file.write(output_path + ".gz", compressed);
+        }
     }
 }
 ```
-**Run**: `nyx ml_example.ny`
 
-## File Processing
+## Concurrent Web Scraper
+
 ```nyx
-import io, json, csv;
+import http, async;
 
-// Read file
-let content = io.read_file("data.txt");
-print(content);
-
-// Write file
-io.write_file("output.txt", "Hello, Nyx!");
-
-// Read lines
-let lines = io.read_lines("file.txt");
-for line in lines {
-    print(line);
+fn scrape_urls(urls) {
+    // Fetch all URLs concurrently
+    let tasks = urls.map(fn(url) {
+        return async.spawn(fn() {
+            let resp = http.get(url);
+            return {
+                url: url,
+                status: resp.status,
+                content: resp.text
+            };
+        });
+    });
+    
+    // Wait for all
+    let results = await async.collect(tasks);
+    
+    // Process results
+    for result in results {
+        if result.status == 200 {
+            print("Success: " + result.url);
+        } else {
+            print("Failed: " + result.url);
+        }
+    }
 }
 
-// JSON
-let data = json.parse(io.read_file("data.json"));
-io.write_file("output.json", json.stringify(data));
-
-// CSV
-let rows = csv.read("data.csv");
-for row in rows {
-    print(row);
-}
-csv.write("output.csv", [["Name", "Age"], ["John", "30"]]);
+let urls = [
+    "https://example.com",
+    "https://example.org",
+    "https://example.net"
+];
+scrape_urls(urls);
 ```
-**Run**: `nyx process.ny`
 
-## Cryptography
+## Machine Learning Pipeline
+
 ```nyx
-import crypto, jwt;
+import tensor, nn, optim, dataset;
 
-// Hash a password
-let password = "securePassword123";
-let hash = crypto.sha256(password);
-print("Hash: " + hash);
+fn train_model() {
+    // Load data
+    let (x_train, y_train) = dataset.load_mnist("train");
+    let (x_test, y_test) = dataset.load_mnist("test");
+    
+    // Create model
+    let model = nn.Sequential([
+        nn.Linear.new(784, 256),
+        nn.ReLU.new(),
+        nn.Dropout.new(0.2),
+        nn.Linear.new(256, 128),
+        nn.ReLU.new(),
+        nn.Linear.new(128, 10)
+    ]);
+    
+    // Optimizer
+    let optimizer = optim.Adam.new(model.parameters(), lr: 0.001);
+    let criterion = nn.CrossEntropyLoss.new();
+    
+    // Training loop
+    for epoch in range(10) {
+        let total_loss = 0;
+        
+        for i in range(0, len(x_train), 32) {
+            let batch_x = tensor.tensor(x_train[i:i+32]);
+            let batch_y = tensor.tensor(y_train[i:i+32]);
+            
+            // Forward
+            let pred = model.forward(batch_x);
+            let loss = criterion(pred, batch_y);
+            
+            // Backward
+            optimizer.zero_grad();
+            loss.backward();
+            optimizer.step();
+            
+            total_loss += loss.data;
+        }
+        
+        print("Epoch " + str(epoch) + ", Loss: " + str(total_loss));
+    }
+    
+    // Evaluate
+    let test_pred = model.forward(tensor.tensor(x_test));
+    let accuracy = compute_accuracy(test_pred, y_test);
+    print("Test Accuracy: " + str(accuracy));
+    
+    return model;
+}
 
-// Generate key and encrypt
-let key = crypto.generate_key("AES-256");
-let secret = "Very secret message";
-let encrypted = crypto.encrypt(secret, key);
-let decrypted = crypto.decrypt(encrypted, key);
-print("Decrypted: " + decrypted);
-
-// JWT
-let payload = {"user_id": 123, "role": "admin"};
-let token = jwt.encode(payload, "secret-key");
-print("Token: " + token);
-let decoded = jwt.verify(token, "secret-key");
-print("User: " + str(decoded["user_id"]));
+let model = train_model();
 ```
-**Run**: `nyx crypto_example.ny`
+
+## GUI Application
+
+```nyx
+import gui;
+
+let window = gui.Window.new("Todo App", 600, 400);
+let todos = [];
+
+fn render() {
+    let layout = gui.VBox.new();
+    
+    // Title
+    layout.add(gui.Label.new("My Todo List"));
+    
+    // Input
+    let input = gui.Input.new();
+    let add_btn = gui.Button.new("Add");
+    
+    add_btn.on_click(fn() {
+        let text = input.text;
+        if text != "" {
+            todos.push({text: text, done: false});
+            input.set_text("");
+            render();
+        }
+    });
+    
+    let input_layout = gui.HBox.new();
+    input_layout.add(input);
+    input_layout.add(add_btn);
+    layout.add(input_layout);
+    
+    // List
+    for i, todo in todos {
+        let check = gui.Checkbox.new(todo.text);
+        check.on_change(fn(checked) {
+            todos[i].done = checked;
+        });
+        
+        let delete_btn = gui.Button.new("X");
+        delete_btn.on_click(fn() {
+            todos.splice(i, 1);
+            render();
+        });
+        
+        let item_layout = gui.HBox.new();
+        item_layout.add(check);
+        item_layout.add(delete_btn);
+        layout.add(item_layout);
+    }
+    
+    window.set_layout(layout);
+}
+
+render();
+window.show();
+```
+
+## Real-time Chat Server
+
+```nyx
+import http, websocket;
+
+let server = http.Server.new(8080);
+let clients = [];
+
+// WebSocket upgrade
+server.get("/ws", fn(req) {
+    let ws = websocket.accept(req);
+    clients.push(ws);
+    
+    // Handle messages
+    ws.on_message(fn(msg) {
+        // Broadcast to all clients
+        for client in clients {
+            if client != ws {
+                client.send(msg);
+            }
+        }
+    });
+    
+    ws.on_close(fn() {
+        let index = clients.index_of(ws);
+        if index >= 0 {
+            clients.splice(index, 1);
+        }
+    });
+    
+    return null;  // Don't send HTTP response
+});
+
+server.listen();
+print("Chat server running on ws://localhost:8080/ws");
+```
 
 ---
 
-# 📁 Project Structure
+# 17. Project Structure
 
-A typical Nyx project:
+## Single File Project
+
+```
+my_script.ny
+```
+
+## Multi-file Project
 
 ```
 my-project/
-├── main.ny              # Entry point
-├── nyx.mod              # Module definition
-├── ny.lock              # Dependency lock file
-├── .cydeps/             # Downloaded dependencies
-│   └── tensor/
-├── src/
-│   ├── utils.ny         # Utility functions
-│   ├── models/
-│   │   └── model.ny
-│   └── lib/
-│       └── helpers.ny
-├── tests/
-│   ├── test_main.ny
-│   └── test_utils.ny
-├── examples/
-│   └── example.ny
-├── scripts/
-│   └── build.ny
-├── docs/
-│   └── README.md
-└── config.ny            # Configuration
+├── main.ny           # Entry point
+├── lib/              # Local modules
+│   ├── utils.ny
+│   ├── helpers.ny
+│   └── math/
+│       ├── operations.ny
+│       └── constants.ny
+├── tests/            # Test files
+│   ├── test_utils.ny
+│   └── test_math.ny
+├── ny.pkg           # Package manifest
+└── ny.lock          # Dependency lock file
 ```
 
-### Module Definition (nyx.mod)
-```nyx
-module "my-project" {
-    version "1.0.0"
-    description "My awesome Nyx project"
-    author "Your Name"
-    license "MIT"
-    dependencies {
-        tensor ">=1.0.0"
-        http ">=2.0.0"
+## Package Manifest (ny.pkg)
+
+```json
+{
+    "name": "my-package",
+    "version": "1.0.0",
+    "description": "My Nyx package",
+    "author": "Your Name",
+    "license": "MIT",
+    "dependencies": {
+        "core": ">=1.0.0",
+        "http": "^2.0.0",
+        "json": ">=1.0.0"
+    },
+    "devDependencies": {
+        "test": ">=1.0.0"
     }
 }
 ```
 
 ---
 
-# 🐛 Troubleshooting
+# 18. Troubleshooting
 
 ## Common Issues
 
-### "nyx is not recognized"
-```powershell
-# Windows - Install globally
-irm https://raw.githubusercontent.com/suryasekhar06jemsbond-lab/cyber/main/scripts/install.ps1 | iex
+### "Command not found"
+- Ensure Nyx is in your PATH
+- Restart your terminal
 
-# Linux/macOS
-curl -fsSL https://raw.githubusercontent.com/suryasekhar06jemsbond-lab/cyber/main/scripts/install.sh | sh
+### "Module not found"
+- Check package is installed: `nypm list`
+- Verify import statement spelling
 
-# Restart terminal
+### "Permission denied"
+- On Linux/macOS: `chmod +x nyx`
+- Check file permissions
+
+### "Out of memory"
+- Check for infinite loops
+- Increase system memory
+
+### "Stack overflow"
+- Reduce recursion depth
+- Use iterative approach instead
+
+## Debug Tips
+
+```nyx
+import debug;
+
+// Print variable value
+debug.print(my_variable);
+
+// Break into debugger
+debug.breakpoint();
+
+// Print stack trace
+debug.traceback();
+
+// Measure execution time
+let start = time.now();
+// ... code ...
+print(time.now().sub(start));
 ```
 
-### Extension not loading
-1. Check logs: `Help → Toggle Developer Tools → Console`
-2. Try reinstalling: `Extensions → Uninstall → Reinstall`
-3. Check file associations: `.ny` and `.nx` files
+## Getting Help
 
-### Build errors
-```powershell
-# Ensure C compiler is installed
-# Windows: Visual Studio Build Tools, MinGW, or LLVM
-# Linux: gcc or clang
-```
-
-### Memory errors
-```powershell
-# Increase allocation
-nyx --max-alloc 1073741824 file.ny  # 1GB
-```
+- GitHub Issues: github.com/suryasekhar06jemsbond-lab/cyber/issues
+- Documentation: docs.nyxlang.dev
+- Community: Discord server
 
 ---
 
-# 📄 License
+# License
 
-Copyright (c) 2026 Surya Sekhar Roy
-All Rights Reserved
+Copyright © 2024 Surya Sekhar Roy. All rights reserved.
 
 ---
 
 <p align="center">
-  <sub>Built with ❤️ by the Nyx Team</sub>
+  Made with ❤️ by Surya Sekhar Roy
 </p>
