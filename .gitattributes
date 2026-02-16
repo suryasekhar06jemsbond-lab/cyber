@@ -1,6 +1,6 @@
-# Nyx language files - recognized via .github/linguist.yml
-*.nx linguist-vendored=false
-*.ny linguist-vendored=false
+# Nyx language files - don't analyze (prevents false detection as Common Lisp)
+*.nx linguist-vendored
+*.ny linguist-vendored
 
 # Exclude C runtime implementation
 native/* linguist-vendored
