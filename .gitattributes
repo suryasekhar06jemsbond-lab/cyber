@@ -1,6 +1,11 @@
 # Language detection for Nyx
+# Mark .nx and .ny files as custom (will show as Text if not defined in Linguist)
 *.nx linguist-vendored
 *.ny linguist-vendored
+
+# Exclude all C source files from language detection (they are runtime implementation)
+native/*.c linguist-vendored
+native/*.h linguist-vendored
 
 # Exclude generated/compiled files from language stats
 compiler_stage*.c linguist-vendored
@@ -10,8 +15,6 @@ output*.exe linguist-vendored
 *.exe linguist-vendored
 *.vsix linguist-vendored
 *.zip linguist-vendored
-nyx.exe linguist-vendored
-native/*.c linguist-vendored
 
 # Documentation files
 extension.js linguist-documentation

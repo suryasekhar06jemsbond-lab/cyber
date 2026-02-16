@@ -10,3 +10,5 @@ output.c
 output_bin.exe
 input_expr.nx
 editor/vscode/cy-language/node_modules/
+nyx-language/nyx.exe
+nyx-language/nyx
