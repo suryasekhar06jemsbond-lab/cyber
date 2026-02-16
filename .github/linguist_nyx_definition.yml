@@ -1,5 +1,5 @@
 # Nyx Language Definition for GitHub Linguist
-# This file should be added to https://github.com/github/linguist/blob/master/lib/linguist/languages.yml
+# Copy this to https://github.com/github/linguist/blob/master/lib/linguist/languages.yml
 
 Nyx:
   type: programming
@@ -9,12 +9,8 @@ Nyx:
     - .nx
   aliases:
     - nyx
-  codemirror_mode: null
   tm_scope: source.nyx
-  language_id: 999999
 
-# Add to samples/nyx/ directory with example files:
+# Also add sample files in samples/nyx/:
 # - hello.ny
-# - functions.ny
-# - classes.ny
-# - http_server.ny
+# - example.ny
