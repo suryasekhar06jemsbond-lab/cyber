@@ -1,0 +1,16 @@
+# Language detection for Nyx
+*.nx linguist-language=Nyx
+*.ny linguist-language=Nyx
+
+# Force Nyx language for stdlib and examples
+stdlib/*.nx linguist-language=Nyx
+stdlib/*.ny linguist-language=Nyx
+examples/*.nx linguist-language=Nyx
+examples/*.ny linguist-language=Nyx
+compiler/*.ny linguist-language=Nyx
+
+# Exclude large binary files from language stats
+*.exe linguist-documentation
+*.vsix linguist-documentation
+*.zip linguist-documentation
+nyx.exe linguist-documentation
