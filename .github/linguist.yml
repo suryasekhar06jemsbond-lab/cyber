@@ -1,0 +1,28 @@
+# GitHub Linguist overrides for Nyx language
+# This tells Linguist to detect .nx and .ny files
+
+# Define patterns for Nyx files
+extensions:
+  - .ny
+  - .nx
+
+# Override language detection
+override:
+  # These files should not be counted toward language stats
+  # as they are generated/compiled artifacts
+  compiler_stage1.c: false
+  compiler_stage2.c: false
+  native/nyx.c: false
+  
+  # Exclude binary files
+  "*.exe": false
+  "*.vsix": false
+  "*.zip": false
+
+# Vendor patterns to exclude from stats
+vendor_rules:
+  - patterns:
+      - "*.c"
+      - "*.h"
+    from_path: native/
+      - "compiler_stage*.c"
