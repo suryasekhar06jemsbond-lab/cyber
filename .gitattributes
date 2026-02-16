@@ -1,22 +1,29 @@
-# Language detection for Nyx
-# Mark .nx and .ny files as custom (will show as Text if not defined in Linguist)
+# Nyx language files - mark as vendored since Linguist doesn't know Nyx yet
+# This ensures they're counted but as "Nyx" (shown as Text/unknown)
 *.nx linguist-vendored
 *.ny linguist-vendored
 
-# Exclude all C source files from language detection (they are runtime implementation)
-native/*.c linguist-vendored
-native/*.h linguist-vendored
+# Exclude C runtime implementation from language stats
+native/* linguist-vendored
+compiler_stage* linguist-vendored
+output* linguist-vendored
 
-# Exclude generated/compiled files from language stats
-compiler_stage*.c linguist-vendored
-compiler_stage*.exe linguist-vendored
-output*.c linguist-vendored
-output*.exe linguist-vendored
+# Exclude build artifacts
 *.exe linguist-vendored
 *.vsix linguist-vendored
 *.zip linguist-vendored
 
-# Documentation files
-extension.js linguist-documentation
-extension.ts linguist-documentation
-nyxDebug.ts linguist-documentation
+# Exclude build tools/scripts (Python, PowerShell, Shell, JS)
+scripts/*.ps1 linguist-vendored
+scripts/*.sh linguist-vendored
+src/*.py linguist-vendored
+*.js linguist-vendored
+package.json linguist-vendored
+
+# Exclude documentation
+*.md linguist-vendored
+LICENSE linguist-vendored
+
+# Keep editor extension TypeScript (it's part of the language distribution)
+# But exclude node_modules
+editor/** node_modules/** linguist-vendored
