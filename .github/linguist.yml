@@ -1,28 +1,40 @@
-# GitHub Linguist overrides for Nyx language
-# This tells Linguist to detect .nx and .ny files
+# GitHub Linguist Configuration for Nyx Language
+# This defines Nyx as a custom language for this repository
 
-# Define patterns for Nyx files
-extensions:
-  - .ny
-  - .nx
+# Define Nyx language
+nyx:
+  type: programming
+  color: "#5e5086"
+  aliases: []
+  extensions:
+    - .ny
+    - .nx
+  filenames: []
+  language_id: 999999
 
-# Override language detection
-override:
-  # These files should not be counted toward language stats
-  # as they are generated/compiled artifacts
-  compiler_stage1.c: false
-  compiler_stage2.c: false
-  native/nyx.c: false
+# Exclude these from language statistics
+exclude:
+  # Documentation
+  - "*.md"
+  - "LICENSE"
+  - "LICENSE.md"
   
-  # Exclude binary files
-  "*.exe": false
-  "*.vsix": false
-  "*.zip": false
-
-# Vendor patterns to exclude from stats
-vendor_rules:
-  - patterns:
-      - "*.c"
-      - "*.h"
-    from_path: native/
-      - "compiler_stage*.c"
+  # Build artifacts
+  - "*.exe"
+  - "*.vsix"
+  - "*.zip"
+  - "compiler_stage*"
+  - "output*"
+  
+  # Runtime (C implementation)
+  - "native/**"
+  
+  # Scripts (not part of Nyx language)
+  - "scripts/*.ps1"
+  - "scripts/*.sh"
+  - "src/**"
+  - "*.js"
+  - "*.json"
+  
+  # Editor extension (separate project)
+  - "editor/**"
