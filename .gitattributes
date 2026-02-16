@@ -1,9 +1,8 @@
-# Nyx language files - mark as vendored since Linguist doesn't know Nyx yet
-# This ensures they're counted but as "Nyx" (shown as Text/unknown)
-*.nx linguist-vendored
-*.ny linguist-vendored
+# Nyx language files - recognized via .github/linguist.yml
+*.nx linguist-vendored=false
+*.ny linguist-vendored=false
 
-# Exclude C runtime implementation from language stats
+# Exclude C runtime implementation
 native/* linguist-vendored
 compiler_stage* linguist-vendored
 output* linguist-vendored
@@ -13,15 +12,12 @@ output* linguist-vendored
 *.vsix linguist-vendored
 *.zip linguist-vendored
 
-# Exclude build tools/scripts (Python, PowerShell, Shell, JS)
-scripts/*.ps1 linguist-vendored
-scripts/*.sh linguist-vendored
-src/*.py linguist-vendored
+# Exclude build tools (Python, PowerShell, Shell)
+scripts/ linguist-vendored
+src/ linguist-vendored
 *.js linguist-vendored
-package.json linguist-vendored
+*.json linguist-vendored
 
 # Exclude documentation
 *.md linguist-vendored
 LICENSE linguist-vendored
-
-# Keep editor extension TypeScript (it's part of the language distribution)
