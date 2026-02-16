@@ -25,5 +25,3 @@ package.json linguist-vendored
 LICENSE linguist-vendored
 
 # Keep editor extension TypeScript (it's part of the language distribution)
-# But exclude node_modules
-editor/** node_modules/** linguist-vendored
